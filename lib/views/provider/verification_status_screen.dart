@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -12,14 +13,14 @@ class _DocRow {
   const _DocRow(this.label, this.status);
 }
 
-/// Shows the provider's ID/certificate review status — mirrors the
-/// verification "seal" concept from the Admin Web Application.
+/// Shows the provider's ID/certificate review status.
 class VerificationStatusScreen extends StatelessWidget {
   const VerificationStatusScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final provider = MockData.providers.first;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     const docs = [
       _DocRow('Government-issued ID', 'approved'),
       _DocRow('Certificate of training', 'approved'),
@@ -43,7 +44,6 @@ class VerificationStatusScreen extends StatelessWidget {
                       border: Border.all(
                         color: provider.isVerified ? AppColors.success : AppColors.warning,
                         width: 3,
-                        style: BorderStyle.solid,
                       ),
                     ),
                     child: Icon(
@@ -51,12 +51,12 @@ class VerificationStatusScreen extends StatelessWidget {
                       size: 38,
                       color: provider.isVerified ? AppColors.success : AppColors.warning,
                     ),
-                  ),
+                  ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).fadeIn(),
                   const SizedBox(height: AppSizes.md),
                   Text(
                     provider.isVerified ? 'You\'re verified!' : 'Verification in progress',
                     style: AppTextStyles.headlineLarge,
-                  ),
+                  ).animate().fadeIn(delay: 150.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                   const SizedBox(height: 4),
                   Text(
                     provider.isVerified
@@ -64,29 +64,39 @@ class VerificationStatusScreen extends StatelessWidget {
                         : 'Our admin team is reviewing your submitted documents.',
                     style: AppTextStyles.bodyMedium,
                     textAlign: TextAlign.center,
-                  ),
+                  ).animate().fadeIn(delay: 250.ms, duration: 300.ms),
                 ],
               ),
             ),
             const SizedBox(height: AppSizes.xxl),
-            Text('Submitted documents', style: AppTextStyles.titleLarge),
+            Text('Submitted documents', style: AppTextStyles.titleLarge)
+                .animate().fadeIn(delay: 350.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.md),
-            for (final d in docs)
+            for (var i = 0; i < docs.length; i++)
               Container(
                 margin: const EdgeInsets.only(bottom: AppSizes.sm),
                 padding: const EdgeInsets.all(AppSizes.md),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppSizes.radiusLg), border: Border.all(color: AppColors.line)),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+                  boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+                ),
                 child: Row(
                   children: [
                     const Icon(Icons.description_outlined, size: 18, color: AppColors.neutral300),
                     const SizedBox(width: AppSizes.sm),
-                    Expanded(child: Text(d.label, style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textPrimary))),
-                    StatusBadge.fromStatus(d.status),
+                    Expanded(child: Text(docs[i].label, style: AppTextStyles.bodyLarge)),
+                    StatusBadge.fromStatus(docs[i].status),
                   ],
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: 400 + i * 80), duration: 350.ms)
+                  .slideX(begin: 0.06, end: 0),
             const SizedBox(height: AppSizes.xl),
-            OutlinedAppButton(label: 'Resubmit a document', icon: Icons.upload_file_rounded, onPressed: () {}),
+            OutlinedAppButton(label: 'Resubmit a document', icon: Icons.upload_file_rounded, onPressed: () {})
+                .animate().fadeIn(delay: 650.ms, duration: 350.ms),
           ],
         ),
       ),

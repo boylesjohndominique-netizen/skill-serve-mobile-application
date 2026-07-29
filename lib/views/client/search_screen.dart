@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/favorites_controller.dart';
@@ -36,27 +37,33 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Search', style: AppTextStyles.displayMedium),
+              Text('Search', style: AppTextStyles.displayMedium)
+                  .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
               const SizedBox(height: AppSizes.md),
-              AppSearchBar(onChanged: (q) => context.read<MarketplaceController>().search(q)),
+              AppSearchBar(onChanged: (q) => context.read<MarketplaceController>().search(q))
+                  .animate().fadeIn(delay: 80.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
               Expanded(
                 child: !hasQuery
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Recent searches', style: AppTextStyles.titleLarge),
+                          Text('Recent searches', style: AppTextStyles.titleLarge)
+                              .animate().fadeIn(delay: 150.ms, duration: 300.ms),
                           const SizedBox(height: AppSizes.md),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              for (final term in _recentSearches)
+                              for (var i = 0; i < _recentSearches.length; i++)
                                 ActionChip(
-                                  label: Text(term),
-                                  onPressed: () => context.read<MarketplaceController>().search(term),
+                                  label: Text(_recentSearches[i]),
+                                  onPressed: () => context.read<MarketplaceController>().search(_recentSearches[i]),
                                   avatar: const Icon(Icons.history_rounded, size: 16, color: AppColors.textMuted),
-                                ),
+                                )
+                                    .animate()
+                                    .fadeIn(delay: Duration(milliseconds: 200 + i * 60), duration: 300.ms)
+                                    .slideX(begin: 0.1, end: 0),
                             ],
                           ),
                         ],
@@ -79,7 +86,10 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
                                     isFavorite: favorites.isFavorite(p.id),
                                     onFavoriteToggle: () => favorites.toggle(p.id),
                                     onTap: () => context.push('/provider-profile/${p.id}'),
-                                  );
+                                  )
+                                      .animate()
+                                      .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                                      .slideY(begin: 0.06, end: 0);
                                 },
                               ),
               ),

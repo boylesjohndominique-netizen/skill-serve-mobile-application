@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -34,6 +35,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   Widget build(BuildContext context) {
     if (_service == null) return const Scaffold(body: LoadingState());
     final s = _service!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Service Details')),
@@ -52,21 +54,24 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   fit: BoxFit.cover,
                   placeholder: (c, u) => const ShimmerPlaceholder(height: 200),
                 ),
-              ),
+              ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.04, end: 0),
               const SizedBox(height: AppSizes.lg),
-              Text(s.title, style: AppTextStyles.headlineLarge),
+              Text(s.title, style: AppTextStyles.headlineLarge)
+                  .animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.sm),
               Row(
                 children: [
-                  _Pill(icon: Icons.payments_outlined, label: Formatters.peso(s.price)),
+                  _Pill(icon: Icons.payments_outlined, label: Formatters.peso(s.price), isDark: isDark),
                   const SizedBox(width: AppSizes.sm),
-                  _Pill(icon: Icons.timer_outlined, label: s.duration),
+                  _Pill(icon: Icons.timer_outlined, label: s.duration, isDark: isDark),
                 ],
-              ),
+              ).animate().fadeIn(delay: 180.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
-              Text('Description', style: AppTextStyles.titleLarge),
+              Text('Description', style: AppTextStyles.titleLarge)
+                  .animate().fadeIn(delay: 260.ms, duration: 300.ms),
               const SizedBox(height: 6),
-              Text(s.description, style: AppTextStyles.bodyLarge),
+              Text(s.description, style: AppTextStyles.bodyLarge)
+                  .animate().fadeIn(delay: 320.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xxxl),
             ],
           ),
@@ -89,13 +94,17 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 class _Pill extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _Pill({required this.icon, required this.label});
+  final bool isDark;
+  const _Pill({required this.icon, required this.label, this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(AppSizes.radiusPill)),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

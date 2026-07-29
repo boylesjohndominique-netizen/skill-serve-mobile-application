@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/notification_controller.dart';
 import '../../core/constants/app_colors.dart';
@@ -37,6 +38,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<NotificationController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final surfaceAltColor = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
@@ -57,9 +62,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(AppSizes.md),
                           decoration: BoxDecoration(
-                            color: n.isRead ? AppColors.surface : AppColors.surfaceAlt,
+                            color: n.isRead ? surfaceColor : surfaceAltColor,
                             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                            border: Border.all(color: AppColors.line),
+                            border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+                            boxShadow: n.isRead ? [] : AppSizes.shadowFor(context, level: ShadowLevel.sm),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,11 +89,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 ),
                               ),
                               if (!n.isRead)
-                                Container(width: 8, height: 8, margin: const EdgeInsets.only(top: 4), decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle)),
+                                Container(width: 8, height: 8, margin: const EdgeInsets.only(top: 4), decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle))
+                                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                                    .scaleXY(begin: 1.0, end: 1.3, duration: 1200.ms, curve: Curves.easeInOut),
                             ],
                           ),
                         ),
-                      );
+                      )
+                          .animate()
+                          .fadeIn(delay: Duration(milliseconds: i.clamp(0, 10) * 50), duration: 350.ms)
+                          .slideY(begin: 0.05, end: 0);
                     },
                   ),
       ),

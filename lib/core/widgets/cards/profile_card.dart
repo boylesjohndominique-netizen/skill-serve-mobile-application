@@ -6,6 +6,7 @@ import '../../../models/user_model.dart';
 
 /// Header card showing avatar, name, and role — used at the top of Profile
 /// / Settings screens for both Client and Provider.
+/// Features a subtle gradient shine and avatar border ring.
 class ProfileCard extends StatelessWidget {
   final UserModel user;
   final VoidCallback? onEdit;
@@ -20,15 +21,29 @@ class ProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.heroGradient,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: AppColors.secondary,
-            child: Text(
-              user.initials,
-              style: AppTextStyles.headlineMedium.copyWith(color: Colors.white),
+          Container(
+            padding: const EdgeInsets.all(2.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.6), width: 2),
+            ),
+            child: CircleAvatar(
+              radius: 28,
+              backgroundColor: AppColors.secondary,
+              child: Text(
+                user.initials,
+                style: AppTextStyles.headlineMedium.copyWith(color: Colors.white),
+              ),
             ),
           ),
           const SizedBox(width: AppSizes.md),
@@ -44,9 +59,15 @@ class ProfileCard extends StatelessWidget {
             ),
           ),
           if (onEdit != null)
-            IconButton(
-              onPressed: onEdit,
-              icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              ),
+              child: IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+              ),
             ),
         ],
       ),

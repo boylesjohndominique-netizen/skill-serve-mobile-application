@@ -4,6 +4,7 @@ import '../../constants/app_text_styles.dart';
 
 /// "Section title + optional 'See all' action" header used throughout
 /// the Home dashboard and list screens.
+/// Action label includes an arrow icon with tap animation.
 class SectionHeader extends StatelessWidget {
   final String title;
   final String? actionLabel;
@@ -20,9 +21,16 @@ class SectionHeader extends StatelessWidget {
         if (actionLabel != null)
           GestureDetector(
             onTap: onAction,
-            child: Text(
-              actionLabel!,
-              style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  actionLabel!,
+                  style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.secondary),
+              ],
             ),
           ),
       ],

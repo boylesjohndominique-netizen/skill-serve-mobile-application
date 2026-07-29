@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 
 /// Shared template for simple static content pages (About, Terms,
-/// Privacy Policy). Content is placeholder copy — replace with the real
-/// legal/marketing text before shipping.
+/// Privacy Policy). Features staggered section fade-in.
 class StaticInfoScreen extends StatelessWidget {
   final String title;
   final List<StaticSection> sections;
@@ -19,12 +19,17 @@ class StaticInfoScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSizes.pageHPad),
           children: [
-            for (final section in sections) ...[
-              if (section.heading != null) ...[
-                Text(section.heading!, style: AppTextStyles.titleLarge),
+            for (var i = 0; i < sections.length; i++) ...[
+              if (sections[i].heading != null) ...[
+                Text(sections[i].heading!, style: AppTextStyles.titleLarge)
+                    .animate()
+                    .fadeIn(delay: Duration(milliseconds: i * 100), duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
                 const SizedBox(height: 6),
               ],
-              Text(section.body, style: AppTextStyles.bodyLarge),
+              Text(sections[i].body, style: AppTextStyles.bodyLarge)
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: 50 + i * 100), duration: 350.ms),
               const SizedBox(height: AppSizes.xl),
             ],
           ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
@@ -12,7 +13,6 @@ import '../../services/booking_service.dart';
 import '../../services/service_service.dart';
 
 /// Booking creation form — date, time slot, address, and notes.
-/// On submit, creates a mock booking and routes to the confirmation screen.
 class BookingFormScreen extends StatefulWidget {
   final String providerId;
   const BookingFormScreen({super.key, required this.providerId});
@@ -70,6 +70,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   Widget build(BuildContext context) {
     if (_provider == null) return const Scaffold(body: LoadingState());
     final p = _provider!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Book a Service')),
@@ -79,11 +80,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Provider summary
               Container(
                 padding: const EdgeInsets.all(AppSizes.md),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
+                  color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
                 ),
                 child: Row(
                   children: [
@@ -102,54 +105,65 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                       Text(Formatters.peso(p.startingPrice!), style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary)),
                   ],
                 ),
-              ),
+              ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.xl),
-              Text('Select a date', style: AppTextStyles.titleLarge),
+
+              // Date picker
+              Text('Select a date', style: AppTextStyles.titleLarge)
+                  .animate().fadeIn(delay: 100.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.sm),
               InkWell(
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 14),
-                  decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.secondary),
                       const SizedBox(width: AppSizes.sm),
-                      Text(Formatters.dateShort(_date), style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textPrimary)),
+                      Text(Formatters.dateShort(_date), style: AppTextStyles.bodyLarge),
                     ],
                   ),
                 ),
-              ),
+              ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
-              Text('Select a time slot', style: AppTextStyles.titleLarge),
+
+              // Time slots
+              Text('Select a time slot', style: AppTextStyles.titleLarge)
+                  .animate().fadeIn(delay: 220.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.sm),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final slot in _slots)
+                  for (var i = 0; i < _slots.length; i++)
                     ChoiceChip(
-                      label: Text(slot),
-                      selected: _slot == slot,
-                      onSelected: (_) => setState(() => _slot = slot),
-                    ),
+                      label: Text(_slots[i]),
+                      selected: _slot == _slots[i],
+                      onSelected: (_) => setState(() => _slot = _slots[i]),
+                    ).animate().fadeIn(delay: Duration(milliseconds: 280 + i * 40), duration: 300.ms).slideX(begin: 0.08, end: 0),
                 ],
               ),
               const SizedBox(height: AppSizes.xl),
+
+              // Address & notes
               AppTextField(
                 label: 'Service address',
                 hint: 'Where should the provider go?',
                 controller: _addressController,
                 prefixIcon: Icons.location_on_outlined,
-              ),
+              ).animate().fadeIn(delay: 400.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.lg),
               AppTextField(
                 label: 'Notes (optional)',
                 hint: 'Describe the issue or any special instructions…',
                 controller: _notesController,
                 maxLines: 4,
-              ),
+              ).animate().fadeIn(delay: 470.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.xxxl),
             ],
           ),

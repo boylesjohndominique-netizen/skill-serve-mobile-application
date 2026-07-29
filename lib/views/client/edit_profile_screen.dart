@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
@@ -84,13 +85,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                          // UI-only — wire to image_picker + upload service later.
                           child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
                 const SizedBox(height: AppSizes.xl),
                 Row(
                   children: [
@@ -98,7 +98,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(width: AppSizes.md),
                     Expanded(child: AppTextField(label: 'Last name', controller: _lastName, validator: Validators.required)),
                   ],
-                ),
+                ).animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Phone number',
@@ -106,16 +106,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.call_outlined,
                   validator: Validators.phone,
-                ),
+                ).animate().fadeIn(delay: 180.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Address',
                   controller: _address,
                   prefixIcon: Icons.location_on_outlined,
                   validator: Validators.required,
-                ),
+                ).animate().fadeIn(delay: 260.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.xxl),
-                PrimaryButton(label: 'Save changes', isLoading: _saving, onPressed: _save),
+                PrimaryButton(label: 'Save changes', isLoading: _saving, onPressed: _save)
+                    .animate().fadeIn(delay: 340.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
               ],
             ),
           ),

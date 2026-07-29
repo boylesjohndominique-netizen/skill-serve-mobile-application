@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -45,17 +46,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _sent ? 'Check your email' : 'Reset your password',
-                  style: AppTextStyles.displayMedium,
-                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _sent ? 'Check your email' : 'Reset your password',
+                    key: ValueKey(_sent),
+                    style: AppTextStyles.displayMedium,
+                  ),
+                ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: 6),
-                Text(
-                  _sent
-                      ? 'We\'ve sent a password reset link to ${_email.text}. Follow the instructions to set a new password.'
-                      : 'Enter the email associated with your account and we\'ll send a link to reset your password.',
-                  style: AppTextStyles.bodyLarge,
-                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _sent
+                        ? 'We\'ve sent a password reset link to ${_email.text}. Follow the instructions to set a new password.'
+                        : 'Enter the email associated with your account and we\'ll send a link to reset your password.',
+                    key: ValueKey('desc_$_sent'),
+                    style: AppTextStyles.bodyLarge,
+                  ),
+                ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.xxl),
                 if (!_sent) ...[
                   AppTextField(
@@ -65,11 +74,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icons.mail_outline_rounded,
                     validator: Validators.email,
-                  ),
+                  ).animate().fadeIn(delay: 200.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                   const SizedBox(height: AppSizes.xl),
-                  PrimaryButton(label: 'Send reset link', isLoading: _loading, onPressed: _submit),
+                  PrimaryButton(label: 'Send reset link', isLoading: _loading, onPressed: _submit)
+                      .animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 ] else
-                  PrimaryButton(label: 'Back to log in', onPressed: () => context.go('/login')),
+                  PrimaryButton(label: 'Back to log in', onPressed: () => context.go('/login'))
+                      .animate().fadeIn(delay: 200.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
               ],
             ),
           ),

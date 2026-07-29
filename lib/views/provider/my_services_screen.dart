@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
@@ -17,6 +18,9 @@ class MyServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final services = MockData.services.take(5).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
     return Scaffold(
       appBar: AppBar(
@@ -46,9 +50,10 @@ class MyServicesScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(AppSizes.md),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: surfaceColor,
                         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                        border: Border.all(color: AppColors.line),
+                        border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+                        boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
                       ),
                       child: Row(
                         children: [
@@ -71,7 +76,10 @@ class MyServicesScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  );
+                  )
+                      .animate()
+                      .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                      .slideX(begin: 0.05, end: 0);
                 },
               ),
       ),

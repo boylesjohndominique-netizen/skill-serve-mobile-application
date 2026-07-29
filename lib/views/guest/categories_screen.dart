@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/marketplace_controller.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 
 /// Full category grid — tapping a category routes into Browse Services
@@ -54,7 +57,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       await context.read<MarketplaceController>().filterByCategory(cat.name);
                       if (context.mounted) context.push('/browse');
                     },
-                  );
+                  )
+                      .animate()
+                      .fadeIn(delay: Duration(milliseconds: (i.clamp(0, 8) * 60)), duration: 350.ms)
+                      .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
                 },
               ),
       ),
@@ -62,7 +68,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 }
 
-class _CategoryTile extends StatelessWidget {
+class _CategoryTile extends StatefulWidget {
   final String name;
   final int count;
   final VoidCallback onTap;
@@ -70,27 +76,50 @@ class _CategoryTile extends StatelessWidget {
   const _CategoryTile({required this.name, required this.count, required this.onTap});
 
   @override
+  State<_CategoryTile> createState() => _CategoryTileState();
+}
+
+class _CategoryTileState extends State<_CategoryTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          border: Border.all(color: Theme.of(context).dividerColor),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.sm),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.work_outline_rounded, color: Color(0xFFC9852E), size: 26),
-              const SizedBox(height: 8),
-              Text(name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 2),
-              Text('$count pros', style: Theme.of(context).textTheme.bodySmall),
-            ],
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            border: Border.all(color: lineColor.withValues(alpha: 0.6)),
+            boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.sm),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.work_outline_rounded, color: AppColors.secondary, size: 26),
+                const SizedBox(height: 8),
+                Text(widget.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text('${widget.count} pros', style: AppTextStyles.bodySmall),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 
 /// Small pill badge for statuses (booking status, verification status, etc.)
 /// Mirrors the color logic used on the Admin Web Application for consistency.
+/// Active/in-progress statuses get a subtle pulse animation.
 class StatusBadge extends StatelessWidget {
   final String label;
   final StatusTone tone;
@@ -35,10 +37,12 @@ class StatusBadge extends StatelessWidget {
   static String _labelize(String s) =>
       s.replaceAll('_', ' ').split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
 
+  bool get _shouldPulse => tone == StatusTone.info || tone == StatusTone.warning;
+
   @override
   Widget build(BuildContext context) {
     final colors = _colorsFor(tone);
-    return Container(
+    Widget badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: colors.$1,
@@ -49,6 +53,19 @@ class StatusBadge extends StatelessWidget {
         style: AppTextStyles.caption.copyWith(color: colors.$2, fontWeight: FontWeight.w600),
       ),
     );
+
+    if (_shouldPulse) {
+      badge = badge
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .scaleXY(
+            begin: 1.0,
+            end: 1.05,
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.easeInOut,
+          );
+    }
+
+    return badge;
   }
 
   (Color, Color) _colorsFor(StatusTone tone) {

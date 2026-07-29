@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
+import '../../core/constants/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -60,14 +62,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
                   icon: const Icon(Icons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
-                ),
+                ).animate().fadeIn(duration: 250.ms),
                 const SizedBox(height: AppSizes.md),
-                Text('Create your account', style: AppTextStyles.displayMedium),
+                Text('Create your account', style: AppTextStyles.displayMedium)
+                    .animate().fadeIn(delay: 80.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: 6),
-                Text('Join SkillLink as a client looking for services, or a provider offering them.', style: AppTextStyles.bodyLarge),
+                Text('Join SkillLink as a client looking for services, or a provider offering them.', style: AppTextStyles.bodyLarge)
+                    .animate().fadeIn(delay: 150.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xl),
 
-                _RoleToggle(role: _role, onChanged: (r) => setState(() => _role = r)),
+                _RoleToggle(role: _role, onChanged: (r) => setState(() => _role = r))
+                    .animate().fadeIn(delay: 220.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.xl),
 
                 Row(
@@ -80,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: AppTextField(label: 'Last name', hint: 'Dela Cruz', controller: _lastName, validator: Validators.required),
                     ),
                   ],
-                ),
+                ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Email address',
@@ -89,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.mail_outline_rounded,
                   validator: Validators.email,
-                ),
+                ).animate().fadeIn(delay: 370.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Password',
@@ -98,7 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: true,
                   prefixIcon: Icons.lock_outline_rounded,
                   validator: Validators.password,
-                ),
+                ).animate().fadeIn(delay: 440.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Confirm password',
@@ -107,13 +112,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: true,
                   prefixIcon: Icons.lock_outline_rounded,
                   validator: (v) => Validators.confirmPassword(v, _password.text),
-                ),
+                ).animate().fadeIn(delay: 510.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.xl),
                 PrimaryButton(
                   label: 'Create account',
                   isLoading: auth.status == AuthStatus.authenticating,
                   onPressed: () => _submit(auth),
-                ),
+                ).animate().fadeIn(delay: 580.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 Center(
                   child: Text.rich(
@@ -131,7 +136,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
                   ),
-                ),
+                ).animate().fadeIn(delay: 640.ms, duration: 300.ms),
               ],
             ),
           ),
@@ -149,9 +154,13 @@ class _RoleToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
+
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
       child: Row(
         children: [
           Expanded(child: _tab('I need a service', UserRole.client, Icons.person_search_rounded)),
@@ -166,15 +175,24 @@ class _RoleToggle extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(value),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: AppAnimations.md,
+        curve: AppAnimations.springCurve,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: selected ? AppColors.secondary : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+          boxShadow: selected
+              ? [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
+              : [],
         ),
         child: Column(
           children: [
-            Icon(icon, size: 20, color: selected ? Colors.white : AppColors.textMuted),
+            AnimatedScale(
+              scale: selected ? 1.1 : 1.0,
+              duration: AppAnimations.md,
+              curve: AppAnimations.springCurve,
+              child: Icon(icon, size: 20, color: selected ? Colors.white : AppColors.textMuted),
+            ),
             const SizedBox(height: 4),
             Text(
               label,

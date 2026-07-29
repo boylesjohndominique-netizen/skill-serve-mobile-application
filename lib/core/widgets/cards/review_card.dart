@@ -7,7 +7,7 @@ import '../../../models/review_model.dart';
 import '../misc/rating_widget.dart';
 
 /// Single review entry used on Provider Profile and the provider's own
-/// Reviews screen.
+/// Reviews screen. Features soft shadow and dark-mode-aware colors.
 class ReviewCard extends StatelessWidget {
   final ReviewModel review;
 
@@ -15,12 +15,18 @@ class ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
+
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+        boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +55,9 @@ class ReviewCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.sm),
-          Text(review.comment, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+          Text(review.comment, style: AppTextStyles.bodyMedium.copyWith(
+            color: isDark ? AppColors.textMutedDark : AppColors.textSecondary,
+          )),
         ],
       ),
     );

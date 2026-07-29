@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/favorites_controller.dart';
@@ -36,7 +37,10 @@ class FavoritesScreen extends StatelessWidget {
                     isFavorite: true,
                     onFavoriteToggle: () => favorites.toggle(p.id),
                     onTap: () => context.push('/provider-profile/${p.id}'),
-                  );
+                  )
+                      .animate()
+                      .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0);
                 },
               ),
       ),

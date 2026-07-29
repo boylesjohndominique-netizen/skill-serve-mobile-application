@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
@@ -49,11 +50,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
                   icon: const Icon(Icons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
-                ),
+                ).animate().fadeIn(duration: 250.ms),
                 const SizedBox(height: AppSizes.md),
-                Text('Welcome back', style: AppTextStyles.displayMedium),
+                Text('Welcome back', style: AppTextStyles.displayMedium)
+                    .animate().fadeIn(delay: 80.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: 6),
-                Text('Log in to continue booking or managing your services.', style: AppTextStyles.bodyLarge),
+                Text('Log in to continue booking or managing your services.', style: AppTextStyles.bodyLarge)
+                    .animate().fadeIn(delay: 150.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xxl),
                 AppTextField(
                   label: 'Email address',
@@ -62,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.mail_outline_rounded,
                   validator: Validators.email,
-                ),
+                ).animate().fadeIn(delay: 220.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Password',
@@ -71,20 +74,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   prefixIcon: Icons.lock_outline_rounded,
                   validator: Validators.password,
-                ),
+                ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push('/forgot-password'),
                     child: const Text('Forgot password?'),
                   ),
-                ),
+                ).animate().fadeIn(delay: 380.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.md),
                 PrimaryButton(
                   label: 'Log in',
                   isLoading: auth.status == AuthStatus.authenticating,
                   onPressed: () => _submit(auth),
-                ),
+                ).animate().fadeIn(delay: 440.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 Center(
                   child: Text.rich(
@@ -102,14 +105,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                ),
+                ).animate().fadeIn(delay: 500.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.sm),
                 Center(
                   child: TextButton(
                     onPressed: () => context.go('/browse'),
                     child: Text('Continue as guest', style: AppTextStyles.label.copyWith(color: AppColors.textMuted)),
                   ),
-                ),
+                ).animate().fadeIn(delay: 550.ms, duration: 300.ms),
               ],
             ),
           ),

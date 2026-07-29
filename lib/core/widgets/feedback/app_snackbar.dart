@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
+import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 
 /// Consistent snackbar styling — success / error variants.
+/// Features improved border radius and icon styling.
 class AppSnackbar {
   AppSnackbar._();
 
@@ -16,9 +18,15 @@ class AppSnackbar {
       ..showSnackBar(
         SnackBar(
           backgroundColor: bg,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(AppSizes.lg, 0, AppSizes.lg, AppSizes.lg),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+          elevation: 6,
           content: Row(
             children: [
-              Icon(icon, size: 18, color: iconColor),
+              Icon(icon, size: 20, color: iconColor),
               const SizedBox(width: 10),
               Expanded(child: Text(message, style: AppTextStyles.onDark(AppTextStyles.bodyMedium))),
             ],

@@ -51,7 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_index == _slides.length - 1) {
       context.go('/welcome');
     } else {
-      _controller.nextPage(duration: const Duration(milliseconds: 320), curve: Curves.easeOut);
+      _controller.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic);
     }
   }
 
@@ -70,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text('Skip', style: AppTextStyles.button.copyWith(color: AppColors.textMuted)),
                 ),
               ),
-            ),
+            ).animate().fadeIn(duration: 300.ms),
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -83,39 +83,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 160,
-                          height: 160,
-                          decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(40)),
-                          child: Icon(slide.icon, size: 68, color: AppColors.secondary),
-                        ).animate(key: ValueKey(i)).fadeIn(duration: 350.ms).scale(begin: const Offset(0.9, 0.9)),
+                        // Icon with glow ring
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Glow ring
+                            Container(
+                              width: 180,
+                              height: 180,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(46),
+                                border: Border.all(
+                                  color: AppColors.secondary.withValues(alpha: 0.15),
+                                  width: 2,
+                                ),
+                              ),
+                            )
+                                .animate(key: ValueKey('ring$i'))
+                                .fadeIn(duration: 300.ms)
+                                .scale(begin: const Offset(0.85, 0.85)),
+                            Container(
+                              width: 160,
+                              height: 160,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(40),
+                              ),
+                              child: Icon(slide.icon, size: 68, color: AppColors.secondary),
+                            )
+                                .animate(key: ValueKey(i))
+                                .fadeIn(duration: 350.ms)
+                                .scale(begin: const Offset(0.88, 0.88), curve: Curves.easeOutBack),
+                          ],
+                        ),
                         const SizedBox(height: AppSizes.xxl),
                         Text(slide.title, style: AppTextStyles.displayMedium, textAlign: TextAlign.center)
                             .animate(key: ValueKey('t$i'))
-                            .fadeIn(delay: 100.ms)
-                            .slideY(begin: 0.15, end: 0),
+                            .fadeIn(delay: 100.ms, duration: 350.ms)
+                            .slideY(begin: 0.12, end: 0),
                         const SizedBox(height: AppSizes.sm),
                         Text(slide.description, style: AppTextStyles.bodyLarge, textAlign: TextAlign.center)
                             .animate(key: ValueKey('d$i'))
-                            .fadeIn(delay: 180.ms),
+                            .fadeIn(delay: 200.ms, duration: 350.ms),
                       ],
                     ),
                   );
                 },
               ),
             ),
+            // Dot indicators with spring physics
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 _slides.length,
                 (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutBack,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _index ? 20 : 6,
+                  width: i == _index ? 24 : 6,
                   height: 6,
                   decoration: BoxDecoration(
                     color: i == _index ? AppColors.secondary : AppColors.neutral200,
                     borderRadius: BorderRadius.circular(3),
+                    boxShadow: i == _index
+                        ? [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 6)]
+                        : [],
                   ),
                 ),
               ),

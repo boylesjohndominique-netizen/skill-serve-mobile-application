@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../data/mock/mock_data.dart';
 
-/// Deeper performance view — completed jobs trend, rating breakdown, and
-/// category share. Uses simple bar visualizations (no chart package
-/// dependency) so the layout stays lightweight.
+/// Deeper performance view — completed jobs trend, rating breakdown.
 class StatisticsScreen extends StatelessWidget {
   const StatisticsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final provider = MockData.providers.first;
-    final monthly = [4, 7, 5, 9, 6, 8]; // mock completed-jobs-per-month
+    final monthly = [4, 7, 5, 9, 6, 8];
     final months = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
     final maxVal = monthly.reduce((a, b) => a > b ? a : b);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Statistics')),
@@ -25,25 +27,31 @@ class StatisticsScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: _StatCard(label: 'Avg. Rating', value: provider.averageRating.toStringAsFixed(1), icon: Icons.star_rounded)),
+                Expanded(child: _StatCard(label: 'Avg. Rating', value: provider.averageRating.toStringAsFixed(1), icon: Icons.star_rounded, index: 0)),
                 const SizedBox(width: AppSizes.md),
-                Expanded(child: _StatCard(label: 'Total Jobs', value: '${provider.completedJobs}', icon: Icons.task_alt_rounded)),
+                Expanded(child: _StatCard(label: 'Total Jobs', value: '${provider.completedJobs}', icon: Icons.task_alt_rounded, index: 1)),
               ],
             ),
             const SizedBox(height: AppSizes.md),
             Row(
               children: [
-                Expanded(child: _StatCard(label: 'Total Reviews', value: '${provider.reviewCount}', icon: Icons.reviews_rounded)),
+                Expanded(child: _StatCard(label: 'Total Reviews', value: '${provider.reviewCount}', icon: Icons.reviews_rounded, index: 2)),
                 const SizedBox(width: AppSizes.md),
-                Expanded(child: _StatCard(label: 'Years Active', value: '${provider.yearsExperience}', icon: Icons.timeline_rounded)),
+                Expanded(child: _StatCard(label: 'Years Active', value: '${provider.yearsExperience}', icon: Icons.timeline_rounded, index: 3)),
               ],
             ),
             const SizedBox(height: AppSizes.xl),
-            Text('Completed Jobs (Last 6 Months)', style: AppTextStyles.titleLarge),
+            Text('Completed Jobs (Last 6 Months)', style: AppTextStyles.titleLarge)
+                .animate().fadeIn(delay: 350.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.lg),
             Container(
               padding: const EdgeInsets.all(AppSizes.lg),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppSizes.radiusLg), border: Border.all(color: AppColors.line)),
+              decoration: BoxDecoration(
+                color: surfaceColor,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+                boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -61,42 +69,52 @@ class StatisticsScreen extends StatelessWidget {
                             color: i == monthly.length - 1 ? AppColors.secondary : AppColors.primary.withValues(alpha: 0.75),
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                           ),
-                        ),
+                        )
+                            .animate()
+                            .scaleY(begin: 0, end: 1, delay: Duration(milliseconds: 500 + i * 80), duration: 400.ms, curve: Curves.easeOutBack, alignment: Alignment.bottomCenter),
                         const SizedBox(height: 6),
                         Text(months[i], style: AppTextStyles.caption),
                       ],
                     ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(delay: 400.ms, duration: 350.ms),
             const SizedBox(height: AppSizes.xl),
-            Text('Rating Breakdown', style: AppTextStyles.titleLarge),
+            Text('Rating Breakdown', style: AppTextStyles.titleLarge)
+                .animate().fadeIn(delay: 700.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.md),
-            for (final entry in const [(5, 0.68), (4, 0.21), (3, 0.07), (2, 0.03), (1, 0.01)])
+            for (var i = 0; i < 5; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSizes.sm),
                 child: Row(
                   children: [
-                    Text('${entry.$1}', style: AppTextStyles.label),
+                    Text('${5 - i}', style: AppTextStyles.label),
                     const SizedBox(width: 4),
                     const Icon(Icons.star_rounded, size: 13, color: AppColors.star),
                     const SizedBox(width: AppSizes.sm),
                     Expanded(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: entry.$2,
-                          minHeight: 8,
-                          backgroundColor: AppColors.surfaceAlt,
-                          valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: [0.68, 0.21, 0.07, 0.03, 0.01][i]),
+                          duration: Duration(milliseconds: 800 + i * 100),
+                          curve: Curves.easeOutCubic,
+                          builder: (_, val, __) => LinearProgressIndicator(
+                            value: val,
+                            minHeight: 8,
+                            backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+                            valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: AppSizes.sm),
-                    Text('${(entry.$2 * 100).toStringAsFixed(0)}%', style: AppTextStyles.bodySmall),
+                    Text('${([68, 21, 7, 3, 1][i])}%', style: AppTextStyles.bodySmall),
                   ],
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: 750 + i * 60), duration: 300.ms),
           ],
         ),
       ),
@@ -108,13 +126,20 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  const _StatCard({required this.label, required this.value, required this.icon});
+  final int index;
+  const _StatCard({required this.label, required this.value, required this.icon, required this.index});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppSizes.radiusLg), border: Border.all(color: AppColors.line)),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+        boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -124,6 +149,9 @@ class _StatCard extends StatelessWidget {
           Text(label, style: AppTextStyles.bodySmall),
         ],
       ),
-    );
+    )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 80 + index * 80), duration: 350.ms)
+        .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
   }
 }

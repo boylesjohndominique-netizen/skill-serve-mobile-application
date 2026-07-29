@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/provider_booking_controller.dart';
@@ -58,7 +59,10 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                           ),
                           const SizedBox(height: AppSizes.md),
                         ],
-                      );
+                      )
+                          .animate()
+                          .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                          .slideY(begin: 0.06, end: 0);
                     },
                   ),
       ),

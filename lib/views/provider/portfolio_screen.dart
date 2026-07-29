@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -88,7 +89,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                           ),
                         ],
                       ),
-                    );
+                    )
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                        .scale(begin: const Offset(0.92, 0.92), curve: Curves.easeOutBack);
                   },
                 ),
     );

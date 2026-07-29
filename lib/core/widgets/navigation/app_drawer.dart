@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
@@ -13,6 +15,7 @@ class DrawerAction {
 
 /// Slide-out drawer offering secondary navigation (Help, Terms, Logout…)
 /// so the bottom nav can stay limited to five primary destinations.
+/// Features staggered entrance animation for drawer items.
 class AppDrawer extends StatelessWidget {
   final UserModel? user;
   final List<DrawerAction> actions;
@@ -22,8 +25,12 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+
     return Drawer(
-      backgroundColor: AppColors.surface,
+      backgroundColor: surfaceColor,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +47,14 @@ class AppDrawer extends StatelessWidget {
                       user?.initials ?? 'G',
                       style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
                     ),
-                  ),
+                  )
+                      .animate()
+                      .scale(
+                        begin: const Offset(0.6, 0.6),
+                        end: const Offset(1.0, 1.0),
+                        duration: AppAnimations.md,
+                        curve: AppAnimations.springCurve,
+                      ),
                   const SizedBox(width: AppSizes.md),
                   Expanded(
                     child: Column(
@@ -50,7 +64,10 @@ class AppDrawer extends StatelessWidget {
                         Text(user?.email ?? 'Browsing as guest', style: AppTextStyles.bodySmall),
                       ],
                     ),
-                  ),
+                  )
+                      .animate()
+                      .fadeIn(duration: AppAnimations.md, delay: 100.ms)
+                      .slideX(begin: 0.1, end: 0),
                 ],
               ),
             ),
@@ -59,12 +76,18 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
                 children: [
-                  for (final action in actions)
+                  for (var i = 0; i < actions.length; i++)
                     ListTile(
-                      leading: Icon(action.icon, color: AppColors.textSecondary, size: 22),
-                      title: Text(action.label, style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textPrimary)),
-                      onTap: action.onTap,
-                    ),
+                      leading: Icon(actions[i].icon, color: isDark ? AppColors.textMutedDark : AppColors.textSecondary, size: 22),
+                      title: Text(actions[i].label, style: AppTextStyles.bodyLarge),
+                      onTap: actions[i].onTap,
+                    )
+                        .animate()
+                        .fadeIn(
+                          duration: AppAnimations.md,
+                          delay: AppAnimations.staggerDelay(i, base: 50.ms),
+                        )
+                        .slideX(begin: 0.08, end: 0),
                 ],
               ),
             ),
@@ -73,7 +96,9 @@ class AppDrawer extends StatelessWidget {
               leading: const Icon(Icons.logout_rounded, color: AppColors.error, size: 22),
               title: Text('Log out', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.error)),
               onTap: onLogout,
-            ),
+            )
+                .animate()
+                .fadeIn(duration: AppAnimations.md, delay: 300.ms),
             const SizedBox(height: AppSizes.sm),
           ],
         ),

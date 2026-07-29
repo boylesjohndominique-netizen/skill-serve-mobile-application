@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/booking_controller.dart';
@@ -46,7 +47,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(AppSizes.pageHPad, AppSizes.lg, AppSizes.pageHPad, 0),
-          child: Text('My Bookings', style: AppTextStyles.displayMedium),
+          child: Text('My Bookings', style: AppTextStyles.displayMedium)
+              .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
         ),
         TabBar(
           controller: _tabController,
@@ -94,7 +96,10 @@ class _BookingList extends StatelessWidget {
       itemBuilder: (context, i) => BookingCard(
         booking: bookings[i],
         onTap: () => context.push('/booking-details/${bookings[i].id}'),
-      ),
+      )
+          .animate()
+          .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+          .slideY(begin: 0.06, end: 0),
     );
   }
 }

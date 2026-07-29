@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
@@ -34,19 +35,27 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
   }
 
   void _promptLogin() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(AppSizes.xl),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXl)),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXl)),
+          boxShadow: AppSizes.shadowLg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lock_outline_rounded, size: 36, color: AppColors.secondary),
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: AppSizes.lg),
+              decoration: BoxDecoration(color: AppColors.neutral200, borderRadius: BorderRadius.circular(2)),
+            ),
+            const Icon(Icons.lock_outline_rounded, size: 36, color: AppColors.secondary)
+                .animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
             const SizedBox(height: AppSizes.md),
             Text('Log in to book this provider', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
             const SizedBox(height: 6),
@@ -78,7 +87,8 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ImageCarousel(images: p.portfolioImages),
+              ImageCarousel(images: p.portfolioImages)
+                  .animate().fadeIn(duration: 350.ms).slideY(begin: 0.04, end: 0),
               const SizedBox(height: AppSizes.lg),
               Row(
                 children: [
@@ -101,7 +111,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                   ),
                   StatusBadge.fromStatus(p.verificationStatus),
                 ],
-              ),
+              ).animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.md),
               Row(
                 children: [
@@ -111,15 +121,19 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                   const SizedBox(width: 4),
                   Text('${p.completedJobs} jobs completed', style: AppTextStyles.bodyMedium),
                 ],
-              ),
+              ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
-              Text('About', style: AppTextStyles.titleLarge),
+              Text('About', style: AppTextStyles.titleLarge)
+                  .animate().fadeIn(delay: 280.ms, duration: 300.ms),
               const SizedBox(height: 6),
-              Text(p.bio, style: AppTextStyles.bodyLarge),
+              Text(p.bio, style: AppTextStyles.bodyLarge)
+                  .animate().fadeIn(delay: 330.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
-              Text('Experience', style: AppTextStyles.titleLarge),
+              Text('Experience', style: AppTextStyles.titleLarge)
+                  .animate().fadeIn(delay: 380.ms, duration: 300.ms),
               const SizedBox(height: 6),
-              Text('${p.yearsExperience} years in ${p.categoryName.toLowerCase()} services', style: AppTextStyles.bodyLarge),
+              Text('${p.yearsExperience} years in ${p.categoryName.toLowerCase()} services', style: AppTextStyles.bodyLarge)
+                  .animate().fadeIn(delay: 430.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xxxl),
             ],
           ),
@@ -133,6 +147,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
               if (p.startingPrice != null)
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Starting at', style: AppTextStyles.bodySmall),

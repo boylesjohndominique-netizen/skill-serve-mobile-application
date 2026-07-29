@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/provider_booking_controller.dart';
@@ -43,7 +44,10 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
                       booking: controller.completed[i],
                       isProviderView: true,
                       onTap: () => context.push('/booking-details/${controller.completed[i].id}'),
-                    ),
+                    )
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                        .slideY(begin: 0.06, end: 0),
                   ),
       ),
     );

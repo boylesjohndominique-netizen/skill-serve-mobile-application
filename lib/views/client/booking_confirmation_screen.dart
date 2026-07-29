@@ -16,6 +16,8 @@ class BookingConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -26,7 +28,11 @@ class BookingConfirmationScreen extends StatelessWidget {
               Container(
                 width: 88,
                 height: 88,
-                decoration: const BoxDecoration(color: AppColors.successBg, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: AppColors.successBg,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: AppColors.success.withValues(alpha: 0.25), blurRadius: 20, spreadRadius: 2)],
+                ),
                 child: const Icon(Icons.check_rounded, color: AppColors.success, size: 44),
               ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
               const SizedBox(height: AppSizes.xl),
@@ -45,8 +51,9 @@ class BookingConfirmationScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSizes.lg),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
+                  color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
                 ),
                 child: Column(
                   children: [
@@ -59,9 +66,11 @@ class BookingConfirmationScreen extends StatelessWidget {
                 ),
               ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.1, end: 0),
               const Spacer(),
-              PrimaryButton(label: 'View booking details', onPressed: () => context.go('/booking-details/${booking.id}')),
+              PrimaryButton(label: 'View booking details', onPressed: () => context.go('/booking-details/${booking.id}'))
+                  .animate().fadeIn(delay: 500.ms, duration: 350.ms),
               const SizedBox(height: AppSizes.sm),
-              OutlinedAppButton(label: 'Back to home', onPressed: () => context.go('/client')),
+              OutlinedAppButton(label: 'Back to home', onPressed: () => context.go('/client'))
+                  .animate().fadeIn(delay: 560.ms, duration: 350.ms),
             ],
           ),
         ),

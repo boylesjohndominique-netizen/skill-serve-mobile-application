@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/cards/review_card.dart';
@@ -47,7 +48,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     child: Row(
                       children: [
-                        Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.displayLarge),
+                        Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.displayLarge)
+                            .animate().fadeIn(duration: 350.ms).scale(begin: const Offset(0.8, 0.8), curve: Curves.easeOutBack),
                         const SizedBox(width: AppSizes.md),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +57,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                             RatingWidget(rating: provider.averageRating, size: 16),
                             Text('${provider.reviewCount} reviews', style: AppTextStyles.bodyMedium),
                           ],
-                        ),
+                        ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
                       ],
                     ),
                   ),
@@ -66,7 +68,10 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad).copyWith(bottom: AppSizes.xl),
                             itemCount: _reviews!.length,
                             separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
-                            itemBuilder: (context, i) => ReviewCard(review: _reviews![i]),
+                            itemBuilder: (context, i) => ReviewCard(review: _reviews![i])
+                                .animate()
+                                .fadeIn(delay: Duration(milliseconds: 150 + i.clamp(0, 8) * 60), duration: 350.ms)
+                                .slideY(begin: 0.06, end: 0),
                           ),
                   ),
                 ],

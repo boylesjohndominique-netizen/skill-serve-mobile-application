@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/buttons/primary_button.dart';
@@ -42,15 +43,17 @@ class _ServiceFormState extends State<ServiceForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppTextField(label: 'Service title', hint: 'e.g. Bathroom Pipe Repair', controller: _title, validator: Validators.required),
+          AppTextField(label: 'Service title', hint: 'e.g. Bathroom Pipe Repair', controller: _title, validator: Validators.required)
+              .animate().fadeIn(duration: 300.ms).slideY(begin: 0.06, end: 0),
           const SizedBox(height: AppSizes.lg),
-          Text('Category', style: Theme.of(context).textTheme.labelMedium),
+          Text('Category', style: Theme.of(context).textTheme.labelMedium)
+              .animate().fadeIn(delay: 60.ms, duration: 300.ms),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             initialValue: _category,
             items: [for (final c in MockData.categories) DropdownMenuItem(value: c.name, child: Text(c.name))],
             onChanged: (v) => setState(() => _category = v ?? _category),
-          ),
+          ).animate().fadeIn(delay: 120.ms, duration: 300.ms),
           const SizedBox(height: AppSizes.lg),
           Row(
             children: [
@@ -68,7 +71,7 @@ class _ServiceFormState extends State<ServiceForm> {
                 child: AppTextField(label: 'Duration', hint: 'e.g. 1–2 hrs', controller: _duration, validator: Validators.required),
               ),
             ],
-          ),
+          ).animate().fadeIn(delay: 200.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
           const SizedBox(height: AppSizes.lg),
           AppTextField(
             label: 'Description',
@@ -76,7 +79,7 @@ class _ServiceFormState extends State<ServiceForm> {
             controller: _description,
             maxLines: 5,
             validator: Validators.required,
-          ),
+          ).animate().fadeIn(delay: 280.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
           const SizedBox(height: AppSizes.xxl),
           PrimaryButton(
             label: widget.existing == null ? 'Add service' : 'Save changes',
@@ -91,7 +94,7 @@ class _ServiceFormState extends State<ServiceForm> {
                 'description': _description.text.trim(),
               });
             },
-          ),
+          ).animate().fadeIn(delay: 360.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
         ],
       ),
     );

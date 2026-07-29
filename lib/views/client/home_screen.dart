@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/favorites_controller.dart';
@@ -38,6 +39,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   Widget build(BuildContext context) {
     final marketplace = context.watch<MarketplaceController>();
     final favorites = context.watch<FavoritesController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final upcoming = MockData.bookingsForClient
         .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
@@ -48,35 +50,45 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
+          color: AppColors.secondary,
           onRefresh: () => marketplace.loadInitial(),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad, vertical: AppSizes.lg),
             children: [
+              // ── Header ──
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('SkillLink', style: AppTextStyles.displayMedium),
+                  Text('SkillLink', style: AppTextStyles.displayMedium)
+                      .animate().fadeIn(duration: 300.ms).slideX(begin: -0.06, end: 0),
                   InkWell(
                     onTap: () => context.push('/notifications'),
                     borderRadius: BorderRadius.circular(999),
                     child: Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(999)),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                       child: const Icon(Icons.notifications_outlined, size: 20),
                     ),
-                  ),
+                  ).animate().fadeIn(delay: 100.ms, duration: 300.ms).scale(begin: const Offset(0.7, 0.7), curve: Curves.easeOutBack),
                 ],
               ),
               const SizedBox(height: AppSizes.lg),
-              AppSearchBar(readOnly: true, onTap: () => context.push('/search')),
+
+              // ── Search bar ──
+              AppSearchBar(readOnly: true, onTap: () => context.push('/search'))
+                  .animate().fadeIn(delay: 120.ms, duration: 300.ms).slideY(begin: 0.06, end: 0),
 
               const SizedBox(height: AppSizes.lg),
               PrimaryButton(
                 label: 'Book a service',
                 icon: Icons.calendar_month_rounded,
                 onPressed: () => context.push('/browse'),
-              ),
+              ).animate().fadeIn(delay: 180.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
 
+              // ── Upcoming booking banner ──
               if (upcoming.isNotEmpty) ...[
                 const SizedBox(height: AppSizes.xl),
                 Container(
@@ -84,6 +96,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   decoration: BoxDecoration(
                     gradient: AppColors.heroGradient,
                     borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6)),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -109,11 +124,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       ),
                     ],
                   ),
-                ),
+                ).animate().fadeIn(delay: 250.ms, duration: 400.ms).slideY(begin: 0.08, end: 0),
               ],
 
+              // ── Categories ──
               const SizedBox(height: AppSizes.xl),
-              const SectionHeader(title: 'Categories'),
+              const SectionHeader(title: 'Categories')
+                  .animate().fadeIn(delay: 300.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.md),
               SizedBox(
                 height: 92,
@@ -129,29 +146,37 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         await marketplace.filterByCategory(cat.name);
                         if (context.mounted) context.push('/browse');
                       },
-                    );
+                    )
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: 350 + (i.clamp(0, 6) * 50)), duration: 300.ms)
+                        .slideX(begin: 0.15, end: 0);
                   },
                 ),
               ),
 
+              // ── Top Rated ──
               const SizedBox(height: AppSizes.xl),
-              SectionHeader(title: 'Top Rated Providers', actionLabel: 'See all', onAction: () => context.push('/browse')),
+              SectionHeader(title: 'Top Rated Providers', actionLabel: 'See all', onAction: () => context.push('/browse'))
+                  .animate().fadeIn(delay: 450.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.md),
               if (marketplace.isLoading)
                 const ShimmerCardList(count: 4, itemHeight: 100)
               else
                 Column(
                   children: [
-                    for (final prov in topRated.take(5))
+                    for (var i = 0; i < topRated.take(5).length; i++)
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSizes.md),
                         child: ProviderCard(
-                          provider: prov,
-                          isFavorite: favorites.isFavorite(prov.id),
-                          onFavoriteToggle: () => favorites.toggle(prov.id),
-                          onTap: () => context.push('/provider-profile/${prov.id}'),
+                          provider: topRated[i],
+                          isFavorite: favorites.isFavorite(topRated[i].id),
+                          onFavoriteToggle: () => favorites.toggle(topRated[i].id),
+                          onTap: () => context.push('/provider-profile/${topRated[i].id}'),
                         ),
-                      ),
+                      )
+                          .animate()
+                          .fadeIn(delay: Duration(milliseconds: 500 + (i.clamp(0, 8) * 60)), duration: 350.ms)
+                          .slideY(begin: 0.06, end: 0),
                   ],
                 ),
             ],

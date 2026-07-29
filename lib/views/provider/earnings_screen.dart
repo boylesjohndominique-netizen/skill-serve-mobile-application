@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
@@ -8,9 +9,7 @@ import '../../core/widgets/buttons/outlined_app_button.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 
-/// Earnings summary — completed-job payouts. Payment processing itself is
-/// out of scope (handled outside the app per the project brief); this is
-/// a read-only ledger view.
+/// Earnings summary — completed-job payouts.
 class EarningsScreen extends StatelessWidget {
   const EarningsScreen({super.key});
 
@@ -21,6 +20,7 @@ class EarningsScreen extends StatelessWidget {
     final thisMonth = completed
         .where((b) => b.bookingDate.month == DateTime.now().month)
         .fold<double>(0, (sum, b) => sum + b.amount);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Earnings')),
@@ -31,7 +31,11 @@ class EarningsScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppSizes.xl),
-              decoration: BoxDecoration(gradient: AppColors.heroGradient, borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -48,21 +52,27 @@ class EarningsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.06, end: 0),
             const SizedBox(height: AppSizes.lg),
             OutlinedAppButton(
               label: 'View withdrawal history',
               icon: Icons.history_rounded,
               onPressed: () => context.push('/withdrawal-history'),
-            ),
+            ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.xl),
-            Text('Payout history', style: AppTextStyles.titleLarge),
+            Text('Payout history', style: AppTextStyles.titleLarge)
+                .animate().fadeIn(delay: 220.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.md),
-            for (final b in completed)
+            for (var i = 0; i < completed.length; i++)
               Container(
                 margin: const EdgeInsets.only(bottom: AppSizes.sm),
                 padding: const EdgeInsets.all(AppSizes.md),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppSizes.radiusLg), border: Border.all(color: AppColors.line)),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+                  boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -75,15 +85,18 @@ class EarningsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(b.serviceTitle, style: AppTextStyles.titleMedium),
-                          Text('${b.clientName} • ${Formatters.dateShort(b.bookingDate)}', style: AppTextStyles.bodySmall),
+                          Text(completed[i].serviceTitle, style: AppTextStyles.titleMedium),
+                          Text('${completed[i].clientName} • ${Formatters.dateShort(completed[i].bookingDate)}', style: AppTextStyles.bodySmall),
                         ],
                       ),
                     ),
-                    Text('+${Formatters.peso(b.amount)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
+                    Text('+${Formatters.peso(completed[i].amount)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
                   ],
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: 300 + i.clamp(0, 8) * 60), duration: 350.ms)
+                  .slideY(begin: 0.05, end: 0),
           ],
         ),
       ),

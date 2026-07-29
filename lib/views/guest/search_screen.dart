@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/marketplace_controller.dart';
@@ -40,18 +41,22 @@ class _SearchScreenState extends State<SearchScreen> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Recent searches', style: AppTextStyles.titleLarge),
+                    Text('Recent searches', style: AppTextStyles.titleLarge)
+                        .animate().fadeIn(duration: 300.ms),
                     const SizedBox(height: AppSizes.md),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final term in _recentSearches)
+                        for (var i = 0; i < _recentSearches.length; i++)
                           ActionChip(
-                            label: Text(term),
-                            onPressed: () => context.read<MarketplaceController>().search(term),
+                            label: Text(_recentSearches[i]),
+                            onPressed: () => context.read<MarketplaceController>().search(_recentSearches[i]),
                             avatar: const Icon(Icons.history_rounded, size: 16, color: AppColors.textMuted),
-                          ),
+                          )
+                              .animate()
+                              .fadeIn(delay: Duration(milliseconds: 100 + i * 60), duration: 300.ms)
+                              .slideX(begin: 0.1, end: 0),
                       ],
                     ),
                   ],
@@ -72,7 +77,10 @@ class _SearchScreenState extends State<SearchScreen> {
                             return ProviderCard(
                               provider: provider,
                               onTap: () => context.push('/provider-preview/${provider.id}'),
-                            );
+                            )
+                                .animate()
+                                .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                                .slideY(begin: 0.06, end: 0);
                           },
                         ),
         ),

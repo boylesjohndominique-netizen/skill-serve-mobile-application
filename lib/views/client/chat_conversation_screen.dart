@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/chat_controller.dart';
 import '../../core/constants/app_colors.dart';
@@ -37,19 +38,30 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatController>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final inputBg = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: const Row(
+        title: Row(
           children: [
-            CircleAvatar(radius: 17, backgroundColor: AppColors.primary, child: Icon(Icons.person, color: Colors.white, size: 18)),
-            SizedBox(width: AppSizes.sm),
+            const CircleAvatar(radius: 17, backgroundColor: AppColors.primary, child: Icon(Icons.person, color: Colors.white, size: 18)),
+            const SizedBox(width: AppSizes.sm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Conversation', style: TextStyle(fontSize: 15)),
-                Text('Active now', style: TextStyle(fontSize: 11, color: AppColors.success)),
+                const Text('Conversation', style: TextStyle(fontSize: 15)),
+                Row(
+                  children: [
+                    Container(
+                      width: 7, height: 7,
+                      decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text('Active now', style: TextStyle(fontSize: 11, color: AppColors.success)),
+                  ],
+                ),
               ],
             ),
           ],
@@ -76,20 +88,27 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
                             decoration: BoxDecoration(
-                              color: fromMe ? AppColors.secondary : AppColors.surfaceAlt,
+                              color: fromMe ? AppColors.secondary : inputBg,
                               borderRadius: BorderRadius.only(
                                 topLeft: const Radius.circular(AppSizes.radiusMd),
                                 topRight: const Radius.circular(AppSizes.radiusMd),
                                 bottomLeft: Radius.circular(fromMe ? AppSizes.radiusMd : 2),
                                 bottomRight: Radius.circular(fromMe ? 2 : AppSizes.radiusMd),
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (fromMe ? AppColors.secondary : Colors.black).withValues(alpha: 0.08),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   m.content,
-                                  style: AppTextStyles.bodyLarge.copyWith(color: fromMe ? Colors.white : AppColors.textPrimary),
+                                  style: AppTextStyles.bodyLarge.copyWith(color: fromMe ? Colors.white : (isDark ? AppColors.textOnDark : AppColors.textPrimary)),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -99,20 +118,27 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                               ],
                             ),
                           ),
-                        );
+                        )
+                            .animate()
+                            .fadeIn(delay: Duration(milliseconds: i.clamp(0, 12) * 30), duration: 250.ms)
+                            .slideX(begin: fromMe ? 0.08 : -0.08, end: 0);
                       },
                     ),
                   ),
                   SafeArea(
                     top: false,
-                    child: Padding(
+                    child: Container(
                       padding: const EdgeInsets.all(AppSizes.md),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+                        border: Border(top: BorderSide(color: isDark ? AppColors.lineDark : AppColors.line, width: 0.5)),
+                      ),
                       child: Row(
                         children: [
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-                              decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(AppSizes.radiusPill)),
+                              decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(AppSizes.radiusPill)),
                               child: TextField(
                                 controller: _controller,
                                 decoration: const InputDecoration(hintText: 'Type a message…', border: InputBorder.none),
@@ -126,7 +152,11 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                             borderRadius: BorderRadius.circular(999),
                             child: Container(
                               padding: const EdgeInsets.all(12),
-                              decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary,
+                                shape: BoxShape.circle,
+                                boxShadow: [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
+                              ),
                               child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
                             ),
                           ),

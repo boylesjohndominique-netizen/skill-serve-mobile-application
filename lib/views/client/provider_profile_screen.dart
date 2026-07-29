@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/favorites_controller.dart';
@@ -15,9 +16,7 @@ import '../../core/widgets/misc/status_badge.dart';
 import '../../models/provider_model.dart';
 import '../../services/service_service.dart';
 
-/// Full provider profile for signed-in clients — booking, messaging, and
-/// favoriting are all live (vs. the guest preview, which gates these
-/// behind a login prompt).
+/// Full provider profile for signed-in clients.
 class ProviderProfileScreen extends StatefulWidget {
   final String providerId;
   const ProviderProfileScreen({super.key, required this.providerId});
@@ -49,9 +48,14 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         actions: [
           IconButton(
             onPressed: () => favorites.toggle(p.id),
-            icon: Icon(
-              favorites.isFavorite(p.id) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              color: favorites.isFavorite(p.id) ? AppColors.error : null,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+              child: Icon(
+                favorites.isFavorite(p.id) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                key: ValueKey(favorites.isFavorite(p.id)),
+                color: favorites.isFavorite(p.id) ? AppColors.error : null,
+              ),
             ),
           ),
         ],
@@ -62,7 +66,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ImageCarousel(images: p.portfolioImages),
+              ImageCarousel(images: p.portfolioImages)
+                  .animate().fadeIn(duration: 350.ms).slideY(begin: 0.04, end: 0),
               const SizedBox(height: AppSizes.lg),
               Row(
                 children: [
@@ -85,7 +90,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   ),
                   StatusBadge.fromStatus(p.verificationStatus),
                 ],
-              ),
+              ).animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.md),
               Row(
                 children: [
@@ -95,7 +100,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   const SizedBox(width: 4),
                   Text('${p.completedJobs} jobs', style: AppTextStyles.bodyMedium),
                 ],
-              ),
+              ).animate().fadeIn(delay: 180.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.lg),
               Row(
                 children: [
@@ -115,11 +120,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     ),
                   ),
                 ],
-              ),
+              ).animate().fadeIn(delay: 260.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.xl),
-              Text('About', style: AppTextStyles.titleLarge),
+              Text('About', style: AppTextStyles.titleLarge)
+                  .animate().fadeIn(delay: 320.ms, duration: 300.ms),
               const SizedBox(height: 6),
-              Text(p.bio, style: AppTextStyles.bodyLarge),
+              Text(p.bio, style: AppTextStyles.bodyLarge)
+                  .animate().fadeIn(delay: 370.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,10 +137,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     child: const Text('See all'),
                   ),
                 ],
-              ),
+              ).animate().fadeIn(delay: 420.ms, duration: 300.ms),
               const SizedBox(height: 6),
               Text('${p.reviewCount} clients rated ${p.user.firstName} an average of ${p.averageRating.toStringAsFixed(1)} stars.',
-                  style: AppTextStyles.bodyLarge),
+                  style: AppTextStyles.bodyLarge)
+                  .animate().fadeIn(delay: 470.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xxxl),
             ],
           ),
@@ -147,6 +155,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               if (p.startingPrice != null)
                 Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Starting at', style: AppTextStyles.bodySmall),

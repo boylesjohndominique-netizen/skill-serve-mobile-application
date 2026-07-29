@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -24,40 +25,55 @@ class HelpCenterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Help Center')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSizes.pageHPad),
           children: [
-            Text('How can we help?', style: AppTextStyles.displayMedium),
+            Text('How can we help?', style: AppTextStyles.displayMedium)
+                .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
             const SizedBox(height: AppSizes.md),
-            const AppSearchBar(hint: 'Search help articles…'),
+            const AppSearchBar(hint: 'Search help articles…')
+                .animate().fadeIn(delay: 80.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.xl),
-            Text('Frequently asked questions', style: AppTextStyles.titleLarge),
+            Text('Frequently asked questions', style: AppTextStyles.titleLarge)
+                .animate().fadeIn(delay: 150.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.sm),
-            for (final faq in _faqs)
+            for (var i = 0; i < _faqs.length; i++)
               Container(
                 margin: const EdgeInsets.only(bottom: AppSizes.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                  border: Border.all(color: AppColors.line),
+                  border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+                  boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
                 ),
                 child: Theme(
                   data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
-                    title: Text(faq.question, style: AppTextStyles.titleMedium),
+                    title: Text(_faqs[i].question, style: AppTextStyles.titleMedium),
                     childrenPadding: const EdgeInsets.fromLTRB(AppSizes.md, 0, AppSizes.md, AppSizes.md),
                     expandedCrossAxisAlignment: CrossAxisAlignment.start,
-                    children: [Text(faq.answer, style: AppTextStyles.bodyLarge)],
+                    children: [Text(_faqs[i].answer, style: AppTextStyles.bodyLarge)],
                   ),
                 ),
-              ),
+              )
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: 200 + i * 60), duration: 350.ms)
+                  .slideY(begin: 0.05, end: 0),
             const SizedBox(height: AppSizes.lg),
             Container(
               padding: const EdgeInsets.all(AppSizes.lg),
-              decoration: BoxDecoration(gradient: AppColors.heroGradient, borderRadius: BorderRadius.circular(AppSizes.radiusLg)),
+              decoration: BoxDecoration(
+                gradient: AppColors.heroGradient,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))],
+              ),
               child: Row(
                 children: [
                   const Icon(Icons.support_agent_rounded, color: AppColors.secondary, size: 28),
@@ -73,7 +89,7 @@ class HelpCenterScreen extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(delay: 600.ms, duration: 400.ms).slideY(begin: 0.08, end: 0),
           ],
         ),
       ),

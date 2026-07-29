@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 import '../constants/app_sizes.dart';
+import '../constants/app_animations.dart';
 
 /// Builds Material 3 [ThemeData] for light and dark modes, wiring every
 /// component theme (buttons, inputs, cards, nav bar, etc.) to the shared
@@ -51,8 +52,16 @@ class AppTheme {
       brightness: brightness,
       scaffoldBackgroundColor: scaffoldBg,
       colorScheme: colorScheme,
-      splashFactory: InkRipple.splashFactory,
+      splashFactory: InkSparkle.splashFactory,
       fontFamily: AppTextStyles.bodyLarge.fontFamily,
+
+      // ── Smooth page transitions across all platforms ──
+      pageTransitionsTheme: PageTransitionsTheme(
+        builders: {
+          for (final platform in TargetPlatform.values)
+            platform: const _SlideFadeTransitionBuilder(),
+        },
+      ),
 
       appBarTheme: AppBarTheme(
         backgroundColor: scaffoldBg,
@@ -70,9 +79,10 @@ class AppTheme {
         color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
+        shadowColor: isDark ? Colors.black54 : Colors.black26,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          side: BorderSide(color: line, width: 1),
+          side: BorderSide(color: line.withValues(alpha: 0.6), width: 0.8),
         ),
       ),
 
@@ -89,6 +99,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           ),
           elevation: 0,
+          animationDuration: AppAnimations.fast,
         ),
       ),
 
@@ -101,6 +112,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           ),
+          animationDuration: AppAnimations.fast,
         ),
       ),
 
@@ -115,7 +127,9 @@ class AppTheme {
         filled: true,
         fillColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: AppTextStyles.bodyMedium,
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           borderSide: BorderSide.none,
@@ -132,6 +146,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           borderSide: const BorderSide(color: AppColors.error, width: 1.4),
         ),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
       ),
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -141,6 +156,26 @@ class AppTheme {
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
+        selectedIconTheme: const IconThemeData(size: 26),
+        unselectedIconTheme: const IconThemeData(size: 24),
+      ),
+
+      // ── Tab bar theme — rounded pill indicator ──
+      tabBarTheme: TabBarThemeData(
+        indicatorColor: AppColors.secondary,
+        labelColor: isDark ? Colors.white : AppColors.textPrimary,
+        unselectedLabelColor: AppColors.textMuted,
+        labelStyle: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
+        unselectedLabelStyle: AppTextStyles.label,
+        indicatorSize: TabBarIndicatorSize.label,
+        dividerColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(AppColors.secondary.withValues(alpha: 0.08)),
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+          border: Border(
+            bottom: BorderSide(color: AppColors.secondary, width: 2.5),
+          ),
+        ),
       ),
 
       chipTheme: ChipThemeData(
@@ -152,6 +187,22 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
           side: BorderSide.none,
         ),
+      ),
+
+      // ── Switch theme ──
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return isDark ? AppColors.neutral300 : AppColors.neutral200;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.secondary;
+          return isDark ? AppColors.surfaceAltDark : AppColors.neutral100;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.transparent;
+          return isDark ? AppColors.lineDark : AppColors.neutral200;
+        }),
       ),
 
       snackBarTheme: SnackBarThemeData(
@@ -174,6 +225,49 @@ class AppTheme {
         backgroundColor: surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        ),
+      ),
+    );
+  }
+}
+
+/// Smooth slide + fade page transition used app-wide.
+class _SlideFadeTransitionBuilder extends PageTransitionsBuilder {
+  const _SlideFadeTransitionBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final fadeIn = CurvedAnimation(
+      parent: animation,
+      curve: AppAnimations.defaultCurve,
+    );
+    final slideIn = Tween<Offset>(
+      begin: const Offset(0.06, 0),
+      end: Offset.zero,
+    ).animate(fadeIn);
+
+    final fadeOut = CurvedAnimation(
+      parent: secondaryAnimation,
+      curve: AppAnimations.defaultCurve,
+    );
+    final slideOut = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(-0.03, 0),
+    ).animate(fadeOut);
+
+    return SlideTransition(
+      position: slideOut,
+      child: SlideTransition(
+        position: slideIn,
+        child: FadeTransition(
+          opacity: fadeIn,
+          child: child,
         ),
       ),
     );

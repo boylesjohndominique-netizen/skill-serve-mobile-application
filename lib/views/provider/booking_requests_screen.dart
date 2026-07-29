@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/provider_booking_controller.dart';
 import '../../core/constants/app_colors.dart';
@@ -44,7 +45,10 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                 padding: const EdgeInsets.all(AppSizes.pageHPad),
                 itemCount: controller.requests.length,
                 separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
-                itemBuilder: (context, i) => _RequestCard(booking: controller.requests[i], controller: controller),
+                itemBuilder: (context, i) => _RequestCard(booking: controller.requests[i], controller: controller)
+                    .animate()
+                    .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
               );
 
     if (widget.embedded) {
@@ -61,12 +65,17 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
+    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
+
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: AppColors.line),
+        border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+        boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +96,7 @@ class _RequestCard extends StatelessWidget {
               Text(Formatters.peso(booking.amount), style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary)),
             ],
           ),
-          const Divider(height: AppSizes.lg),
+          Divider(height: AppSizes.lg, color: lineColor),
           Row(
             children: [
               const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
