@@ -1,0 +1,68 @@
+name: skilllink_mobile
+description: >
+  SkillLink — Users Side (Guest, Client, Service Provider) mobile frontend for
+  "Bridging Service Accessibility and Talent Visibility Through an Integrated
+  Skills Marketplace and Service Management Platform." Frontend only —
+  ready for future REST API integration.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Design
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  lottie: ^3.1.2
+  cached_network_image: ^3.4.1
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+
+  # State management
+  provider: ^6.1.2
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # Future REST API layer
+  dio: ^5.7.0
+
+  # Local placeholder storage
+  shared_preferences: ^2.3.2
+
+  # Responsive layout
+  responsive_framework: ^1.5.1
+  flutter_screenutil: ^5.9.3
+
+  # Formatting
+  intl: ^0.19.0
+
+  # Media (UI only — no upload logic)
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+
+  # Uncomment once font files are added to assets/fonts/
+  # fonts:
+  #   - family: SpaceGrotesk
+  #     fonts:
+  #       - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/SpaceGrotesk-SemiBold.ttf
+  #         weight: 600
