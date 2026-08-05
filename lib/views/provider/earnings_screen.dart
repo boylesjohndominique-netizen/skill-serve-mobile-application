@@ -6,12 +6,64 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/buttons/outlined_app_button.dart';
+import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 
-/// Earnings summary — completed-job payouts.
-class EarningsScreen extends StatelessWidget {
+const _payoutMethods = [
+  ('GCash', Icons.account_balance_wallet_rounded, 'Withdraw to your GCash wallet'),
+  ('Maya', Icons.account_balance_wallet_rounded, 'Withdraw to your Maya wallet'),
+  ('Card', Icons.credit_card_rounded, 'Withdraw to a linked bank card'),
+];
+
+/// Earnings summary — completed-job payouts + payout method.
+class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
+
+  @override
+  State<EarningsScreen> createState() => _EarningsScreenState();
+}
+
+class _EarningsScreenState extends State<EarningsScreen> {
+  String _payoutMethod = 'GCash';
+
+  Future<void> _pickPayoutMethod() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceDark : AppColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXl))),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Payout method', style: AppTextStyles.titleLarge),
+              const SizedBox(height: 4),
+              Text('Choose where your earnings are sent.', style: AppTextStyles.bodyMedium),
+              const SizedBox(height: AppSizes.md),
+              for (final m in _payoutMethods)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(m.$2, color: AppColors.secondary),
+                  title: Text(m.$1, style: AppTextStyles.bodyLarge),
+                  subtitle: Text(m.$3, style: AppTextStyles.bodySmall),
+                  trailing: _payoutMethod == m.$1
+                      ? const Icon(Icons.check_circle_rounded, color: AppColors.secondary)
+                      : const Icon(Icons.radio_button_off_rounded, color: AppColors.neutral300),
+                  onTap: () => Navigator.of(context).pop(m.$1),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() => _payoutMethod = selected);
+      AppSnackbar.success(context, 'Payout method updated to $selected.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +111,44 @@ class EarningsScreen extends StatelessWidget {
               icon: Icons.history_rounded,
               onPressed: () => context.push('/withdrawal-history'),
             ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
+            const SizedBox(height: AppSizes.md),
+            // ── Payout method ──
+            InkWell(
+              onTap: _pickPayoutMethod,
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+              child: Container(
+                padding: const EdgeInsets.all(AppSizes.md),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+                  boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.brassGradient,
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                      ),
+                      child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: AppSizes.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Payout method', style: AppTextStyles.bodySmall),
+                          Text(_payoutMethod, style: AppTextStyles.titleMedium),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.neutral300),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.xl),
             Text('Payout history', style: AppTextStyles.titleLarge)
                 .animate().fadeIn(delay: 220.ms, duration: 300.ms),

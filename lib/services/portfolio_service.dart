@@ -17,4 +17,7 @@ class PortfolioService {
 
   // DELETE /portfolio/:id
   Future<void> removePortfolioItem(String id) async => simulateNetworkDelay(ms: 250);
+
+  // PATCH /portfolio/:id (resubmit a rejected item)
+  Future<void> resubmitPortfolioItem(String id) async => simulateNetworkDelay(ms: 350);
 }

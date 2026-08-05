@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import '../../controllers/booking_controller.dart';
+import '../../controllers/provider_booking_controller.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -30,6 +32,7 @@ class BookingDetailsScreen extends StatelessWidget {
     if (booking == null) return const Scaffold(body: LoadingState());
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isProviderView = booking.providerId == MockData.currentProvider.id;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Booking Details')),
@@ -42,7 +45,7 @@ class BookingDetailsScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('#${booking.id}', style: AppTextStyles.bodySmall),
+                  Text('#${booking.id}', style: AppTextStyles.monoSm),
                   StatusBadge.fromStatus(booking.status.name),
                 ],
               ).animate().fadeIn(duration: 300.ms),
@@ -50,6 +53,39 @@ class BookingDetailsScreen extends StatelessWidget {
               Text(booking.serviceTitle, style: AppTextStyles.displayMedium)
                   .animate().fadeIn(delay: 80.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
               const SizedBox(height: AppSizes.xl),
+
+              // Disputed banner
+              if (booking.status == BookingStatus.disputed) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSizes.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorBg,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.gavel_rounded, color: AppColors.error, size: 22),
+                      const SizedBox(width: AppSizes.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('This booking is under dispute', style: AppTextStyles.titleMedium.copyWith(color: AppColors.error)),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Our support team is reviewing the case. You can track progress in Reports or contact support anytime.',
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 130.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
+                const SizedBox(height: AppSizes.lg),
+              ],
 
               _SectionCard(
                 title: 'Schedule',
@@ -67,6 +103,7 @@ class BookingDetailsScreen extends StatelessWidget {
                 children: [
                   _detailRow(Icons.person_outline_rounded, 'Client', booking.clientName),
                   _detailRow(Icons.handyman_outlined, 'Provider', booking.providerName),
+                  _detailRow(Icons.account_balance_wallet_rounded, 'Payment', booking.paymentMethod),
                 ],
               ).animate().fadeIn(delay: 250.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               if (booking.notes != null && booking.notes!.isNotEmpty) ...[
@@ -85,44 +122,140 @@ class BookingDetailsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Total amount', style: AppTextStyles.titleMedium),
-                    Text(Formatters.peso(booking.amount), style: AppTextStyles.headlineMedium.copyWith(color: AppColors.secondary)),
+                    Text(Formatters.peso(booking.amount), style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary)),
                   ],
                 ),
               ).animate().fadeIn(delay: 400.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
+
+              // ── Timeline ──
+              if (booking.timeline.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.xl),
+                Text('Timeline', style: AppTextStyles.titleLarge)
+                    .animate().fadeIn(delay: 440.ms, duration: 300.ms),
+                const SizedBox(height: AppSizes.md),
+                _Timeline(entries: booking.timeline)
+                    .animate().fadeIn(delay: 480.ms, duration: 350.ms).slideY(begin: 0.05, end: 0),
+              ],
+
               const SizedBox(height: AppSizes.xxl),
-              if (booking.status == BookingStatus.pending || booking.status == BookingStatus.confirmed)
-                OutlinedAppButton(
-                  label: 'Cancel booking',
-                  icon: Icons.close_rounded,
-                  color: AppColors.error,
-                  onPressed: () async {
-                    final confirmed = await AppDialog.confirm(
-                      context,
-                      title: 'Cancel this booking?',
-                      message: 'This will notify ${booking.providerName} that the booking is cancelled.',
-                      confirmLabel: 'Cancel booking',
-                      danger: true,
-                    );
-                    if (confirmed && context.mounted) {
-                      await context.read<BookingController>().cancel(booking.id);
-                      if (context.mounted) {
-                        AppSnackbar.success(context, 'Booking cancelled.');
-                        context.pop();
-                      }
-                    }
-                  },
-                ).animate().fadeIn(delay: 480.ms, duration: 350.ms),
-              if (booking.status == BookingStatus.completed)
-                PrimaryButton(
-                  label: 'Leave a review',
-                  icon: Icons.star_border_rounded,
-                  onPressed: () => context.push('/reviews/${booking.providerId}'),
-                ).animate().fadeIn(delay: 480.ms, duration: 350.ms),
+              _buildActions(context, booking, isProviderView),
+              const SizedBox(height: AppSizes.lg),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildActions(BuildContext context, BookingModel booking, bool isProviderView) {
+    final actions = <Widget>[];
+
+    if (isProviderView) {
+      // ── Provider-side contextual actions ──
+      switch (booking.status) {
+        case BookingStatus.pending:
+          actions.add(PrimaryButton(
+            label: 'Accept request',
+            icon: Icons.check_rounded,
+            onPressed: () async {
+              await context.read<ProviderBookingController>().accept(booking.id);
+              if (context.mounted) AppSnackbar.success(context, 'Booking accepted!');
+            },
+          ));
+          actions.add(const SizedBox(height: AppSizes.sm));
+          actions.add(OutlinedAppButton(
+            label: 'Decline request',
+            icon: Icons.close_rounded,
+            color: AppColors.error,
+            onPressed: () async {
+              final confirmed = await AppDialog.confirm(
+                context,
+                title: 'Decline this request?',
+                message: 'The client will be notified that this request was declined.',
+                confirmLabel: 'Decline',
+                danger: true,
+              );
+              if (confirmed && context.mounted) {
+                await context.read<ProviderBookingController>().decline(booking.id);
+                if (context.mounted) AppSnackbar.success(context, 'Request declined.');
+              }
+            },
+          ));
+        case BookingStatus.confirmed:
+          actions.add(PrimaryButton(
+            label: 'Start job',
+            icon: Icons.play_arrow_rounded,
+            onPressed: () async {
+              await context.read<ProviderBookingController>().start(booking.id);
+              if (context.mounted) AppSnackbar.success(context, 'Job started — good luck!');
+            },
+          ));
+          actions.add(const SizedBox(height: AppSizes.sm));
+          actions.add(OutlinedAppButton(
+            label: 'Message client',
+            icon: Icons.chat_bubble_outline_rounded,
+            onPressed: () => context.push('/chat-conversation/${booking.clientId}'),
+          ));
+        case BookingStatus.inProgress:
+          actions.add(PrimaryButton(
+            label: 'Mark as completed',
+            icon: Icons.task_alt_rounded,
+            onPressed: () async {
+              await context.read<ProviderBookingController>().complete(booking.id);
+              if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');
+            },
+          ));
+        default:
+          break;
+      }
+      return Column(children: actions);
+    }
+
+    // ── Client-side contextual actions ──
+    if (booking.status == BookingStatus.pending || booking.status == BookingStatus.confirmed) {
+      actions.add(OutlinedAppButton(
+        label: 'Cancel booking',
+        icon: Icons.close_rounded,
+        color: AppColors.error,
+        onPressed: () async {
+          final confirmed = await AppDialog.confirm(
+            context,
+            title: 'Cancel this booking?',
+            message: 'This will notify ${booking.providerName} that the booking is cancelled.',
+            confirmLabel: 'Cancel booking',
+            danger: true,
+          );
+          if (confirmed && context.mounted) {
+            await context.read<BookingController>().cancel(booking.id);
+            if (context.mounted) {
+              AppSnackbar.success(context, 'Booking cancelled.');
+              context.pop();
+            }
+          }
+        },
+      ));
+    }
+    if (booking.status == BookingStatus.completed) {
+      actions.add(PrimaryButton(
+        label: 'Leave a review',
+        icon: Icons.star_border_rounded,
+        onPressed: () => context.push('/write-review/${booking.id}'),
+      ));
+    }
+    if (booking.status == BookingStatus.disputed) {
+      actions.add(OutlinedAppButton(
+        label: 'Contact support',
+        icon: Icons.support_agent_rounded,
+        onPressed: () => context.push('/help-center'),
+      ));
+    }
+    actions.add(const SizedBox(height: AppSizes.sm));
+    actions.add(TextButton.icon(
+      onPressed: () => context.push('/file-report?bookingId=${booking.id}'),
+      icon: const Icon(Icons.flag_outlined, size: 16, color: AppColors.neutral300),
+      label: Text('Report an issue', style: AppTextStyles.label.copyWith(color: AppColors.neutral300)),
+    ));
+    return Column(children: actions);
   }
 
   Widget _detailRow(IconData icon, String label, String value) {
@@ -133,7 +266,9 @@ class BookingDetailsScreen extends StatelessWidget {
           Icon(icon, size: 16, color: AppColors.neutral300),
           const SizedBox(width: AppSizes.sm),
           Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
-          Text(value, style: AppTextStyles.titleMedium),
+          Flexible(
+            child: Text(value, style: AppTextStyles.titleMedium, textAlign: TextAlign.right, overflow: TextOverflow.ellipsis),
+          ),
         ],
       ),
     );
@@ -168,6 +303,81 @@ class _SectionCard extends StatelessWidget {
           ...children,
         ],
       ),
+    );
+  }
+}
+
+/// ─── Vertical status timeline ───
+class _Timeline extends StatelessWidget {
+  final List<BookingTimelineEntry> entries;
+  const _Timeline({required this.entries});
+
+  Color _colorFor(String status) {
+    switch (status) {
+      case 'completed':
+        return AppColors.success;
+      case 'inProgress':
+      case 'in_progress':
+        return AppColors.info;
+      case 'cancelled':
+      case 'disputed':
+        return AppColors.error;
+      default:
+        return AppColors.warning;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      children: [
+        for (var i = 0; i < entries.length; i++)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 20,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 11,
+                        height: 11,
+                        margin: const EdgeInsets.only(top: 5),
+                        decoration: BoxDecoration(
+                          color: _colorFor(entries[i].status),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isDark ? AppColors.surfaceDark : Colors.white, width: 2),
+                        ),
+                      ),
+                      if (i < entries.length - 1)
+                        Expanded(
+                          child: Container(
+                            width: 2,
+                            color: _colorFor(entries[i].status).withValues(alpha: 0.3),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSizes.md),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.lg),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(entries[i].label, style: AppTextStyles.titleMedium),
+                        Text(Formatters.relative(entries[i].at), style: AppTextStyles.bodySmall),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

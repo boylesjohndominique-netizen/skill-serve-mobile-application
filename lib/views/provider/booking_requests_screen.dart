@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import '../../controllers/provider_booking_controller.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
@@ -8,14 +10,15 @@ import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/buttons/outlined_app_button.dart';
 import '../../core/widgets/buttons/primary_button.dart';
+import '../../core/widgets/cards/booking_card.dart';
 import '../../core/widgets/feedback/app_dialog.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/booking_model.dart';
 
-/// Pending booking requests — providers accept or decline before the
-/// booking moves to Active Jobs.
+/// Provider's Bookings tab — every status in one place with contextual
+/// actions: accept/decline requests, start confirmed jobs, mark complete.
 class BookingRequestsScreen extends StatefulWidget {
   final bool embedded;
   const BookingRequestsScreen({super.key, this.embedded = false});
@@ -24,7 +27,10 @@ class BookingRequestsScreen extends StatefulWidget {
   State<BookingRequestsScreen> createState() => _BookingRequestsScreenState();
 }
 
-class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
+class _BookingRequestsScreenState extends State<BookingRequestsScreen> with SingleTickerProviderStateMixin {
+  static const _tabs = ['Requests', 'Confirmed', 'In Progress', 'Completed', 'Cancelled', 'Disputed'];
+  late final TabController _tabController = TabController(length: _tabs.length, vsync: this);
+
   @override
   void initState() {
     super.initState();
@@ -33,31 +39,164 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     });
   }
 
+  List<BookingModel> _forTab(ProviderBookingController c, int tab) {
+    switch (tab) {
+      case 0:
+        return c.requests;
+      case 1:
+        return c.bookings.where((b) => b.status == BookingStatus.confirmed).toList();
+      case 2:
+        return c.bookings.where((b) => b.status == BookingStatus.inProgress).toList();
+      case 3:
+        return c.bookings.where((b) => b.status == BookingStatus.completed).toList();
+      case 4:
+        return c.bookings.where((b) => b.status == BookingStatus.cancelled).toList();
+      default:
+        return c.bookings.where((b) => b.status == BookingStatus.disputed).toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProviderBookingController>();
 
-    final body = controller.isLoading
-        ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 150))
-        : controller.requests.isEmpty
-            ? const EmptyState(icon: Icons.inbox_outlined, title: 'No pending requests', message: 'New booking requests from clients will appear here.')
-            : ListView.separated(
-                padding: const EdgeInsets.all(AppSizes.pageHPad),
-                itemCount: controller.requests.length,
-                separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
-                itemBuilder: (context, i) => _RequestCard(booking: controller.requests[i], controller: controller)
-                    .animate()
-                    .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
-                    .slideY(begin: 0.06, end: 0),
-              );
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.embedded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSizes.pageHPad, AppSizes.lg, AppSizes.pageHPad, 0),
+            child: Text('Bookings', style: AppTextStyles.displayMedium)
+                .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
+          ),
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: [for (final t in _tabs) Tab(text: t)],
+        ),
+        Expanded(
+          child: controller.isLoading
+              ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    for (var t = 0; t < _tabs.length; t++)
+                      _TabList(
+                        bookings: _forTab(controller, t),
+                        tabIndex: t,
+                        controller: controller,
+                      ),
+                  ],
+                ),
+        ),
+      ],
+    );
 
-    if (widget.embedded) {
-      return Scaffold(appBar: AppBar(title: const Text('Booking Requests'), automaticallyImplyLeading: false), body: SafeArea(child: body));
-    }
-    return Scaffold(appBar: AppBar(title: const Text('Booking Requests')), body: SafeArea(child: body));
+    if (widget.embedded) return Scaffold(body: SafeArea(child: content));
+    return Scaffold(appBar: AppBar(title: const Text('Bookings')), body: SafeArea(child: content));
   }
 }
 
+class _TabList extends StatelessWidget {
+  final List<BookingModel> bookings;
+  final int tabIndex;
+  final ProviderBookingController controller;
+
+  const _TabList({required this.bookings, required this.tabIndex, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    if (bookings.isEmpty) {
+      return EmptyState(
+        icon: tabIndex == 0
+            ? Icons.inbox_outlined
+            : (tabIndex == 4 ? Icons.cancel_outlined : (tabIndex == 5 ? Icons.gavel_rounded : Icons.event_note_outlined)),
+        title: 'Nothing here',
+        message: 'Bookings in this category will appear here.',
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSizes.pageHPad),
+      itemCount: bookings.length,
+      separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
+      itemBuilder: (context, i) => _ActionableCard(
+        booking: bookings[i],
+        tabIndex: tabIndex,
+        controller: controller,
+      )
+          .animate()
+          .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+          .slideY(begin: 0.06, end: 0),
+    );
+  }
+}
+
+class _ActionableCard extends StatelessWidget {
+  final BookingModel booking;
+  final int tabIndex;
+  final ProviderBookingController controller;
+
+  const _ActionableCard({required this.booking, required this.tabIndex, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (tabIndex) {
+      case 0:
+        return _RequestCard(booking: booking, controller: controller);
+      case 1:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingCard(booking: booking, isProviderView: true, onTap: () => context.push('/booking-details/${booking.id}')),
+            const SizedBox(height: AppSizes.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedAppButton(
+                    label: 'Message client',
+                    icon: Icons.chat_bubble_outline_rounded,
+                    onPressed: () => context.push('/chat-conversation/${booking.clientId}'),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.md),
+                Expanded(
+                  child: PrimaryButton(
+                    label: 'Start job',
+                    icon: Icons.play_arrow_rounded,
+                    onPressed: () async {
+                      await controller.start(booking.id);
+                      if (context.mounted) AppSnackbar.success(context, 'Job started — good luck!');
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      case 2:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BookingCard(booking: booking, isProviderView: true, onTap: () => context.push('/booking-details/${booking.id}')),
+            const SizedBox(height: AppSizes.sm),
+            PrimaryButton(
+              label: 'Mark as completed',
+              icon: Icons.task_alt_rounded,
+              onPressed: () async {
+                await controller.complete(booking.id);
+                if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');
+              },
+            ),
+          ],
+        );
+      default:
+        return BookingCard(booking: booking, isProviderView: true, onTap: () => context.push('/booking-details/${booking.id}'));
+    }
+  }
+}
+
+/// Pending request — accept / decline.
 class _RequestCard extends StatelessWidget {
   final BookingModel booking;
   final ProviderBookingController controller;
@@ -93,7 +232,7 @@ class _RequestCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(Formatters.peso(booking.amount), style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary)),
+              Text(Formatters.peso(booking.amount), style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700)),
             ],
           ),
           Divider(height: AppSizes.lg, color: lineColor),
@@ -116,9 +255,15 @@ class _RequestCard extends StatelessWidget {
                   label: 'Decline',
                   color: AppColors.error,
                   onPressed: () async {
-                    final confirmed = await AppDialog.confirm(context, title: 'Decline this request?', message: 'The client will be notified this request was declined.', confirmLabel: 'Decline', danger: true);
-                    if (confirmed) {
-                      await controller.loadProviderBookings();
+                    final confirmed = await AppDialog.confirm(
+                      context,
+                      title: 'Decline this request?',
+                      message: 'The client will be notified this request was declined.',
+                      confirmLabel: 'Decline',
+                      danger: true,
+                    );
+                    if (confirmed && context.mounted) {
+                      await controller.decline(booking.id);
                       if (context.mounted) AppSnackbar.success(context, 'Request declined.');
                     }
                   },

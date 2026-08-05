@@ -36,17 +36,26 @@ class BookingConfirmationScreen extends StatelessWidget {
                 child: const Icon(Icons.check_rounded, color: AppColors.success, size: 44),
               ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
               const SizedBox(height: AppSizes.xl),
-              Text('Booking confirmed!', style: AppTextStyles.displayMedium, textAlign: TextAlign.center)
+              Text(
+                'You\'re all set, ${booking.clientName.split(' ').first}!',
+                style: AppTextStyles.displayMedium,
+                textAlign: TextAlign.center,
+              )
                   .animate()
                   .fadeIn(delay: 150.ms)
                   .slideY(begin: 0.15, end: 0),
               const SizedBox(height: AppSizes.sm),
               Text(
-                'We\'ve sent your request to ${booking.providerName}. You\'ll be notified once it\'s accepted.',
+                'Your booking request has been sent to ${booking.providerName}. You\'ll be notified once it\'s accepted.',
                 style: AppTextStyles.bodyLarge,
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 250.ms),
-              const SizedBox(height: AppSizes.xxl),
+              const SizedBox(height: AppSizes.sm),
+              Text(
+                'REF ${booking.id}',
+                style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary),
+              ).animate().fadeIn(delay: 300.ms),
+              const SizedBox(height: AppSizes.lg),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSizes.lg),
@@ -57,10 +66,11 @@ class BookingConfirmationScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _row('Booking ID', booking.id),
                     _row('Service', booking.serviceTitle),
+                    _row('Provider', booking.providerName),
                     _row('Date', Formatters.dateShort(booking.bookingDate)),
                     _row('Time', booking.schedule),
+                    _row('Payment', booking.paymentMethod),
                     _row('Amount', Formatters.peso(booking.amount)),
                   ],
                 ),
@@ -69,8 +79,10 @@ class BookingConfirmationScreen extends StatelessWidget {
               PrimaryButton(label: 'View booking details', onPressed: () => context.go('/booking-details/${booking.id}'))
                   .animate().fadeIn(delay: 500.ms, duration: 350.ms),
               const SizedBox(height: AppSizes.sm),
-              OutlinedAppButton(label: 'Back to home', onPressed: () => context.go('/client'))
+              OutlinedAppButton(label: 'Make another booking', onPressed: () => context.push('/booking-form/${booking.providerId}'))
                   .animate().fadeIn(delay: 560.ms, duration: 350.ms),
+              TextButton(onPressed: () => context.go('/client'), child: const Text('Back to home'))
+                  .animate().fadeIn(delay: 620.ms, duration: 300.ms),
             ],
           ),
         ),
@@ -85,7 +97,13 @@ class BookingConfirmationScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: AppTextStyles.bodyMedium),
-          Text(value, style: AppTextStyles.titleMedium),
+          Flexible(
+            child: Text(
+              value,
+              style: value.startsWith('₱') || value.startsWith('REF') ? AppTextStyles.monoMd : AppTextStyles.titleMedium,
+              textAlign: TextAlign.right,
+            ),
+          ),
         ],
       ),
     );

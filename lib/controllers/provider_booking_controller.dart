@@ -27,6 +27,16 @@ class ProviderBookingController extends ChangeNotifier {
     await loadProviderBookings();
   }
 
+  Future<void> decline(String id) async {
+    await _bookingService.declineBooking(id);
+    await loadProviderBookings();
+  }
+
+  Future<void> start(String id) async {
+    await _bookingService.startBooking(id);
+    await loadProviderBookings();
+  }
+
   Future<void> complete(String id) async {
     await _bookingService.completeBooking(id);
     await loadProviderBookings();

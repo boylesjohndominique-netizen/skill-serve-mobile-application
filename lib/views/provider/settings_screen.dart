@@ -27,7 +27,10 @@ class ProviderSettingsScreen extends StatelessWidget {
     int idx = 0;
     Widget stagger(Widget child) {
       final delay = Duration(milliseconds: 100 + (idx++) * 40);
-      return child.animate().fadeIn(delay: delay, duration: 300.ms).slideX(begin: 0.04, end: 0);
+      return child
+          .animate()
+          .fadeIn(delay: delay, duration: 300.ms)
+          .slideX(begin: 0.04, end: 0);
     }
 
     return Scaffold(
@@ -36,40 +39,119 @@ class ProviderSettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(AppSizes.pageHPad),
           children: [
             Text('Profile', style: AppTextStyles.displayMedium)
-                .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
+                .animate()
+                .fadeIn(duration: 300.ms)
+                .slideY(begin: 0.08, end: 0),
             const SizedBox(height: AppSizes.lg),
             if (user != null)
               ProfileCard(
                 user: user,
                 onEdit: () => context.push('/edit-profile'),
-                trailingBadge: StatusBadge.fromStatus(provider.verificationStatus),
-              ).animate().fadeIn(delay: 80.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
-
+                trailingBadge:
+                    StatusBadge.fromStatus(provider.verificationStatus),
+              )
+                  .animate()
+                  .fadeIn(delay: 80.ms, duration: 350.ms)
+                  .slideY(begin: 0.06, end: 0),
             const SizedBox(height: AppSizes.xl),
-            stagger(_SectionLabel('Business')),
-            stagger(_Tile(icon: Icons.design_services_outlined, label: 'My Services', onTap: () => context.push('/my-services'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.bar_chart_rounded, label: 'Statistics', onTap: () => context.push('/statistics'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.calendar_month_outlined, label: 'Calendar', onTap: () => context.push('/calendar'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.reviews_outlined, label: 'Reviews', onTap: () => context.push('/reviews/${provider.id}'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.payments_outlined, label: 'Earnings', onTap: () => context.push('/earnings'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.verified_user_outlined, label: 'Verification Status', onTap: () => context.push('/verification-status'), isDark: isDark)),
-
+            stagger(const _SectionLabel('Business')),
+            stagger(_Tile(
+                icon: Icons.design_services_outlined,
+                label: 'My Services',
+                onTap: () => context.push('/my-services'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.photo_library_outlined,
+                label: 'Portfolio',
+                onTap: () => context.push('/portfolio'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.bar_chart_rounded,
+                label: 'Statistics',
+                onTap: () => context.push('/statistics'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.calendar_month_outlined,
+                label: 'Calendar',
+                onTap: () => context.push('/calendar'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.reviews_outlined,
+                label: 'Reviews',
+                onTap: () => context.push('/reviews/${provider.id}'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.payments_outlined,
+                label: 'Earnings',
+                onTap: () => context.push('/earnings'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.verified_user_outlined,
+                label: 'Verification Status',
+                onTap: () => context.push('/verification-status'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.workspace_premium_outlined,
+                label: 'My Badges',
+                onTap: () => context.push('/provider-badges'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.visibility_outlined,
+                label: 'View public profile',
+                onTap: () => context.push('/provider-profile-preview'),
+                isDark: isDark)),
             const SizedBox(height: AppSizes.lg),
-            stagger(_SectionLabel('Account')),
-            stagger(_Tile(icon: Icons.person_outline_rounded, label: 'Edit profile', onTap: () => context.push('/edit-profile'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.lock_outline_rounded, label: 'Change password', onTap: () => context.push('/change-password'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.notifications_none_rounded, label: 'Notifications', onTap: () => context.push('/notifications'), isDark: isDark)),
-
+            stagger(const _SectionLabel('Account')),
+            stagger(_Tile(
+                icon: Icons.person_outline_rounded,
+                label: 'Edit profile',
+                onTap: () => context.push('/edit-profile'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.lock_outline_rounded,
+                label: 'Change password',
+                onTap: () => context.push('/change-password'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.notifications_none_rounded,
+                label: 'Notifications',
+                onTap: () => context.push('/notifications'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.flag_outlined,
+                label: 'File a report',
+                onTap: () => context.push('/file-report'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.receipt_long_outlined,
+                label: 'My reports',
+                onTap: () => context.push('/my-reports'),
+                isDark: isDark)),
             const SizedBox(height: AppSizes.lg),
-            stagger(_SectionLabel('Preferences')),
-            stagger(_SwitchTile(icon: Icons.dark_mode_outlined, label: 'Dark mode', value: theme.mode == ThemeMode.dark, onChanged: (_) => theme.toggle(), isDark: isDark)),
-
+            stagger(const _SectionLabel('Preferences')),
+            stagger(_SwitchTile(
+                icon: Icons.dark_mode_outlined,
+                label: 'Dark mode',
+                value: theme.mode == ThemeMode.dark,
+                onChanged: (_) => theme.toggle(),
+                isDark: isDark)),
             const SizedBox(height: AppSizes.lg),
-            stagger(_SectionLabel('Support')),
-            stagger(_Tile(icon: Icons.help_outline_rounded, label: 'Help Center', onTap: () => context.push('/help-center'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.description_outlined, label: 'Terms & Conditions', onTap: () => context.push('/terms'), isDark: isDark)),
-            stagger(_Tile(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => context.push('/privacy'), isDark: isDark)),
-
+            stagger(const _SectionLabel('Support')),
+            stagger(_Tile(
+                icon: Icons.help_outline_rounded,
+                label: 'Help Center',
+                onTap: () => context.push('/help-center'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.description_outlined,
+                label: 'Terms & Conditions',
+                onTap: () => context.push('/terms'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: Icons.privacy_tip_outlined,
+                label: 'Privacy Policy',
+                onTap: () => context.push('/privacy'),
+                isDark: isDark)),
             const SizedBox(height: AppSizes.xl),
             stagger(_Tile(
               icon: Icons.logout_rounded,
@@ -80,7 +162,8 @@ class ProviderSettingsScreen extends StatelessWidget {
                 final confirmed = await AppDialog.confirm(
                   context,
                   title: 'Log out?',
-                  message: 'You\'ll need to log in again to manage bookings or your services.',
+                  message:
+                      'You\'ll need to log in again to manage bookings or your services.',
                   confirmLabel: 'Log out',
                   danger: true,
                 );
@@ -116,16 +199,30 @@ class _Tile extends StatelessWidget {
   final VoidCallback onTap;
   final bool danger;
   final bool isDark;
-  const _Tile({required this.icon, required this.label, required this.onTap, this.danger = false, this.isDark = false});
+  const _Tile(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      this.danger = false,
+      this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? AppColors.error : (isDark ? AppColors.textOnDark : AppColors.textPrimary);
+    final color = danger
+        ? AppColors.error
+        : (isDark ? AppColors.textOnDark : AppColors.textPrimary);
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: danger ? AppColors.error : (isDark ? AppColors.textMutedDark : AppColors.textSecondary), size: 21),
+      leading: Icon(icon,
+          color: danger
+              ? AppColors.error
+              : (isDark ? AppColors.textMutedDark : AppColors.textSecondary),
+          size: 21),
       title: Text(label, style: AppTextStyles.bodyLarge.copyWith(color: color)),
-      trailing: danger ? null : Icon(Icons.chevron_right_rounded, color: isDark ? AppColors.neutral400 : AppColors.neutral300),
+      trailing: danger
+          ? null
+          : Icon(Icons.chevron_right_rounded,
+              color: isDark ? AppColors.neutral400 : AppColors.neutral300),
       onTap: onTap,
     );
   }
@@ -137,14 +234,23 @@ class _SwitchTile extends StatelessWidget {
   final bool value;
   final void Function(bool) onChanged;
   final bool isDark;
-  const _SwitchTile({required this.icon, required this.label, required this.value, required this.onChanged, this.isDark = false});
+  const _SwitchTile(
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.onChanged,
+      this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: isDark ? AppColors.textMutedDark : AppColors.textSecondary, size: 21),
-      title: Text(label, style: AppTextStyles.bodyLarge.copyWith(color: isDark ? AppColors.textOnDark : AppColors.textPrimary)),
+      leading: Icon(icon,
+          color: isDark ? AppColors.textMutedDark : AppColors.textSecondary,
+          size: 21),
+      title: Text(label,
+          style: AppTextStyles.bodyLarge.copyWith(
+              color: isDark ? AppColors.textOnDark : AppColors.textPrimary)),
       trailing: Switch(value: value, onChanged: onChanged),
     );
   }

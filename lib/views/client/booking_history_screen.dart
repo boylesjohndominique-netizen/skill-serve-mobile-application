@@ -21,13 +21,16 @@ class BookingHistoryScreen extends StatefulWidget {
 }
 
 class _BookingHistoryScreenState extends State<BookingHistoryScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 4, vsync: this);
+  late final TabController _tabController = TabController(length: _filters.length, vsync: this);
 
-  final _filters = const [
+  static const _filters = [
     ('All', null),
-    ('Upcoming', [BookingStatus.pending, BookingStatus.confirmed]),
-    ('Ongoing', [BookingStatus.inProgress]),
-    ('Past', [BookingStatus.completed, BookingStatus.cancelled]),
+    ('Pending', [BookingStatus.pending]),
+    ('Confirmed', [BookingStatus.confirmed]),
+    ('In Progress', [BookingStatus.inProgress]),
+    ('Completed', [BookingStatus.completed]),
+    ('Cancelled', [BookingStatus.cancelled]),
+    ('Disputed', [BookingStatus.disputed]),
   ];
 
   @override

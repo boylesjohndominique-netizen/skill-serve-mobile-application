@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Typography system for SkillLink.
+/// Typography system for SkillServe.
 ///
 /// Display / Headline / Title -> Space Grotesk (matches the admin web's
 /// technical, distinctive display face).
 /// Body / Caption / Button / Label -> Inter (matches the admin web's UI face).
+/// Mono (IDs, prices, references, timestamps) -> IBM Plex Mono.
 ///
 /// Colors are intentionally omitted from static styles so that every text
 /// widget inherits the correct color from the theme's [DefaultTextStyle].
@@ -16,6 +17,7 @@ class AppTextStyles {
 
   static final TextStyle _display = GoogleFonts.spaceGrotesk();
   static final TextStyle _body = GoogleFonts.inter();
+  static final TextStyle _mono = GoogleFonts.ibmPlexMono();
 
   // ---- Display ----
   static TextStyle displayLarge = _display.copyWith(
@@ -98,6 +100,40 @@ class AppTextStyles {
     fontSize: 14.5,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
+  );
+
+  // ---- Mono (IBM Plex Mono — IDs, prices, references, timestamps) ----
+  static TextStyle monoSm = _mono.copyWith(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+
+  static TextStyle monoMd = _mono.copyWith(
+    fontSize: 13.5,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+
+  static TextStyle monoLg = _mono.copyWith(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
+
+  static TextStyle monoDisplay = _mono.copyWith(
+    fontSize: 26,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+    letterSpacing: -0.5,
+  );
+
+  // ---- Eyebrow (11px mono, uppercase, wide tracking, muted) ----
+  static TextStyle eyebrow = _mono.copyWith(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 1.8,
+    height: 1.4,
   );
 
   /// Returns a dark-theme-adjusted copy of any style in this system.

@@ -62,12 +62,12 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 22),
             Text(
-              'SkillLink',
+              'SkillServe',
               style: AppTextStyles.onDark(AppTextStyles.displayMedium),
             ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideY(begin: 0.2, end: 0),
             const SizedBox(height: 6),
             Text(
-              'Trusted talent, made visible.',
+              'Find trusted talent, fast.',
               style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMutedDark),
             ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
           ],

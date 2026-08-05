@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../data/mock/mock_data.dart';
 import '../models/booking_model.dart';
 
 // Guest
@@ -32,6 +33,11 @@ import '../views/client/chat_conversation_screen.dart';
 import '../views/client/edit_profile_screen.dart';
 import '../views/client/change_password_screen.dart';
 import '../views/client/help_center_screen.dart';
+import '../views/client/payments_screen.dart';
+import '../views/client/payment_details_screen.dart';
+import '../views/client/file_report_screen.dart';
+import '../views/client/my_reports_screen.dart';
+import '../views/client/write_review_screen.dart';
 
 // Provider
 import '../views/provider/provider_shell.dart';
@@ -47,6 +53,9 @@ import '../views/provider/completed_jobs_screen.dart';
 import '../views/provider/earnings_screen.dart';
 import '../views/provider/withdrawal_history_screen.dart';
 import '../views/provider/verification_status_screen.dart';
+import '../views/provider/portfolio_screen.dart';
+import '../views/provider/provider_onboarding_screen.dart';
+import '../views/provider/badges_screen.dart';
 
 // Shared
 import '../views/shared/notifications_screen.dart';
@@ -111,6 +120,20 @@ final GoRouter appRouter = GoRouter(
       path: '/chat-conversation/:id',
       builder: (context, state) => ChatConversationScreen(conversationId: state.pathParameters['id']!),
     ),
+    GoRoute(path: '/payments', builder: (context, state) => const PaymentsScreen()),
+    GoRoute(
+      path: '/payment-details/:id',
+      builder: (context, state) => PaymentDetailsScreen(paymentId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/file-report',
+      builder: (context, state) => FileReportScreen(bookingId: state.uri.queryParameters['bookingId']),
+    ),
+    GoRoute(path: '/my-reports', builder: (context, state) => const MyReportsScreen()),
+    GoRoute(
+      path: '/write-review/:bookingId',
+      builder: (context, state) => WriteReviewScreen(bookingId: state.pathParameters['bookingId']!),
+    ),
     GoRoute(path: '/edit-profile', builder: (context, state) => const EditProfileScreen()),
     GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),
     GoRoute(path: '/help-center', builder: (context, state) => const HelpCenterScreen()),
@@ -119,6 +142,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/provider', builder: (context, state) => const ProviderShell()),
     GoRoute(path: '/statistics', builder: (context, state) => const StatisticsScreen()),
     GoRoute(path: '/my-services', builder: (context, state) => const MyServicesScreen()),
+    GoRoute(path: '/portfolio', builder: (context, state) => const ProviderPortfolioScreen()),
     GoRoute(path: '/add-service', builder: (context, state) => const AddServiceScreen()),
     GoRoute(
       path: '/edit-service/:id',
@@ -132,6 +156,19 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/earnings', builder: (context, state) => const EarningsScreen()),
     GoRoute(path: '/withdrawal-history', builder: (context, state) => const WithdrawalHistoryScreen()),
     GoRoute(path: '/verification-status', builder: (context, state) => const VerificationStatusScreen()),
+    GoRoute(path: '/provider-onboarding', builder: (context, state) => const ProviderOnboardingScreen()),
+    GoRoute(path: '/provider-badges', builder: (context, state) => const BadgesScreen()),
+    GoRoute(
+      path: '/provider-profile-preview',
+      builder: (context, state) => ProviderProfileScreen(
+        providerId: MockData.providers
+            .firstWhere(
+              (p) => p.user.id == MockData.currentProvider.id,
+              orElse: () => MockData.providers.first,
+            )
+            .id,
+      ),
+    ),
 
     // Shared across personas
     GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
@@ -141,3 +178,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+

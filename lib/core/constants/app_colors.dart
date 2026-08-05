@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Central color palette for SkillLink.
+/// Central color palette for SkillServe.
 ///
 /// Visual identity is inherited from the Admin Web Application:
 /// Ink Navy (structure/trust) + Brass (accent/action) + Warm Slate (canvas).
@@ -17,6 +17,8 @@ class AppColors {
   static const Color secondary = Color(0xFFC9852E); // Brass
   static const Color secondaryLight = Color(0xFFE3AD50);
   static const Color secondaryDark = Color(0xFFA66B22);
+  static const Color secondarySoft = Color(0xFFF6E4C4); // brass-100 — light fills/rings
+  static const Color secondaryDeep = Color(0xFF7D501A); // brass-700 — brass text on light fills
 
   static const Color accent = Color(0xFF2F6690); // Muted teal-blue, complements brass without breaking the 2-hue identity
 

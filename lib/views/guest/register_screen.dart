@@ -40,7 +40,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
     if (!mounted) return;
     if (success) {
-      context.go(_role == UserRole.provider ? '/provider' : '/client');
+      // Providers land on the verification gate first (spec P1/P2).
+      context.go(_role == UserRole.provider ? '/provider-onboarding' : '/client');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Registration failed');
     }
@@ -67,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text('Create your account', style: AppTextStyles.displayMedium)
                     .animate().fadeIn(delay: 80.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: 6),
-                Text('Join SkillLink as a client looking for services, or a provider offering them.', style: AppTextStyles.bodyLarge)
+                Text('Join SkillServe as a client looking for services, or a provider offering them.', style: AppTextStyles.bodyLarge)
                     .animate().fadeIn(delay: 150.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xl),
 

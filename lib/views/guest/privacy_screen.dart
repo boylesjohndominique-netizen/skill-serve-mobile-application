@@ -11,7 +11,7 @@ class PrivacyScreen extends StatelessWidget {
       sections: [
         StaticSection(
           heading: 'Information we collect',
-          body: 'SkillLink collects only the information required to match clients with providers and process '
+          body: 'SkillServe collects only the information required to match clients with providers and process '
               'bookings securely — including contact details, booking history, and verification documents.',
         ),
         StaticSection(

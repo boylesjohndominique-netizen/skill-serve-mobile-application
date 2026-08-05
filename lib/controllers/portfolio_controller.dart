@@ -15,4 +15,23 @@ class PortfolioController extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
+
+  /// Marks a rejected item back to pending for admin re-review.
+  Future<void> resubmit(String itemId) async {
+    await _service.resubmitPortfolioItem(itemId);
+    items = [
+      for (final item in items)
+        item.id == itemId
+            ? PortfolioModel(
+                id: item.id,
+                providerId: item.providerId,
+                image: item.image,
+                title: item.title,
+                description: item.description,
+                status: 'pending',
+              )
+            : item,
+    ];
+    notifyListeners();
+  }
 }

@@ -8,6 +8,10 @@ import '../../models/review_model.dart';
 import '../../models/message_model.dart';
 import '../../models/notification_model.dart';
 import '../../models/portfolio_model.dart';
+import '../../models/payment_model.dart';
+import '../../models/report_model.dart';
+import '../../models/verification_document_model.dart';
+import '../../models/badge_model.dart';
 
 /// In-memory sample data standing in for the future Laravel REST API.
 /// Every placeholder service in lib/services reads from here.
@@ -60,31 +64,83 @@ class MockData {
 
   static T _pick<T>(List<T> list) => list[_rand.nextInt(list.length)];
 
+  static const List<String> paymentMethods = ['GCash', 'Maya', 'Cash on hand', 'Card'];
+  static const List<String> reportReasons = [
+    'No-show for scheduled booking',
+    'Inappropriate messages',
+    'Overcharging beyond quote',
+    'Fake portfolio images',
+    'Harassment',
+    'Poor workmanship / unresolved damage',
+  ];
+
+  /// Builds a plausible status timeline for a booking at a given status.
+  static List<BookingTimelineEntry> _timelineFor(BookingStatus status, DateTime bookingDate) {
+    final entries = <BookingTimelineEntry>[
+      BookingTimelineEntry(
+        label: 'Booking requested',
+        at: bookingDate.subtract(const Duration(days: 5)),
+        status: 'pending',
+      ),
+    ];
+    if (status == BookingStatus.pending) return entries;
+    entries.add(BookingTimelineEntry(
+      label: 'Accepted by provider',
+      at: bookingDate.subtract(const Duration(days: 3)),
+      status: 'confirmed',
+    ));
+    if (status == BookingStatus.confirmed) return entries;
+    entries.add(BookingTimelineEntry(
+      label: 'Job in progress',
+      at: bookingDate.subtract(const Duration(days: 1)),
+      status: 'inProgress',
+    ));
+    if (status == BookingStatus.inProgress) return entries;
+    if (status == BookingStatus.completed) {
+      entries.add(BookingTimelineEntry(label: 'Completed', at: bookingDate, status: 'completed'));
+    } else if (status == BookingStatus.cancelled) {
+      entries.add(BookingTimelineEntry(
+        label: 'Cancelled',
+        at: bookingDate.subtract(const Duration(days: 2)),
+        status: 'cancelled',
+      ));
+    } else if (status == BookingStatus.disputed) {
+      entries.add(BookingTimelineEntry(label: 'Disputed', at: bookingDate, status: 'disputed'));
+    }
+    return entries;
+  }
+
   // ---- Providers ----
+  // Index 0 is the signed-in demo provider (Miguel Reyes) so the Provider
+  // app's own profile preview, dashboard, and services stay coherent.
   static final List<ProviderModel> providers = List.generate(16, (i) {
-    final cat = _pick(categories);
-    final user = UserModel(
-      id: 'PR-${3000 + i}',
-      role: UserRole.provider,
-      firstName: _pick(_firstNames),
-      lastName: _pick(_lastNames),
-      email: 'provider$i@mail.com',
-      phone: '09${100000000 + i}',
-      address: _pick(['Cebu City', 'Mandaue City', 'Tagbilaran, Bohol', 'Dumaguete', 'Lapu-Lapu City']),
-      createdAt: DateTime.now().subtract(Duration(days: 30 + i * 11)),
-    );
+    final cat = i == 0 ? categories[1] : _pick(categories);
+    final user = i == 0
+        ? currentProvider
+        : UserModel(
+            id: 'PR-${3000 + i}',
+            role: UserRole.provider,
+            firstName: _pick(_firstNames),
+            lastName: _pick(_lastNames),
+            email: 'provider$i@mail.com',
+            phone: '09${100000000 + i}',
+            address: _pick(['Cebu City', 'Mandaue City', 'Tagbilaran, Bohol', 'Dumaguete', 'Lapu-Lapu City']),
+            createdAt: DateTime.now().subtract(Duration(days: 30 + i * 11)),
+          );
     return ProviderModel(
       id: 'PV-${100 + i}',
       user: user,
-      bio: 'Reliable, background-checked ${cat.name.toLowerCase()} professional serving the Visayas region.',
-      yearsExperience: 1 + _rand.nextInt(14),
-      verificationStatus: i % 5 == 0 ? 'pending' : 'verified',
-      averageRating: 3.5 + _rand.nextDouble() * 1.5,
-      reviewCount: 5 + _rand.nextInt(120),
-      completedJobs: 10 + _rand.nextInt(200),
+      bio: i == 0
+          ? 'Licensed electrician serving households and small businesses across Bohol for 9 years. Licensed, insured, and background-checked — safety first on every job.'
+          : 'Reliable, background-checked ${cat.name.toLowerCase()} professional serving the Visayas region.',
+      yearsExperience: i == 0 ? 9 : 1 + _rand.nextInt(14),
+      verificationStatus: i == 0 ? 'verified' : (i % 5 == 0 ? 'pending' : 'verified'),
+      averageRating: i == 0 ? 4.8 : 3.5 + _rand.nextDouble() * 1.5,
+      reviewCount: i == 0 ? 156 : 5 + _rand.nextInt(120),
+      completedJobs: i == 0 ? 118 : 10 + _rand.nextInt(200),
       categoryName: cat.name,
       portfolioImages: List.generate(4, (j) => 'https://picsum.photos/seed/${cat.name}$i$j/500/400'),
-      startingPrice: (250 + _rand.nextInt(2500)).toDouble(),
+      startingPrice: i == 0 ? 550 : (250 + _rand.nextInt(2500)).toDouble(),
     );
   });
 
@@ -107,6 +163,8 @@ class MockData {
   // ---- Bookings ----
   static final List<BookingModel> bookingsForClient = List.generate(9, (i) {
     final p = _pick(providers);
+    final status = BookingStatus.values[_rand.nextInt(BookingStatus.values.length)];
+    final date = DateTime.now().add(Duration(days: i - 4));
     return BookingModel(
       id: 'BK-${5000 + i}',
       clientId: currentClient.id,
@@ -115,15 +173,19 @@ class MockData {
       providerName: p.user.fullName,
       serviceId: 'SV-$i',
       serviceTitle: '${p.categoryName} Service',
-      bookingDate: DateTime.now().add(Duration(days: i - 4)),
+      bookingDate: date,
       schedule: '${9 + _rand.nextInt(8)}:00 AM',
-      status: BookingStatus.values[_rand.nextInt(BookingStatus.values.length)],
+      status: status,
       amount: (400 + _rand.nextInt(4000)).toDouble(),
       address: currentClient.address,
+      paymentMethod: paymentMethods[i % paymentMethods.length],
+      timeline: _timelineFor(status, date),
     );
   });
 
   static final List<BookingModel> bookingsForProvider = List.generate(11, (i) {
+    final status = BookingStatus.values[_rand.nextInt(BookingStatus.values.length)];
+    final date = DateTime.now().add(Duration(days: i - 5));
     return BookingModel(
       id: 'BK-${6000 + i}',
       clientId: 'CL-${1100 + i}',
@@ -132,13 +194,141 @@ class MockData {
       providerName: currentProvider.fullName,
       serviceId: 'SV-p$i',
       serviceTitle: '${_pick(categories).name} Service',
-      bookingDate: DateTime.now().add(Duration(days: i - 5)),
+      bookingDate: date,
       schedule: '${9 + _rand.nextInt(8)}:00 AM',
-      status: BookingStatus.values[_rand.nextInt(BookingStatus.values.length)],
+      status: status,
       amount: (400 + _rand.nextInt(4000)).toDouble(),
       address: _pick(['Lahug, Cebu City', 'IT Park, Cebu City', 'Talisay, Cebu']),
+      paymentMethod: paymentMethods[(i + 1) % paymentMethods.length],
+      timeline: _timelineFor(status, date),
     );
   });
+
+  // ---- Payments ----
+  static final List<PaymentModel> payments = List.generate(8, (i) {
+    final booking = bookingsForClient.length > i ? bookingsForClient[i] : bookingsForClient.first;
+    final status = PaymentStatus.values[i % PaymentStatus.values.length];
+    final method = paymentMethods[i % paymentMethods.length];
+    final isCash = method == 'Cash on hand';
+    return PaymentModel(
+      id: 'PAY-${8000 + i}',
+      bookingId: booking.id,
+      clientName: currentClient.fullName,
+      providerName: booking.providerName,
+      method: method,
+      amount: booking.amount,
+      status: status,
+      reference: '${isCash ? 'COD' : 'TXN'}-${123456 + i * 1001}',
+      paidAt: DateTime.now().subtract(Duration(days: i * 3 + 1)),
+    );
+  });
+
+  // ---- Reports (complaints / disputes) ----
+  static final List<ReportModel> reports = [
+    ReportModel(
+      id: 'RP-1001',
+      reporterName: currentClient.fullName,
+      reportedName: 'Miguel Reyes',
+      reason: 'Overcharging beyond quote',
+      details: 'I was quoted ₱800 but charged ₱1,500 after the job was done without any prior notice.',
+      status: ReportStatus.investigating,
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
+      updates: [
+        ReportUpdate(label: 'Report filed', at: DateTime.now().subtract(const Duration(days: 6)), status: 'open'),
+        ReportUpdate(label: 'Under investigation', at: DateTime.now().subtract(const Duration(days: 4)), status: 'investigating'),
+      ],
+    ),
+    ReportModel(
+      id: 'RP-1002',
+      reporterName: currentClient.fullName,
+      reportedName: 'Jose Garcia',
+      reason: 'No-show for scheduled booking',
+      details: 'The provider never arrived at the agreed schedule and did not respond to messages.',
+      status: ReportStatus.closed,
+      createdAt: DateTime.now().subtract(const Duration(days: 20)),
+      updates: [
+        ReportUpdate(label: 'Report filed', at: DateTime.now().subtract(const Duration(days: 20)), status: 'open'),
+        ReportUpdate(label: 'Provider warned', at: DateTime.now().subtract(const Duration(days: 15)), status: 'warned'),
+        ReportUpdate(label: 'Report closed', at: DateTime.now().subtract(const Duration(days: 12)), status: 'closed'),
+      ],
+    ),
+  ];
+
+  // ---- Verification documents (current provider) ----
+  static final List<VerificationDocumentModel> verificationDocs = [
+    VerificationDocumentModel(
+      id: 'VD-1',
+      providerId: currentProvider.id,
+      type: 'ID',
+      label: 'Government-issued ID',
+      status: 'approved',
+      submittedAt: DateTime.now().subtract(const Duration(days: 30)),
+    ),
+    VerificationDocumentModel(
+      id: 'VD-2',
+      providerId: currentProvider.id,
+      type: 'Certificate',
+      label: 'Certificate of training',
+      status: 'approved',
+      submittedAt: DateTime.now().subtract(const Duration(days: 28)),
+    ),
+    VerificationDocumentModel(
+      id: 'VD-3',
+      providerId: currentProvider.id,
+      type: 'Document',
+      label: 'Proof of address',
+      status: 'pending',
+      submittedAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+  ];
+
+  // ---- Recognition badges (current provider) ----
+  static final List<BadgeModel> badges = [
+    const BadgeModel(
+      key: 'verified_pro',
+      title: 'Verified Pro',
+      criteria: 'Full document verification + approved portfolio',
+      earned: true,
+      progress: 1,
+      progressLabel: 'Complete',
+    ),
+    const BadgeModel(
+      key: 'top_rated',
+      title: 'Top Rated',
+      criteria: '4.5+ average rating and 20+ completed jobs',
+      earned: true,
+      progress: 1,
+      progressLabel: '4.8 ★ · 156 jobs',
+    ),
+    const BadgeModel(
+      key: 'veteran',
+      title: 'Veteran',
+      criteria: '5+ years experience and 100+ completed jobs',
+      earned: false,
+      progress: 0.55,
+      progressLabel: '5 yrs · 118/100 jobs',
+    ),
+    const BadgeModel(
+      key: 'rising_star',
+      title: 'Rising Star',
+      criteria: 'High rating with rapid booking growth in 60 days',
+      earned: false,
+      progress: 0.7,
+      progressLabel: '70% booking growth',
+    ),
+    const BadgeModel(
+      key: 'community_favorite',
+      title: 'Community Favorite',
+      criteria: 'Most-reviewed provider with positive feedback',
+      earned: false,
+      progress: 0.4,
+      progressLabel: '40% of top reviews',
+    ),
+  ];
+
+  /// Providers shown in the Discover "Featured" strip (verified only).
+  static final List<ProviderModel> featuredProviders =
+      providers.where((p) => p.isVerified).take(6).toList();
 
   // ---- Reviews ----
   static final List<String> _snippets = [
@@ -233,6 +423,6 @@ class MockData {
         image: 'https://picsum.photos/seed/portfolio$i/500/500',
         title: _pick(['Bathroom Repipe', 'Panel Upgrade', 'Cabinet Build', 'Circuit Rewire']),
         description: 'Completed project shared to the public profile.',
-        status: i == 0 ? 'pending' : 'approved',
+        status: i == 0 ? 'pending' : (i == 5 ? 'rejected' : 'approved'),
       ));
 }

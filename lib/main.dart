@@ -9,7 +9,9 @@ import 'controllers/chat_controller.dart';
 import 'controllers/favorites_controller.dart';
 import 'controllers/marketplace_controller.dart';
 import 'controllers/notification_controller.dart';
+import 'controllers/payment_controller.dart';
 import 'controllers/portfolio_controller.dart';
+import 'controllers/report_controller.dart';
 import 'controllers/provider_booking_controller.dart';
 import 'controllers/theme_controller.dart';
 import 'core/config/app_config.dart';
@@ -36,6 +38,8 @@ class SkillLinkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationController()),
         ChangeNotifierProvider(create: (_) => ChatController()),
         ChangeNotifierProvider(create: (_) => PortfolioController()),
+        ChangeNotifierProvider(create: (_) => PaymentController()),
+        ChangeNotifierProvider(create: (_) => ReportController()),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, _) {

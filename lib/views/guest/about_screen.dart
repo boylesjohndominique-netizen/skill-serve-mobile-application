@@ -7,10 +7,10 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const StaticInfoScreen(
-      title: 'About SkillLink',
+      title: 'About SkillServe',
       sections: [
         StaticSection(
-          body: 'SkillLink bridges service accessibility and talent visibility by connecting households across '
+          body: 'SkillServe bridges service accessibility and talent visibility by connecting households across '
               'Cebu, Bohol, and Dumaguete with verified local service professionals — from plumbers and '
               'electricians to tutors, designers, and photographers.',
         ),
@@ -20,7 +20,7 @@ class AboutScreen extends StatelessWidget {
               'build a visible, thriving service business.',
         ),
         StaticSection(
-          heading: 'Why SkillLink',
+          heading: 'Why SkillServe',
           body: 'Every provider on the platform is ID-verified and rated by real clients, so bookings come '
               'with built-in accountability on both sides.',
         ),

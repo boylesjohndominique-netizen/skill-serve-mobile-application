@@ -15,7 +15,7 @@ class ContactScreen extends StatelessWidget {
     final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
     const items = [
-      (Icons.mail_outline_rounded, 'Email', 'support@skilllink.ph'),
+      (Icons.mail_outline_rounded, 'Email', 'support@skillserve.ph'),
       (Icons.call_outlined, 'Phone', '(032) 123 4567'),
       (Icons.location_on_outlined, 'Office', 'Cebu City, Philippines'),
       (Icons.schedule_outlined, 'Support hours', 'Mon–Sat, 8:00 AM – 8:00 PM'),

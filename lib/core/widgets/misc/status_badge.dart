@@ -12,25 +12,52 @@ class StatusBadge extends StatelessWidget {
 
   const StatusBadge({super.key, required this.label, required this.tone});
 
+  /// Maps every status enum (Section 4) to the admin console's Badge colors
+  /// (Section 10): emerald (success), brass (pending), blue (progress),
+  /// orange (warning), red (failure/blocked), neutral (hidden/closed).
   factory StatusBadge.fromStatus(String status) {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
+    final s = status.toLowerCase().replaceAll(' ', '_');
+    switch (s) {
+      // Emerald — success / verified / paid / completed / sent
       case 'active':
       case 'verified':
       case 'approved':
       case 'completed':
-        return StatusBadge(label: _labelize(status), tone: StatusTone.success);
+      case 'visible':
+      case 'sent':
+      case 'paid':
+        return StatusBadge(label: _labelize(s), tone: StatusTone.success);
+      // Brass — pending / confirmed / resubmission
       case 'pending':
-        return StatusBadge(label: _labelize(status), tone: StatusTone.warning);
-      case 'cancelled':
-      case 'rejected':
-      case 'disputed':
-        return StatusBadge(label: _labelize(status), tone: StatusTone.error);
-      case 'inprogress':
+      case 'confirmed':
+      case 'resubmission_requested':
+      case 'resubmit':
+        return StatusBadge(label: _labelize(s), tone: StatusTone.warning);
+      // Blue — in progress / investigating
       case 'in_progress':
-        return const StatusBadge(label: 'In Progress', tone: StatusTone.info);
+      case 'inprogress':
+      case 'investigating':
+        return StatusBadge(label: _labelize(s), tone: StatusTone.info);
+      // Orange — warned / refunded
+      case 'warned':
+      case 'refunded':
+        return StatusBadge(label: _labelize(s), tone: StatusTone.orange);
+      // Red — failure / blocked / flagged / disputed
+      case 'suspended':
+      case 'rejected':
+      case 'cancelled':
+      case 'disputed':
+      case 'flagged':
+      case 'open':
+      case 'failed':
+        return StatusBadge(label: _labelize(s), tone: StatusTone.error);
+      // Neutral — hidden / closed / archived
+      case 'hidden':
+      case 'closed':
+      case 'archived':
+        return StatusBadge(label: _labelize(s), tone: StatusTone.neutral);
       default:
-        return StatusBadge(label: _labelize(status), tone: StatusTone.neutral);
+        return StatusBadge(label: _labelize(s), tone: StatusTone.neutral);
     }
   }
 
@@ -78,10 +105,12 @@ class StatusBadge extends StatelessWidget {
         return (AppColors.errorBg, AppColors.error);
       case StatusTone.info:
         return (AppColors.infoBg, AppColors.info);
+      case StatusTone.orange:
+        return (AppColors.warningBg, AppColors.warning);
       case StatusTone.neutral:
         return (AppColors.neutral50, AppColors.neutral400);
     }
   }
 }
 
-enum StatusTone { success, warning, error, info, neutral }
+enum StatusTone { success, warning, error, info, orange, neutral }

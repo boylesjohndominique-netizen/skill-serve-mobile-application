@@ -14,6 +14,7 @@ import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../data/mock/mock_data.dart';
+import '../../models/booking_model.dart';
 
 /// Provider's home tab — quick stats, verification status, and today's
 /// pending requests.
@@ -113,6 +114,19 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 
               const SizedBox(height: AppSizes.xl),
 
+              // ── Quick actions ──
+              Row(
+                children: [
+                  _QuickAction(icon: Icons.add_circle_outline_rounded, label: 'Add service', onTap: () => context.push('/add-service'), index: 0),
+                  const SizedBox(width: AppSizes.sm),
+                  _QuickAction(icon: Icons.photo_library_outlined, label: 'Upload portfolio', onTap: () => context.push('/upload-portfolio'), index: 1),
+                  const SizedBox(width: AppSizes.sm),
+                  _QuickAction(icon: Icons.verified_user_outlined, label: 'Verification', onTap: () => context.push('/verification-status'), index: 2),
+                ],
+              ),
+
+              const SizedBox(height: AppSizes.xl),
+
               // ── Stat tiles ──
               GridView.count(
                 shrinkWrap: true,
@@ -129,6 +143,34 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 ],
               ),
 
+              // ── Upcoming bookings ──
+              const SizedBox(height: AppSizes.xl),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Upcoming Bookings', style: AppTextStyles.headlineMedium),
+                  TextButton(onPressed: () => context.push('/booking-requests'), child: const Text('See all')),
+                ],
+              ).animate().fadeIn(delay: 420.ms, duration: 300.ms),
+              const SizedBox(height: AppSizes.md),
+              if (bookings.isLoading)
+                const ShimmerCardList(count: 2, itemHeight: 110)
+              else if (bookings.active.isEmpty)
+                const EmptyState(icon: Icons.event_available_outlined, title: 'Nothing scheduled', message: 'Confirmed jobs will show up here.')
+              else
+                Column(
+                  children: [
+                    for (var i = 0; i < bookings.active.take(2).length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSizes.md),
+                        child: _UpcomingTile(booking: bookings.active[i], onTap: () => context.push('/booking-details/${bookings.active[i].id}')),
+                      )
+                          .animate()
+                          .fadeIn(delay: Duration(milliseconds: 460 + i * 60), duration: 350.ms)
+                          .slideY(begin: 0.06, end: 0),
+                  ],
+                ),
+
               const SizedBox(height: AppSizes.xl),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -136,7 +178,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   Text('New Requests', style: AppTextStyles.headlineMedium),
                   TextButton(onPressed: () => context.push('/booking-requests'), child: const Text('See all')),
                 ],
-              ).animate().fadeIn(delay: 500.ms, duration: 300.ms),
+              ).animate().fadeIn(delay: 520.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.md),
               if (bookings.isLoading)
                 const ShimmerCardList(count: 2, itemHeight: 130)
@@ -216,9 +258,100 @@ class _StatTileState extends State<_StatTile> {
           ),
         ),
       ),
+    )                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: 250 + widget.index * 80), duration: 350.ms)
+                  .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
+  }
+}
+
+/// Compact quick-action tile for the dashboard.
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final int index;
+
+  const _QuickAction({required this.icon, required this.label, required this.onTap, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.surfaceDark : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+            boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 22, color: AppColors.secondary),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
     )
         .animate()
-        .fadeIn(delay: Duration(milliseconds: 250 + widget.index * 80), duration: 350.ms)
+        .fadeIn(delay: Duration(milliseconds: 180 + index * 70), duration: 350.ms)
         .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
+  }
+}
+
+/// Upcoming (confirmed / in-progress) booking row for the dashboard.
+class _UpcomingTile extends StatelessWidget {
+  final BookingModel booking;
+  final VoidCallback onTap;
+
+  const _UpcomingTile({required this.booking, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.md),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+          border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+          boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                gradient: AppColors.brassGradient,
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
+              child: const Icon(Icons.event_available_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: AppSizes.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(booking.serviceTitle, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text('${booking.clientName} · ${Formatters.dateShort(booking.bookingDate)} · ${booking.schedule}', style: AppTextStyles.bodySmall),
+                ],
+              ),
+            ),
+            StatusBadge.fromStatus(booking.status.name),
+          ],
+        ),
+      ),
+    );
   }
 }

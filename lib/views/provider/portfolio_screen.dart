@@ -4,7 +4,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/portfolio_controller.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
+import '../../core/widgets/feedback/app_dialog.dart';
+import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
@@ -55,39 +58,82 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   itemCount: controller.items.length,
                   itemBuilder: (context, i) {
                     final item = controller.items[i];
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CachedNetworkImage(imageUrl: item.image, fit: BoxFit.cover, placeholder: (c, u) => const ShimmerPlaceholder()),
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: StatusBadge.fromStatus(item.status),
-                          ),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [Colors.transparent, Colors.black54],
+                    return GestureDetector(
+                      onTap: item.status == 'rejected'
+                          ? () async {
+                              final confirmed = await AppDialog.confirm(
+                                context,
+                                title: 'Resubmit this item?',
+                                message: 'It will go back into review. You can edit it first from your gallery.',
+                                confirmLabel: 'Resubmit',
+                              );
+                              if (confirmed && context.mounted) {
+                                await controller.resubmit(item.id);
+                                if (context.mounted) AppSnackbar.success(context, 'Item resubmitted for review.');
+                              }
+                            }
+                          : null,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CachedNetworkImage(imageUrl: item.image, fit: BoxFit.cover, placeholder: (c, u) => const ShimmerPlaceholder()),
+                            if (item.status == 'rejected')
+                              Container(
+                                color: AppColors.error.withValues(alpha: 0.25),
+                              ),
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: StatusBadge.fromStatus(item.status),
+                            ),
+                            if (item.status == 'rejected')
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                top: 28,
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error,
+                                      borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.rotate_left_rounded, size: 12, color: Colors.white),
+                                        SizedBox(width: 4),
+                                        Text('Tap to resubmit', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                item.title,
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Colors.transparent, Colors.black54],
+                                  ),
+                                ),
+                                child: Text(
+                                  item.title,
+                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     )
                         .animate()

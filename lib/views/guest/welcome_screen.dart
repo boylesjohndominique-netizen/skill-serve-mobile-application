@@ -48,7 +48,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSizes.xl),
               Text(
-                'Welcome to SkillLink',
+                'Welcome to SkillServe',
                 style: AppTextStyles.onDark(AppTextStyles.displayLarge),
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.12, end: 0),

@@ -8,9 +8,9 @@ import 'settings_screen.dart';
 
 const _clientNavItems = [
   NavItem(icon: Icons.home_outlined, activeIcon: Icons.home_rounded, label: 'Home'),
-  NavItem(icon: Icons.search_outlined, activeIcon: Icons.search_rounded, label: 'Search'),
+  NavItem(icon: Icons.explore_outlined, activeIcon: Icons.explore_rounded, label: 'Explore'),
   NavItem(icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today_rounded, label: 'Bookings'),
-  NavItem(icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded, label: 'Chat'),
+  NavItem(icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded, label: 'Messages'),
   NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
 ];
 

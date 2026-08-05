@@ -11,12 +11,12 @@ class TermsScreen extends StatelessWidget {
       sections: [
         StaticSection(
           heading: '1. Acceptance of terms',
-          body: 'By creating an account or using SkillLink, clients and providers agree to abide by these '
+          body: 'By creating an account or using SkillServe, clients and providers agree to abide by these '
               'terms, including platform conduct guidelines and dispute resolution processes.',
         ),
         StaticSection(
           heading: '2. Bookings',
-          body: 'Bookings are agreements directly between the client and provider. SkillLink facilitates the '
+          body: 'Bookings are agreements directly between the client and provider. SkillServe facilitates the '
               'connection but is not a party to the underlying service agreement.',
         ),
         StaticSection(
@@ -26,7 +26,7 @@ class TermsScreen extends StatelessWidget {
         ),
         StaticSection(
           heading: '4. Account suspension',
-          body: 'SkillLink reserves the right to suspend accounts that violate platform guidelines, including '
+          body: 'SkillServe reserves the right to suspend accounts that violate platform guidelines, including '
               'fraudulent activity, harassment, or repeated no-shows.',
         ),
       ],

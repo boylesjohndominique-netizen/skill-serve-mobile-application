@@ -1,4 +1,5 @@
 import '../data/mock/mock_data.dart';
+import '../models/badge_model.dart';
 import '../models/category_model.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
@@ -35,5 +36,25 @@ class ServiceService {
   Future<ServiceModel> getServiceById(String id) async {
     await simulateNetworkDelay(ms: 300);
     return MockData.services.firstWhere((s) => s.id == id, orElse: () => MockData.services.first);
+  }
+
+  // GET /providers/:id/services (active only — what clients can book)
+  Future<List<ServiceModel>> getServicesForProvider(String providerId) async {
+    await simulateNetworkDelay(ms: 250);
+    return MockData.services
+        .where((s) => s.providerId == providerId && s.status == 'active')
+        .toList();
+  }
+
+  // GET /providers?featured=1
+  Future<List<ProviderModel>> getFeaturedProviders() async {
+    await simulateNetworkDelay(ms: 250);
+    return MockData.featuredProviders;
+  }
+
+  // GET /providers/:id/badges
+  Future<List<BadgeModel>> getProviderBadges(String providerId) async {
+    await simulateNetworkDelay(ms: 250);
+    return MockData.badges;
   }
 }

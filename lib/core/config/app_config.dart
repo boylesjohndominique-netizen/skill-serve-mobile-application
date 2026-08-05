@@ -6,7 +6,7 @@
 class AppConfig {
   AppConfig._();
 
-  static const String appName = 'SkillLink';
+  static const String appName = 'SkillServe';
 
   /// Laravel REST API base URL. Update when the backend is deployed.
   static const String baseUrl = 'http://localhost:8000/api';

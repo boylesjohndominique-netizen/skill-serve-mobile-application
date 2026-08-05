@@ -37,7 +37,8 @@ class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: AppColors.secondary, // Brass drives interactive elements on mobile
+      primary:
+          AppColors.secondary, // Brass drives interactive elements on mobile
       onPrimary: Colors.white,
       secondary: AppColors.primary,
       onSecondary: Colors.white,
@@ -126,7 +127,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         hintStyle: AppTextStyles.bodyMedium.copyWith(
           color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
         ),
@@ -169,17 +171,19 @@ class AppTheme {
         unselectedLabelStyle: AppTextStyles.label,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
-        overlayColor: WidgetStateProperty.all(AppColors.secondary.withValues(alpha: 0.08)),
+        overlayColor: WidgetStateProperty.all(
+            AppColors.secondary.withValues(alpha: 0.08)),
         indicator: BoxDecoration(
           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-          border: Border(
+          border: const Border(
             bottom: BorderSide(color: AppColors.secondary, width: 2.5),
           ),
         ),
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        backgroundColor:
+            isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
         selectedColor: AppColors.secondary.withValues(alpha: 0.15),
         labelStyle: AppTextStyles.label,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -217,7 +221,8 @@ class AppTheme {
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXl)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXl)),
         ),
       ),
 
