@@ -15,3 +15,9 @@ macos/
 windows/
 linux/
 web/
+
+# Local JDK installations (accidentally committed in history once)
+oracleJdk-26/
+lib/oracleJdk-26/
+**/oracleJdk-*/
+
