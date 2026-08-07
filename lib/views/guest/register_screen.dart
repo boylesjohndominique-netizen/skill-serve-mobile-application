@@ -179,7 +179,7 @@ class _RoleToggle extends StatelessWidget {
       onTap: () => onChanged(value),
       child: AnimatedContainer(
         duration: AppAnimations.md,
-        curve: AppAnimations.springCurve,
+        curve: AppAnimations.defaultCurve,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: selected ? AppColors.secondary : Colors.transparent,
@@ -194,14 +194,14 @@ class _RoleToggle extends StatelessWidget {
               scale: selected ? 1.1 : 1.0,
               duration: AppAnimations.md,
               curve: AppAnimations.springCurve,
-              child: AppIcon(icon, size: 20, color: selected ? Colors.white : AppColors.textMuted),
+              child: AppIcon(icon, size: 20, color: selected ? AppColors.primary : AppColors.textMuted),
             ),
             const SizedBox(height: 4),
             Text(
               label,
               textAlign: TextAlign.center,
               style: AppTextStyles.caption.copyWith(
-                color: selected ? Colors.white : AppColors.textMuted,
+                color: selected ? AppColors.primary : AppColors.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),

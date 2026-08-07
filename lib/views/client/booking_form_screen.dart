@@ -479,7 +479,7 @@ class _WizardStepper extends StatelessWidget {
               children: [
                 AnimatedContainer(
                   duration: AppAnimations.md,
-                  curve: AppAnimations.springCurve,
+                  curve: AppAnimations.defaultCurve,
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
