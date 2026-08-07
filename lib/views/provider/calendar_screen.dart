@@ -7,6 +7,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/cards/booking_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Lightweight month calendar showing booking density per day,
 /// with the selected day's bookings listed below.
@@ -52,7 +54,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 IconButton(
                   onPressed: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
-                  icon: const Icon(Icons.chevron_left_rounded),
+                  icon: const AppIcon(AppIcons.chevron_left_rounded),
                 ),
                 Text(
                   '${_monthName(_month.month)} ${_month.year}',
@@ -60,7 +62,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
                 IconButton(
                   onPressed: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
-                  icon: const Icon(Icons.chevron_right_rounded),
+                  icon: const AppIcon(AppIcons.chevron_right_rounded),
                 ),
               ],
             ).animate().fadeIn(duration: 300.ms),
@@ -138,7 +140,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 .animate().fadeIn(delay: 250.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.md),
             if (selectedDayBookings.isEmpty)
-              const EmptyState(icon: Icons.event_busy_rounded, title: 'No bookings', message: 'You have no bookings scheduled for this day.')
+              const EmptyState(icon: AppIcons.event_busy_rounded, title: 'No bookings', message: 'You have no bookings scheduled for this day.')
             else
               Column(
                 children: [

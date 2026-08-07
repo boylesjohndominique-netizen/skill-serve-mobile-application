@@ -7,6 +7,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/feedback/loading_state.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class ChatConversationScreen extends StatefulWidget {
   final String conversationId;
@@ -46,7 +48,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            const CircleAvatar(radius: 17, backgroundColor: AppColors.primary, child: Icon(Icons.person, color: Colors.white, size: 18)),
+            const CircleAvatar(radius: 17, backgroundColor: AppColors.primary, child: AppIcon(AppIcons.person, color: Colors.white, size: 18)),
             const SizedBox(width: AppSizes.sm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +159,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
                               ),
-                              child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                              child: const AppIcon(AppIcons.send_rounded, color: Colors.white, size: 18),
                             ),
                           ),
                         ],

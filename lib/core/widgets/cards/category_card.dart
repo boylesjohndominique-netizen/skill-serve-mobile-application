@@ -4,14 +4,16 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../models/category_model.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
-const Map<String, IconData> _categoryIcons = {
-  'plumbing': Icons.plumbing_rounded,
-  'bolt': Icons.bolt_rounded,
-  'school': Icons.school_rounded,
-  'brush': Icons.brush_rounded,
-  'photo_camera': Icons.photo_camera_rounded,
-  'carpenter': Icons.carpenter_rounded,
+const Map<String, AppIconData> _categoryIcons = {
+  'plumbing': AppIcons.plumbing_rounded,
+  'bolt': AppIcons.bolt_rounded,
+  'school': AppIcons.school_rounded,
+  'brush': AppIcons.brush_rounded,
+  'photo_camera': AppIcons.photo_camera_rounded,
+  'carpenter': AppIcons.carpenter_rounded,
 };
 
 /// Compact category tile used in horizontal scrollers and category grids.
@@ -34,7 +36,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final icon = _categoryIcons[widget.category.icon] ?? Icons.work_outline_rounded;
+    final icon = _categoryIcons[widget.category.icon] ?? AppIcons.work_outline_rounded;
     final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
     final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
@@ -76,7 +78,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
               AnimatedRotation(
                 turns: widget.selected ? 0.02 : 0,
                 duration: AppAnimations.md,
-                child: Icon(icon, color: widget.selected ? Colors.white : AppColors.secondary, size: 24),
+                child: AppIcon(icon, color: widget.selected ? Colors.white : AppColors.secondary, size: 24),
               ),
               const SizedBox(height: 8),
               Text(

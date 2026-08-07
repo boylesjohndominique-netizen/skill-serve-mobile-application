@@ -7,6 +7,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/widgets/cards/booking_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Provider's job history — completed bookings only.
 class CompletedJobsScreen extends StatefulWidget {
@@ -35,7 +36,7 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
             : controller.completed.isEmpty
-                ? const EmptyState(icon: Icons.task_alt_rounded, title: 'No completed jobs yet', message: 'Your finished bookings will be listed here.')
+                ? const EmptyState(icon: AppIcons.task_alt_rounded, title: 'No completed jobs yet', message: 'Your finished bookings will be listed here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     itemCount: controller.completed.length,

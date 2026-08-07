@@ -9,11 +9,13 @@ import '../../core/widgets/buttons/outlined_app_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 const _payoutMethods = [
-  ('GCash', Icons.account_balance_wallet_rounded, 'Withdraw to your GCash wallet'),
-  ('Maya', Icons.account_balance_wallet_rounded, 'Withdraw to your Maya wallet'),
-  ('Card', Icons.credit_card_rounded, 'Withdraw to a linked bank card'),
+  ('GCash', AppIcons.account_balance_wallet_rounded, 'Withdraw to your GCash wallet'),
+  ('Maya', AppIcons.account_balance_wallet_rounded, 'Withdraw to your Maya wallet'),
+  ('Card', AppIcons.credit_card_rounded, 'Withdraw to a linked bank card'),
 ];
 
 /// Earnings summary — completed-job payouts + payout method.
@@ -46,12 +48,12 @@ class _EarningsScreenState extends State<EarningsScreen> {
               for (final m in _payoutMethods)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(m.$2, color: AppColors.secondary),
+                  leading: AppIcon(m.$2, color: AppColors.secondary),
                   title: Text(m.$1, style: AppTextStyles.bodyLarge),
                   subtitle: Text(m.$3, style: AppTextStyles.bodySmall),
                   trailing: _payoutMethod == m.$1
-                      ? const Icon(Icons.check_circle_rounded, color: AppColors.secondary)
-                      : const Icon(Icons.radio_button_off_rounded, color: AppColors.neutral300),
+                      ? const AppIcon(AppIcons.check_circle_rounded, color: AppColors.secondary)
+                      : const AppIcon(AppIcons.radio_button_off_rounded, color: AppColors.neutral300),
                   onTap: () => Navigator.of(context).pop(m.$1),
                 ),
             ],
@@ -108,7 +110,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             const SizedBox(height: AppSizes.lg),
             OutlinedAppButton(
               label: 'View withdrawal history',
-              icon: Icons.history_rounded,
+              icon: AppIcons.history_rounded,
               onPressed: () => context.push('/withdrawal-history'),
             ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.md),
@@ -132,7 +134,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                         gradient: AppColors.brassGradient,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
-                      child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18),
+                      child: const AppIcon(AppIcons.account_balance_wallet_rounded, color: Colors.white, size: 18),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Expanded(
@@ -144,7 +146,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded, color: AppColors.neutral300),
+                    const AppIcon(AppIcons.chevron_right_rounded, color: AppColors.neutral300),
                   ],
                 ),
               ),
@@ -168,7 +170,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(color: AppColors.successBg, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-                      child: const Icon(Icons.arrow_downward_rounded, color: AppColors.success, size: 16),
+                      child: const AppIcon(AppIcons.arrow_downward_rounded, color: AppColors.success, size: 16),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Expanded(

@@ -12,6 +12,8 @@ import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../models/payment_model.dart';
 import '../../services/payment_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Full payment receipt — client, provider, method, reference, amount.
 class PaymentDetailsScreen extends StatefulWidget {
@@ -75,10 +77,10 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                             : (p.status == PaymentStatus.refunded ? AppColors.warningBg : AppColors.errorBg),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: AppIcon(
                         p.status == PaymentStatus.paid
-                            ? Icons.check_rounded
-                            : (p.status == PaymentStatus.refunded ? Icons.currency_exchange_rounded : Icons.error_rounded),
+                            ? AppIcons.check_rounded
+                            : (p.status == PaymentStatus.refunded ? AppIcons.currency_exchange_rounded : AppIcons.error_rounded),
                         size: 32,
                         color: p.status == PaymentStatus.paid
                             ? AppColors.success
@@ -119,7 +121,7 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
               const SizedBox(height: AppSizes.xl),
               OutlinedAppButton(
                 label: 'Share receipt',
-                icon: Icons.ios_share_rounded,
+                icon: AppIcons.ios_share_rounded,
                 onPressed: _share,
               ).animate().fadeIn(delay: 260.ms, duration: 350.ms),
               const SizedBox(height: AppSizes.sm),

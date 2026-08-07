@@ -6,6 +6,8 @@ import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
 import '../../../models/booking_model.dart';
 import '../misc/status_badge.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Booking summary card used in Booking History (client) and
 /// Booking Requests / Active / Completed lists (provider).
@@ -74,11 +76,11 @@ class _BookingCardState extends State<BookingCard> {
               Divider(height: AppSizes.lg, color: lineColor),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
+                  const AppIcon(AppIcons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
                   const SizedBox(width: 6),
                   Text(Formatters.dateShort(widget.booking.bookingDate), style: AppTextStyles.bodySmall),
                   const SizedBox(width: 14),
-                  const Icon(Icons.access_time_rounded, size: 14, color: AppColors.neutral300),
+                  const AppIcon(AppIcons.access_time_rounded, size: 14, color: AppColors.neutral300),
                   const SizedBox(width: 6),
                   Text(widget.booking.schedule, style: AppTextStyles.bodySmall),
                   const Spacer(),

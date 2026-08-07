@@ -45,6 +45,9 @@ dependencies:
   # Media (UI only — no upload logic)
   image_picker: ^1.1.2
 
+  # Icons
+  hugeicons: ^1.1.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

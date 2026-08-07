@@ -9,6 +9,7 @@ import '../../core/widgets/cards/booking_card.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Bookings the provider has accepted and is actively working on.
 class ActiveJobsScreen extends StatefulWidget {
@@ -37,7 +38,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
             : controller.active.isEmpty
-                ? const EmptyState(icon: Icons.work_outline_rounded, title: 'No active jobs', message: 'Accepted bookings you\'re currently working on will show up here.')
+                ? const EmptyState(icon: AppIcons.work_outline_rounded, title: 'No active jobs', message: 'Accepted bookings you\'re currently working on will show up here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     itemCount: controller.active.length,
@@ -51,7 +52,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                           const SizedBox(height: AppSizes.sm),
                           PrimaryButton(
                             label: 'Mark as completed',
-                            icon: Icons.task_alt_rounded,
+                            icon: AppIcons.task_alt_rounded,
                             onPressed: () async {
                               await controller.complete(booking.id);
                               if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');

@@ -18,13 +18,15 @@ import '../../models/provider_model.dart';
 import '../../models/service_model.dart';
 import '../../services/booking_service.dart';
 import '../../services/service_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 const _slots = ['8:00 AM', '9:30 AM', '11:00 AM', '1:30 PM', '3:00 PM', '4:30 PM'];
 const _paymentMethods = [
-  ('GCash', Icons.account_balance_wallet_rounded, 'Pay instantly via GCash'),
-  ('Maya', Icons.account_balance_wallet_rounded, 'Pay instantly via Maya'),
-  ('Cash on hand', Icons.payments_outlined, 'Pay when the job is done'),
-  ('Card', Icons.credit_card_rounded, 'Pay with a debit / credit card'),
+  ('GCash', AppIcons.account_balance_wallet_rounded, 'Pay instantly via GCash'),
+  ('Maya', AppIcons.account_balance_wallet_rounded, 'Pay instantly via Maya'),
+  ('Cash on hand', AppIcons.payments_outlined, 'Pay when the job is done'),
+  ('Card', AppIcons.credit_card_rounded, 'Pay with a debit / credit card'),
 ];
 
 /// SkillServe 4-step booking wizard —
@@ -191,7 +193,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                 Expanded(
                   child: OutlinedAppButton(
                     label: 'Back',
-                    icon: Icons.arrow_back_rounded,
+                    icon: AppIcons.arrow_back_rounded,
                     onPressed: _submitting ? null : () => setState(() => _step--),
                   ),
                 ),
@@ -201,7 +203,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                 flex: 2,
                 child: PrimaryButton(
                   label: _step == 3 ? 'Confirm booking' : 'Continue',
-                  icon: _step == 3 ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                  icon: _step == 3 ? AppIcons.check_rounded : AppIcons.arrow_forward_rounded,
                   isLoading: _submitting,
                   onPressed: _next,
                 ),
@@ -276,11 +278,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.secondary),
+                const AppIcon(AppIcons.calendar_today_rounded, size: 18, color: AppColors.secondary),
                 const SizedBox(width: AppSizes.sm),
                 Text(Formatters.dateShort(_date), style: AppTextStyles.bodyLarge),
                 const Spacer(),
-                const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.neutral300),
+                const AppIcon(AppIcons.chevron_right_rounded, size: 18, color: AppColors.neutral300),
               ],
             ),
           ),
@@ -322,14 +324,14 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         const SizedBox(height: 4),
         Text('Where should ${_provider!.user.firstName} go, and how will you pay?', style: AppTextStyles.bodyMedium),
         const SizedBox(height: AppSizes.lg),
-        AppTextField(label: 'Full name', hint: 'Juan Dela Cruz', controller: _nameController, prefixIcon: Icons.person_outline_rounded),
+        AppTextField(label: 'Full name', hint: 'Juan Dela Cruz', controller: _nameController, prefixIcon: AppIcons.person_outline_rounded),
         const SizedBox(height: AppSizes.lg),
         AppTextField(
           label: 'Phone number',
           hint: '09XX XXX XXXX',
           controller: _phoneController,
           keyboardType: TextInputType.phone,
-          prefixIcon: Icons.phone_outlined,
+          prefixIcon: AppIcons.phone_outlined,
           validator: Validators.phone,
         ),
         const SizedBox(height: AppSizes.lg),
@@ -337,7 +339,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           label: 'Service address',
           hint: 'Where should the provider go?',
           controller: _addressController,
-          prefixIcon: Icons.location_on_outlined,
+          prefixIcon: AppIcons.location_on_outlined,
         ),
         const SizedBox(height: AppSizes.lg),
         AppTextField(
@@ -389,14 +391,14 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           ),
           child: Column(
             children: [
-              _summaryRow(Icons.handyman_outlined, 'Provider', _provider!.user.fullName),
-              _summaryRow(Icons.design_services_outlined, 'Service', _selectedService!.title),
-              _summaryRow(Icons.schedule_rounded, 'Duration', _selectedService!.duration),
-              _summaryRow(Icons.calendar_today_rounded, 'Schedule', '${Formatters.dateShort(_date)} · $_slot'),
-              _summaryRow(Icons.person_outline_rounded, 'Client', _nameController.text.trim()),
-              _summaryRow(Icons.phone_outlined, 'Phone', _phoneController.text.trim()),
-              _summaryRow(Icons.location_on_outlined, 'Address', _addressController.text.trim()),
-              _summaryRow(Icons.account_balance_wallet_rounded, 'Payment', _paymentMethod),
+              _summaryRow(AppIcons.handyman_outlined, 'Provider', _provider!.user.fullName),
+              _summaryRow(AppIcons.design_services_outlined, 'Service', _selectedService!.title),
+              _summaryRow(AppIcons.schedule_rounded, 'Duration', _selectedService!.duration),
+              _summaryRow(AppIcons.calendar_today_rounded, 'Schedule', '${Formatters.dateShort(_date)} · $_slot'),
+              _summaryRow(AppIcons.person_outline_rounded, 'Client', _nameController.text.trim()),
+              _summaryRow(AppIcons.phone_outlined, 'Phone', _phoneController.text.trim()),
+              _summaryRow(AppIcons.location_on_outlined, 'Address', _addressController.text.trim()),
+              _summaryRow(AppIcons.account_balance_wallet_rounded, 'Payment', _paymentMethod),
             ],
           ),
         ),
@@ -425,12 +427,12 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     );
   }
 
-  Widget _summaryRow(IconData icon, String label, String value) {
+  Widget _summaryRow(AppIconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.neutral300),
+          AppIcon(icon, size: 16, color: AppColors.neutral300),
           const SizedBox(width: AppSizes.sm),
           Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
           Flexible(
@@ -494,7 +496,7 @@ class _WizardStepper extends StatelessWidget {
                   ),
                   child: Center(
                     child: i < current
-                        ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                        ? const AppIcon(AppIcons.check_rounded, size: 16, color: Colors.white)
                         : Text(
                             '${i + 1}',
                             style: AppTextStyles.label.copyWith(
@@ -576,7 +578,7 @@ class _RadioCard extends StatelessWidget {
                 color: selected ? AppColors.secondary : Colors.transparent,
                 border: Border.all(color: selected ? AppColors.secondary : AppColors.neutral300, width: 1.6),
               ),
-              child: selected ? const Icon(Icons.check_rounded, size: 13, color: Colors.white) : null,
+              child: selected ? const AppIcon(AppIcons.check_rounded, size: 13, color: Colors.white) : null,
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(
@@ -604,7 +606,7 @@ class _RadioCard extends StatelessWidget {
 /// ─── Payment method tile ───
 class _MethodTile extends StatelessWidget {
   final bool selected;
-  final IconData icon;
+  final AppIconData icon;
   final String label;
   final String subtitle;
   final VoidCallback onTap;
@@ -633,7 +635,7 @@ class _MethodTile extends StatelessWidget {
                 color: selected ? AppColors.secondary : (isDark ? AppColors.surfaceDark : Colors.white),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSm),
               ),
-              child: Icon(icon, size: 17, color: selected ? Colors.white : AppColors.neutral400),
+              child: AppIcon(icon, size: 17, color: selected ? Colors.white : AppColors.neutral400),
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(
@@ -645,8 +647,8 @@ class _MethodTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+            AppIcon(
+              selected ? AppIcons.radio_button_checked_rounded : AppIcons.radio_button_off_rounded,
               size: 19,
               color: selected ? AppColors.secondary : AppColors.neutral300,
             ),

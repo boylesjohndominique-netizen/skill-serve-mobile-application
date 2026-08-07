@@ -9,6 +9,7 @@ import '../../core/widgets/misc/rating_widget.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/review_model.dart';
 import '../../services/review_service.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Full reviews list for a provider — reused from the Provider Profile
 /// ("See all") and from the Service Provider's own "Reviews" screen.
@@ -63,7 +64,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                   ),
                   Expanded(
                     child: _reviews!.isEmpty
-                        ? const EmptyState(icon: Icons.star_border_rounded, title: 'No reviews yet', message: 'Reviews from clients will appear here.')
+                        ? const EmptyState(icon: AppIcons.star_border_rounded, title: 'No reviews yet', message: 'Reviews from clients will appear here.')
                         : ListView.separated(
                             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad).copyWith(bottom: AppSizes.xl),
                             itemCount: _reviews!.length,

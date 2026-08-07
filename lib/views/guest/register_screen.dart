@@ -12,6 +12,8 @@ import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../models/user_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -61,7 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 IconButton(
                   onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
-                  icon: const Icon(Icons.arrow_back_rounded),
+                  icon: const AppIcon(AppIcons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
                 ).animate().fadeIn(duration: 250.ms),
                 const SizedBox(height: AppSizes.md),
@@ -93,7 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hint: 'you@email.com',
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.mail_outline_rounded,
+                  prefixIcon: AppIcons.mail_outline_rounded,
                   validator: Validators.email,
                 ).animate().fadeIn(delay: 370.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
@@ -102,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hint: 'At least 8 characters',
                   controller: _password,
                   obscureText: true,
-                  prefixIcon: Icons.lock_outline_rounded,
+                  prefixIcon: AppIcons.lock_outline_rounded,
                   validator: Validators.password,
                 ).animate().fadeIn(delay: 440.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
@@ -111,7 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   hint: 'Re-enter your password',
                   controller: _confirm,
                   obscureText: true,
-                  prefixIcon: Icons.lock_outline_rounded,
+                  prefixIcon: AppIcons.lock_outline_rounded,
                   validator: (v) => Validators.confirmPassword(v, _password.text),
                 ).animate().fadeIn(delay: 510.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.xl),
@@ -164,14 +166,14 @@ class _RoleToggle extends StatelessWidget {
       decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
       child: Row(
         children: [
-          Expanded(child: _tab('I need a service', UserRole.client, Icons.person_search_rounded)),
-          Expanded(child: _tab('I offer a service', UserRole.provider, Icons.handyman_rounded)),
+          Expanded(child: _tab('I need a service', UserRole.client, AppIcons.person_search_rounded)),
+          Expanded(child: _tab('I offer a service', UserRole.provider, AppIcons.handyman_rounded)),
         ],
       ),
     );
   }
 
-  Widget _tab(String label, UserRole value, IconData icon) {
+  Widget _tab(String label, UserRole value, AppIconData icon) {
     final selected = role == value;
     return GestureDetector(
       onTap: () => onChanged(value),
@@ -192,7 +194,7 @@ class _RoleToggle extends StatelessWidget {
               scale: selected ? 1.1 : 1.0,
               duration: AppAnimations.md,
               curve: AppAnimations.springCurve,
-              child: Icon(icon, size: 20, color: selected ? Colors.white : AppColors.textMuted),
+              child: AppIcon(icon, size: 20, color: selected ? Colors.white : AppColors.textMuted),
             ),
             const SizedBox(height: 4),
             Text(

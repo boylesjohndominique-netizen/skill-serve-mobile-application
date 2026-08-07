@@ -11,6 +11,8 @@ import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/service_model.dart';
 import '../../services/service_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class ServiceDetailsScreen extends StatefulWidget {
   final String serviceId;
@@ -61,9 +63,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               const SizedBox(height: AppSizes.sm),
               Row(
                 children: [
-                  _Pill(icon: Icons.payments_outlined, label: Formatters.peso(s.price), isDark: isDark),
+                  _Pill(icon: AppIcons.payments_outlined, label: Formatters.peso(s.price), isDark: isDark),
                   const SizedBox(width: AppSizes.sm),
-                  _Pill(icon: Icons.timer_outlined, label: s.duration, isDark: isDark),
+                  _Pill(icon: AppIcons.timer_outlined, label: s.duration, isDark: isDark),
                 ],
               ).animate().fadeIn(delay: 180.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
@@ -82,7 +84,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           padding: const EdgeInsets.all(AppSizes.lg),
           child: PrimaryButton(
             label: 'Book this service',
-            icon: Icons.calendar_month_rounded,
+            icon: AppIcons.calendar_month_rounded,
             onPressed: () => context.push('/booking-form/${s.providerId}'),
           ),
         ),
@@ -92,7 +94,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 }
 
 class _Pill extends StatelessWidget {
-  final IconData icon;
+  final AppIconData icon;
   final String label;
   final bool isDark;
   const _Pill({required this.icon, required this.label, this.isDark = false});
@@ -108,7 +110,7 @@ class _Pill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: AppColors.secondary),
+          AppIcon(icon, size: 15, color: AppColors.secondary),
           const SizedBox(width: 6),
           Text(label, style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600)),
         ],

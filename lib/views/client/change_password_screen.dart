@@ -8,6 +8,7 @@ import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../services/profile_service.dart';
+import '../../core/constants/app_icons.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -53,17 +54,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 Text('Choose a strong password you don\'t use elsewhere.', style: AppTextStyles.bodyLarge)
                     .animate().fadeIn(delay: 80.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.xl),
-                AppTextField(label: 'Current password', controller: _current, obscureText: true, prefixIcon: Icons.lock_outline_rounded, validator: Validators.password)
+                AppTextField(label: 'Current password', controller: _current, obscureText: true, prefixIcon: AppIcons.lock_outline_rounded, validator: Validators.password)
                     .animate().fadeIn(delay: 150.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
-                AppTextField(label: 'New password', controller: _next, obscureText: true, prefixIcon: Icons.lock_outline_rounded, validator: Validators.password)
+                AppTextField(label: 'New password', controller: _next, obscureText: true, prefixIcon: AppIcons.lock_outline_rounded, validator: Validators.password)
                     .animate().fadeIn(delay: 230.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Confirm new password',
                   controller: _confirm,
                   obscureText: true,
-                  prefixIcon: Icons.lock_outline_rounded,
+                  prefixIcon: AppIcons.lock_outline_rounded,
                   validator: (v) => Validators.confirmPassword(v, _next.text),
                 ).animate().fadeIn(delay: 310.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.xxl),

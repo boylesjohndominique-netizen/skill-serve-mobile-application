@@ -17,6 +17,8 @@ import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class BookingDetailsScreen extends StatelessWidget {
   final String bookingId;
@@ -66,7 +68,7 @@ class BookingDetailsScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.gavel_rounded, color: AppColors.error, size: 22),
+                      const AppIcon(AppIcons.gavel_rounded, color: AppColors.error, size: 22),
                       const SizedBox(width: AppSizes.md),
                       Expanded(
                         child: Column(
@@ -91,9 +93,9 @@ class BookingDetailsScreen extends StatelessWidget {
                 title: 'Schedule',
                 isDark: isDark,
                 children: [
-                  _detailRow(Icons.calendar_today_rounded, 'Date', Formatters.dateShort(booking.bookingDate)),
-                  _detailRow(Icons.access_time_rounded, 'Time', booking.schedule),
-                  _detailRow(Icons.location_on_outlined, 'Address', booking.address.isEmpty ? '—' : booking.address),
+                  _detailRow(AppIcons.calendar_today_rounded, 'Date', Formatters.dateShort(booking.bookingDate)),
+                  _detailRow(AppIcons.access_time_rounded, 'Time', booking.schedule),
+                  _detailRow(AppIcons.location_on_outlined, 'Address', booking.address.isEmpty ? '—' : booking.address),
                 ],
               ).animate().fadeIn(delay: 150.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.lg),
@@ -101,9 +103,9 @@ class BookingDetailsScreen extends StatelessWidget {
                 title: 'Parties',
                 isDark: isDark,
                 children: [
-                  _detailRow(Icons.person_outline_rounded, 'Client', booking.clientName),
-                  _detailRow(Icons.handyman_outlined, 'Provider', booking.providerName),
-                  _detailRow(Icons.account_balance_wallet_rounded, 'Payment', booking.paymentMethod),
+                  _detailRow(AppIcons.person_outline_rounded, 'Client', booking.clientName),
+                  _detailRow(AppIcons.handyman_outlined, 'Provider', booking.providerName),
+                  _detailRow(AppIcons.account_balance_wallet_rounded, 'Payment', booking.paymentMethod),
                 ],
               ).animate().fadeIn(delay: 250.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               if (booking.notes != null && booking.notes!.isNotEmpty) ...[
@@ -156,7 +158,7 @@ class BookingDetailsScreen extends StatelessWidget {
         case BookingStatus.pending:
           actions.add(PrimaryButton(
             label: 'Accept request',
-            icon: Icons.check_rounded,
+            icon: AppIcons.check_rounded,
             onPressed: () async {
               await context.read<ProviderBookingController>().accept(booking.id);
               if (context.mounted) AppSnackbar.success(context, 'Booking accepted!');
@@ -165,7 +167,7 @@ class BookingDetailsScreen extends StatelessWidget {
           actions.add(const SizedBox(height: AppSizes.sm));
           actions.add(OutlinedAppButton(
             label: 'Decline request',
-            icon: Icons.close_rounded,
+            icon: AppIcons.close_rounded,
             color: AppColors.error,
             onPressed: () async {
               final confirmed = await AppDialog.confirm(
@@ -184,7 +186,7 @@ class BookingDetailsScreen extends StatelessWidget {
         case BookingStatus.confirmed:
           actions.add(PrimaryButton(
             label: 'Start job',
-            icon: Icons.play_arrow_rounded,
+            icon: AppIcons.play_arrow_rounded,
             onPressed: () async {
               await context.read<ProviderBookingController>().start(booking.id);
               if (context.mounted) AppSnackbar.success(context, 'Job started — good luck!');
@@ -193,13 +195,13 @@ class BookingDetailsScreen extends StatelessWidget {
           actions.add(const SizedBox(height: AppSizes.sm));
           actions.add(OutlinedAppButton(
             label: 'Message client',
-            icon: Icons.chat_bubble_outline_rounded,
+            icon: AppIcons.chat_bubble_outline_rounded,
             onPressed: () => context.push('/chat-conversation/${booking.clientId}'),
           ));
         case BookingStatus.inProgress:
           actions.add(PrimaryButton(
             label: 'Mark as completed',
-            icon: Icons.task_alt_rounded,
+            icon: AppIcons.task_alt_rounded,
             onPressed: () async {
               await context.read<ProviderBookingController>().complete(booking.id);
               if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');
@@ -215,7 +217,7 @@ class BookingDetailsScreen extends StatelessWidget {
     if (booking.status == BookingStatus.pending || booking.status == BookingStatus.confirmed) {
       actions.add(OutlinedAppButton(
         label: 'Cancel booking',
-        icon: Icons.close_rounded,
+        icon: AppIcons.close_rounded,
         color: AppColors.error,
         onPressed: () async {
           final confirmed = await AppDialog.confirm(
@@ -238,32 +240,32 @@ class BookingDetailsScreen extends StatelessWidget {
     if (booking.status == BookingStatus.completed) {
       actions.add(PrimaryButton(
         label: 'Leave a review',
-        icon: Icons.star_border_rounded,
+        icon: AppIcons.star_border_rounded,
         onPressed: () => context.push('/write-review/${booking.id}'),
       ));
     }
     if (booking.status == BookingStatus.disputed) {
       actions.add(OutlinedAppButton(
         label: 'Contact support',
-        icon: Icons.support_agent_rounded,
+        icon: AppIcons.support_agent_rounded,
         onPressed: () => context.push('/help-center'),
       ));
     }
     actions.add(const SizedBox(height: AppSizes.sm));
     actions.add(TextButton.icon(
       onPressed: () => context.push('/file-report?bookingId=${booking.id}'),
-      icon: const Icon(Icons.flag_outlined, size: 16, color: AppColors.neutral300),
+      icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
       label: Text('Report an issue', style: AppTextStyles.label.copyWith(color: AppColors.neutral300)),
     ));
     return Column(children: actions);
   }
 
-  Widget _detailRow(IconData icon, String label, String value) {
+  Widget _detailRow(AppIconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.neutral300),
+          AppIcon(icon, size: 16, color: AppColors.neutral300),
           const SizedBox(width: AppSizes.sm),
           Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
           Flexible(

@@ -3,6 +3,8 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Standard labeled text field used across auth, booking, and profile forms.
 /// Features animated label color shift and subtle container shadow on focus.
@@ -13,7 +15,7 @@ class AppTextField extends StatefulWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-  final IconData? prefixIcon;
+  final AppIconData? prefixIcon;
   final int maxLines;
   final void Function(String)? onChanged;
 
@@ -83,12 +85,12 @@ class _AppTextFieldState extends State<AppTextField> {
               decoration: InputDecoration(
                 hintText: widget.hint,
                 prefixIcon: widget.prefixIcon != null
-                    ? Icon(widget.prefixIcon, size: 20, color: _focused ? AppColors.secondary : AppColors.neutral300)
+                    ? AppIcon(widget.prefixIcon, size: 20, color: _focused ? AppColors.secondary : AppColors.neutral300)
                     : null,
                 suffixIcon: widget.obscureText
                     ? IconButton(
-                        icon: Icon(
-                          _obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        icon: AppIcon(
+                          _obscured ? AppIcons.visibility_off_outlined : AppIcons.visibility_outlined,
                           size: 20,
                           color: _focused ? AppColors.secondary : AppColors.neutral300,
                         ),

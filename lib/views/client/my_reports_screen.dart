@@ -12,6 +12,8 @@ import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../models/report_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// My reports — status pills plus a timeline of admin actions per report.
 class MyReportsScreen extends StatefulWidget {
@@ -39,7 +41,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
       appBar: AppBar(
         title: const Text('My Reports'),
         actions: [
-          IconButton(onPressed: () => context.push('/file-report'), icon: const Icon(Icons.add_rounded)),
+          IconButton(onPressed: () => context.push('/file-report'), icon: const AppIcon(AppIcons.add_rounded)),
         ],
       ),
       body: SafeArea(
@@ -47,7 +49,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 120))
             : controller.reports.isEmpty
                 ? EmptyState(
-                    icon: Icons.flag_outlined,
+                    icon: AppIcons.flag_outlined,
                     title: 'No reports yet',
                     message: 'If something went wrong with a booking, you can file a report here.',
                     actionLabel: 'File a report',
@@ -116,7 +118,7 @@ class _ReportCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
                   children: [
-                    Icon(_iconFor(u.status), size: 13, color: _colorFor(u.status)),
+                    AppIcon(_iconFor(u.status), size: 13, color: _colorFor(u.status)),
                     const SizedBox(width: 6),
                     Expanded(child: Text(u.label, style: AppTextStyles.bodySmall)),
                     Text(Formatters.relative(u.at), style: AppTextStyles.bodySmall),
@@ -129,18 +131,18 @@ class _ReportCard extends StatelessWidget {
     );
   }
 
-  IconData _iconFor(String status) {
+  AppIconData _iconFor(String status) {
     switch (status) {
       case 'investigating':
-        return Icons.manage_search_rounded;
+        return AppIcons.manage_search_rounded;
       case 'warned':
-        return Icons.warning_amber_rounded;
+        return AppIcons.warning_amber_rounded;
       case 'suspended':
-        return Icons.block_rounded;
+        return AppIcons.block_rounded;
       case 'closed':
-        return Icons.task_alt_rounded;
+        return AppIcons.task_alt_rounded;
       default:
-        return Icons.flag_outlined;
+        return AppIcons.flag_outlined;
     }
   }
 

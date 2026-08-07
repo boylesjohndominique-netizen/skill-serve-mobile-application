@@ -6,6 +6,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/buttons/outlined_app_button.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -42,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                     width: 96,
                     height: 96,
                     decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                    child: const Icon(Icons.check_rounded, color: Colors.white, size: 46),
+                    child: const AppIcon(AppIcons.check_rounded, color: Colors.white, size: 46),
                   ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
                 ],
               ),

@@ -3,6 +3,8 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Primary call-to-action button. Pass [isLoading] to show an inline
 /// spinner and disable interaction — this doubles as the "Loading Button"
@@ -14,7 +16,7 @@ class PrimaryButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
-  final IconData? icon;
+  final AppIconData? icon;
   final bool fullWidth;
 
   const PrimaryButton({
@@ -50,7 +52,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
               key: const ValueKey('content'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.icon != null) ...[Icon(widget.icon, size: AppSizes.iconMd, color: Colors.white), const SizedBox(width: 8)],
+                if (widget.icon != null) ...[AppIcon(widget.icon, size: AppSizes.iconMd, color: Colors.white), const SizedBox(width: 8)],
                 Text(widget.label, style: AppTextStyles.button.copyWith(color: Colors.white)),
               ],
             ),

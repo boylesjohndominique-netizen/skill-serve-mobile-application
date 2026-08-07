@@ -10,6 +10,8 @@ import '../../core/widgets/misc/status_badge.dart';
 import '../../core/widgets/misc/verification_seal.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/verification_document_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Shows the provider's ID/certificate review status with the signature
 /// VerificationSeal and document upload flow.
@@ -49,13 +51,13 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
               for (final t in ['ID', 'Certificate', 'Document'])
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    t == 'ID' ? Icons.badge_outlined : (t == 'Certificate' ? Icons.workspace_premium_outlined : Icons.description_outlined),
+                  leading: AppIcon(
+                    t == 'ID' ? AppIcons.badge_outlined : (t == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
                     color: AppColors.secondary,
                   ),
                   title: Text(t, style: AppTextStyles.bodyLarge),
                   subtitle: const Text('Photo or PDF'),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.neutral300),
+                  trailing: const AppIcon(AppIcons.chevron_right_rounded, color: AppColors.neutral300),
                   onTap: () => Navigator.of(context).pop(t),
                 ),
             ],
@@ -187,10 +189,10 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
                         color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.warningBg,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
-                      child: Icon(
+                      child: AppIcon(
                         _docs[i].type == 'ID'
-                            ? Icons.badge_outlined
-                            : (_docs[i].type == 'Certificate' ? Icons.workspace_premium_outlined : Icons.description_outlined),
+                            ? AppIcons.badge_outlined
+                            : (_docs[i].type == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
                         size: 17,
                         color: _docs[i].status == 'approved' ? AppColors.success : AppColors.warning,
                       ),
@@ -215,7 +217,7 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
             const SizedBox(height: AppSizes.xl),
             OutlinedAppButton(
               label: 'Upload a document',
-              icon: Icons.upload_file_rounded,
+              icon: AppIcons.upload_file_rounded,
               onPressed: _uploadDoc,
             ).animate().fadeIn(delay: 700.ms, duration: 350.ms),
           ],

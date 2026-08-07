@@ -12,6 +12,8 @@ import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../data/mock/mock_data.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Provider's own portfolio grid — shows moderation status per item and
 /// links to Upload Portfolio for new submissions.
@@ -41,7 +43,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
           ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 160))
           : controller.items.isEmpty
               ? EmptyState(
-                  icon: Icons.photo_library_outlined,
+                  icon: AppIcons.photo_library_outlined,
                   title: 'Showcase your work',
                   message: 'Upload photos of completed jobs to build trust with future clients.',
                   actionLabel: 'Upload portfolio item',
@@ -103,7 +105,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                     child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.rotate_left_rounded, size: 12, color: Colors.white),
+                                        AppIcon(AppIcons.rotate_left_rounded, size: 12, color: Colors.white),
                                         SizedBox(width: 4),
                                         Text('Tap to resubmit', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
                                       ],
@@ -148,7 +150,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
         appBar: AppBar(
           title: const Text('Portfolio'),
           automaticallyImplyLeading: false,
-          actions: [IconButton(onPressed: () => context.push('/upload-portfolio'), icon: const Icon(Icons.add_rounded))],
+          actions: [IconButton(onPressed: () => context.push('/upload-portfolio'), icon: const AppIcon(AppIcons.add_rounded))],
         ),
         body: body,
       );
@@ -156,7 +158,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Portfolio'),
-        actions: [IconButton(onPressed: () => context.push('/upload-portfolio'), icon: const Icon(Icons.add_rounded))],
+        actions: [IconButton(onPressed: () => context.push('/upload-portfolio'), icon: const AppIcon(AppIcons.add_rounded))],
       ),
       body: body,
     );

@@ -8,6 +8,8 @@ import '../../utils/formatters.dart';
 import '../../../models/provider_model.dart';
 import '../misc/rating_widget.dart';
 import '../feedback/shimmer_placeholder.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Provider summary card — used in Browse Services, Search results, and
 /// Favorites. Shows the platform's verification seal when applicable.
@@ -113,7 +115,7 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(color: surfaceColor, shape: BoxShape.circle),
-                        child: const Icon(Icons.verified_rounded, size: 16, color: AppColors.secondary),
+                        child: const AppIcon(AppIcons.verified_rounded, size: 16, color: AppColors.secondary),
                       ),
                     ),
                 ],
@@ -136,8 +138,8 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                               scale: _heartScale.value,
                               child: child,
                             ),
-                            child: Icon(
-                              widget.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            child: AppIcon(
+                              widget.isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
                               size: 19,
                               color: widget.isFavorite ? AppColors.error : AppColors.neutral300,
                             ),
@@ -152,7 +154,7 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                       children: [
                         RatingWidget(rating: widget.provider.averageRating, reviewCount: widget.provider.reviewCount),
                         const SizedBox(width: 10),
-                        const Icon(Icons.work_outline_rounded, size: 13, color: AppColors.neutral300),
+                        const AppIcon(AppIcons.work_outline_rounded, size: 13, color: AppColors.neutral300),
                         const SizedBox(width: 3),
                         Text('${widget.provider.completedJobs} jobs', style: AppTextStyles.bodySmall),
                       ],

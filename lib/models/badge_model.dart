@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/constants/app_icons.dart';
 
 /// A recognition badge awarded to providers by performance rules
 /// (see spec Section 4).
@@ -21,20 +22,20 @@ class BadgeModel {
     this.progressLabel = '',
   });
 
-  IconData get icon {
+  AppIconData get icon {
     switch (key) {
       case 'top_rated':
-        return Icons.star_rounded;
+        return AppIcons.star_rounded;
       case 'rising_star':
-        return Icons.trending_up_rounded;
+        return AppIcons.trending_up_rounded;
       case 'veteran':
-        return Icons.military_tech_rounded;
+        return AppIcons.military_tech_rounded;
       case 'verified_pro':
-        return Icons.verified_rounded;
+        return AppIcons.verified_rounded;
       case 'community_favorite':
-        return Icons.favorite_rounded;
+        return AppIcons.favorite_rounded;
       default:
-        return Icons.workspace_premium_rounded;
+        return AppIcons.workspace_premium_rounded;
     }
   }
 

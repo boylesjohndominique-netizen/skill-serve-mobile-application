@@ -3,6 +3,8 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../models/user_model.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Header card showing avatar, name, and role — used at the top of Profile
 /// / Settings screens for both Client and Provider.
@@ -66,7 +68,7 @@ class ProfileCard extends StatelessWidget {
               ),
               child: IconButton(
                 onPressed: onEdit,
-                icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+                icon: const AppIcon(AppIcons.edit_rounded, color: Colors.white, size: 20),
               ),
             ),
         ],

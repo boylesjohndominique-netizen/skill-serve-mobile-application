@@ -13,6 +13,8 @@ import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/report_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// File a complaint / dispute — reason picklist + details + optional booking.
 class FileReportScreen extends StatefulWidget {
@@ -58,7 +60,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.link_rounded, size: 16, color: AppColors.info),
+                      const AppIcon(AppIcons.link_rounded, size: 16, color: AppColors.info),
                       const SizedBox(width: AppSizes.sm),
                       Expanded(
                         child: Text(
@@ -79,7 +81,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
                 label: 'Provider name',
                 hint: 'Full name of the provider',
                 controller: _reportedController,
-                prefixIcon: Icons.person_outline_rounded,
+                prefixIcon: AppIcons.person_outline_rounded,
               ).animate().fadeIn(delay: 220.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.xl),
 
@@ -119,7 +121,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
           padding: const EdgeInsets.all(AppSizes.lg),
           child: PrimaryButton(
             label: 'Submit report',
-            icon: Icons.flag_rounded,
+            icon: AppIcons.flag_rounded,
             isLoading: controller.isSubmitting,
             onPressed: _reason == null || _detailsController.text.trim().isEmpty
                 ? null
@@ -160,7 +162,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
               width: 64,
               height: 64,
               decoration: const BoxDecoration(color: AppColors.successBg, shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: AppColors.success, size: 32),
+              child: const AppIcon(AppIcons.check_rounded, color: AppColors.success, size: 32),
             ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
             const SizedBox(height: AppSizes.lg),
             Text('Report submitted', style: AppTextStyles.titleLarge),
@@ -212,8 +214,8 @@ class _ReasonTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+            AppIcon(
+              selected ? AppIcons.radio_button_checked_rounded : AppIcons.radio_button_off_rounded,
               size: 18,
               color: selected ? AppColors.secondary : AppColors.neutral300,
             ),

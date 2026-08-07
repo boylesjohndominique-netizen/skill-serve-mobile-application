@@ -5,9 +5,11 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/buttons/primary_button.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class _OnboardSlide {
-  final IconData icon;
+  final AppIconData icon;
   final String title;
   final String description;
   const _OnboardSlide({required this.icon, required this.title, required this.description});
@@ -15,22 +17,22 @@ class _OnboardSlide {
 
 const _slides = [
   _OnboardSlide(
-    icon: Icons.handyman_rounded,
+    icon: AppIcons.handyman_rounded,
     title: 'Find trusted local talent',
     description: 'Browse verified plumbers, electricians, tutors, designers, and more — all background-checked.',
   ),
   _OnboardSlide(
-    icon: Icons.event_available_rounded,
+    icon: AppIcons.event_available_rounded,
     title: 'Book in a few taps',
     description: 'Pick a service, choose a schedule, and confirm your booking — no back-and-forth calls needed.',
   ),
   _OnboardSlide(
-    icon: Icons.verified_user_rounded,
+    icon: AppIcons.verified_user_rounded,
     title: 'Verified & rated providers',
     description: 'Every provider is ID-verified and rated by real clients, so you always know who you\'re hiring.',
   ),
   _OnboardSlide(
-    icon: Icons.storefront_rounded,
+    icon: AppIcons.storefront_rounded,
     title: 'Grow your service business',
     description: 'Providers get a public profile, booking calendar, and direct messaging — all in one app.',
   ),
@@ -109,7 +111,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 color: AppColors.surfaceAlt,
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: Icon(slide.icon, size: 68, color: AppColors.secondary),
+                              child: AppIcon(slide.icon, size: 68, color: AppColors.secondary),
                             )
                                 .animate(key: ValueKey(i))
                                 .fadeIn(duration: 350.ms)

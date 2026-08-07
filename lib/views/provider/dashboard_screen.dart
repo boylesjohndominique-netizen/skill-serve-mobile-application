@@ -15,6 +15,8 @@ import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Provider's home tab — quick stats, verification status, and today's
 /// pending requests.
@@ -74,7 +76,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Icon(Icons.notifications_outlined, size: 20),
+                      child: const AppIcon(AppIcons.notifications_outlined, size: 20),
                     ),
                   ).animate().fadeIn(delay: 100.ms, duration: 300.ms).scale(begin: const Offset(0.7, 0.7), curve: Curves.easeOutBack),
                 ],
@@ -94,8 +96,8 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        providerProfile.isVerified ? Icons.verified_rounded : Icons.hourglass_top_rounded,
+                      AppIcon(
+                        providerProfile.isVerified ? AppIcons.verified_rounded : AppIcons.hourglass_top_rounded,
                         color: AppColors.secondary,
                         size: 20,
                       ),
@@ -117,11 +119,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               // ── Quick actions ──
               Row(
                 children: [
-                  _QuickAction(icon: Icons.add_circle_outline_rounded, label: 'Add service', onTap: () => context.push('/add-service'), index: 0),
+                  _QuickAction(icon: AppIcons.add_circle_outline_rounded, label: 'Add service', onTap: () => context.push('/add-service'), index: 0),
                   const SizedBox(width: AppSizes.sm),
-                  _QuickAction(icon: Icons.photo_library_outlined, label: 'Upload portfolio', onTap: () => context.push('/upload-portfolio'), index: 1),
+                  _QuickAction(icon: AppIcons.photo_library_outlined, label: 'Upload portfolio', onTap: () => context.push('/upload-portfolio'), index: 1),
                   const SizedBox(width: AppSizes.sm),
-                  _QuickAction(icon: Icons.verified_user_outlined, label: 'Verification', onTap: () => context.push('/verification-status'), index: 2),
+                  _QuickAction(icon: AppIcons.verified_user_outlined, label: 'Verification', onTap: () => context.push('/verification-status'), index: 2),
                 ],
               ),
 
@@ -136,10 +138,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 crossAxisSpacing: AppSizes.md,
                 childAspectRatio: 1.5,
                 children: [
-                  _StatTile(label: 'Pending Requests', value: '${bookings.requests.length}', icon: Icons.pending_actions_rounded, index: 0, onTap: () => context.push('/booking-requests')),
-                  _StatTile(label: 'Active Jobs', value: '${bookings.active.length}', icon: Icons.work_rounded, index: 1, onTap: () => context.push('/active-jobs')),
-                  _StatTile(label: 'Completed', value: '${bookings.completed.length}', icon: Icons.task_alt_rounded, index: 2, onTap: () => context.push('/completed-jobs')),
-                  _StatTile(label: 'This Month', value: Formatters.peso(earningsThisMonth), icon: Icons.payments_rounded, index: 3, onTap: () => context.push('/earnings')),
+                  _StatTile(label: 'Pending Requests', value: '${bookings.requests.length}', icon: AppIcons.pending_actions_rounded, index: 0, onTap: () => context.push('/booking-requests')),
+                  _StatTile(label: 'Active Jobs', value: '${bookings.active.length}', icon: AppIcons.work_rounded, index: 1, onTap: () => context.push('/active-jobs')),
+                  _StatTile(label: 'Completed', value: '${bookings.completed.length}', icon: AppIcons.task_alt_rounded, index: 2, onTap: () => context.push('/completed-jobs')),
+                  _StatTile(label: 'This Month', value: Formatters.peso(earningsThisMonth), icon: AppIcons.payments_rounded, index: 3, onTap: () => context.push('/earnings')),
                 ],
               ),
 
@@ -156,7 +158,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               if (bookings.isLoading)
                 const ShimmerCardList(count: 2, itemHeight: 110)
               else if (bookings.active.isEmpty)
-                const EmptyState(icon: Icons.event_available_outlined, title: 'Nothing scheduled', message: 'Confirmed jobs will show up here.')
+                const EmptyState(icon: AppIcons.event_available_outlined, title: 'Nothing scheduled', message: 'Confirmed jobs will show up here.')
               else
                 Column(
                   children: [
@@ -183,7 +185,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               if (bookings.isLoading)
                 const ShimmerCardList(count: 2, itemHeight: 130)
               else if (bookings.requests.isEmpty)
-                const EmptyState(icon: Icons.inbox_outlined, title: 'No new requests', message: 'New booking requests will show up here.')
+                const EmptyState(icon: AppIcons.inbox_outlined, title: 'No new requests', message: 'New booking requests will show up here.')
               else
                 Column(
                   children: [
@@ -208,7 +210,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
 class _StatTile extends StatefulWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final AppIconData icon;
   final int index;
   final VoidCallback onTap;
 
@@ -250,7 +252,7 @@ class _StatTileState extends State<_StatTile> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: AppColors.secondary, size: 20),
+              AppIcon(widget.icon, color: AppColors.secondary, size: 20),
               const SizedBox(height: 8),
               Text(widget.value, style: AppTextStyles.titleLarge.copyWith(fontFamily: AppTextStyles.headlineLarge.fontFamily)),
               Text(widget.label, style: AppTextStyles.bodySmall),
@@ -266,7 +268,7 @@ class _StatTileState extends State<_StatTile> {
 
 /// Compact quick-action tile for the dashboard.
 class _QuickAction extends StatelessWidget {
-  final IconData icon;
+  final AppIconData icon;
   final String label;
   final VoidCallback onTap;
   final int index;
@@ -289,7 +291,7 @@ class _QuickAction extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, size: 22, color: AppColors.secondary),
+              AppIcon(icon, size: 22, color: AppColors.secondary),
               const SizedBox(height: 6),
               Text(
                 label,
@@ -335,7 +337,7 @@ class _UpcomingTile extends StatelessWidget {
                 gradient: AppColors.brassGradient,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              child: const Icon(Icons.event_available_rounded, color: Colors.white, size: 18),
+              child: const AppIcon(AppIcons.event_available_rounded, color: Colors.white, size: 18),
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(

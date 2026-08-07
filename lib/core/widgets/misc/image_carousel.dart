@@ -4,6 +4,8 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../feedback/shimmer_placeholder.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Swipeable image gallery used on provider profiles and portfolio galleries.
 /// Features smoother page indicators and improved dot indicator design.
@@ -31,7 +33,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
         child: const Center(
-          child: Icon(Icons.image_outlined, color: AppColors.neutral300, size: 40),
+          child: AppIcon(AppIcons.image_outlined, color: AppColors.neutral300, size: 40),
         ),
       );
     }
@@ -54,7 +56,7 @@ class _ImageCarouselState extends State<ImageCarousel> {
                 errorWidget: (context, url, error) => Container(
                   color: AppColors.surfaceAlt,
                   child: const Center(
-                    child: Icon(Icons.broken_image_outlined, color: AppColors.neutral300),
+                    child: AppIcon(AppIcons.broken_image_outlined, color: AppColors.neutral300),
                   ),
                 ),
               ),

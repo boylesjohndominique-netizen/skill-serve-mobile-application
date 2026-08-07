@@ -13,6 +13,8 @@ import '../../core/widgets/inputs/app_text_field.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../services/review_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Write a review for a completed booking (one review per completed booking).
 class WriteReviewScreen extends StatefulWidget {
@@ -77,8 +79,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                                 scale: i <= _rating ? 1.1 : 1.0,
                                 duration: AppAnimations.md,
                                 curve: AppAnimations.springCurve,
-                                child: Icon(
-                                  i <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                                child: AppIcon(
+                                  i <= _rating ? AppIcons.star_rounded : AppIcons.star_outline_rounded,
                                   size: 40,
                                   color: i <= _rating ? AppColors.star : AppColors.neutral200,
                                 ),
@@ -109,7 +111,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 hint: 'Share what went well (or what could improve)…',
                 controller: _commentController,
                 maxLines: 5,
-                prefixIcon: Icons.edit_outlined,
+                prefixIcon: AppIcons.edit_outlined,
               ).animate().fadeIn(delay: 450.ms, duration: 350.ms).slideY(begin: 0.05, end: 0),
               const SizedBox(height: AppSizes.xl),
             ],
@@ -132,7 +134,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 flex: 2,
                 child: PrimaryButton(
                   label: 'Submit review',
-                  icon: Icons.send_rounded,
+                  icon: AppIcons.send_rounded,
                   isLoading: _submitting,
                   onPressed: _rating == 0
                       ? null

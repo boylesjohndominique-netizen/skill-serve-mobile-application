@@ -3,11 +3,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Shown when a list/screen has no content yet (no bookings, no messages…).
 /// Features a gentle breathe animation on the icon and fade-in entrance.
 class EmptyState extends StatelessWidget {
-  final IconData icon;
+  final AppIconData icon;
   final String title;
   final String message;
   final String? actionLabel;
@@ -15,7 +17,7 @@ class EmptyState extends StatelessWidget {
 
   const EmptyState({
     super.key,
-    this.icon = Icons.inbox_outlined,
+    this.icon = AppIcons.inbox_outlined,
     required this.title,
     required this.message,
     this.actionLabel,
@@ -34,7 +36,7 @@ class EmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: const BoxDecoration(color: AppColors.surfaceAlt, shape: BoxShape.circle),
-              child: Icon(icon, size: 32, color: AppColors.neutral300),
+              child: AppIcon(icon, size: 32, color: AppColors.neutral300),
             )
                 .animate()
                 .fadeIn(duration: 400.ms)

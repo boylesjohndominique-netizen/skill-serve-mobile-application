@@ -7,6 +7,7 @@ import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/provider_model.dart';
 import '../../services/service_service.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Full portfolio gallery for a provider — grid of past work, tap to view
 /// full-screen.
@@ -56,7 +57,7 @@ class _PortfolioGalleryScreenState extends State<PortfolioGalleryScreen> {
       appBar: AppBar(title: Text('${_provider!.user.fullName}\'s Work')),
       body: SafeArea(
         child: images.isEmpty
-            ? const EmptyState(icon: Icons.photo_library_outlined, title: 'No portfolio yet', message: 'This provider hasn\'t uploaded work samples.')
+            ? const EmptyState(icon: AppIcons.photo_library_outlined, title: 'No portfolio yet', message: 'This provider hasn\'t uploaded work samples.')
             : GridView.builder(
                 padding: const EdgeInsets.all(AppSizes.pageHPad),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

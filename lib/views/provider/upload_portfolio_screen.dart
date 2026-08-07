@@ -11,6 +11,8 @@ import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../services/portfolio_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Upload form for a new portfolio item.
 class UploadPortfolioScreen extends StatefulWidget {
@@ -88,7 +90,7 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.add_photo_alternate_outlined, size: 36, color: AppColors.neutral300),
+                              const AppIcon(AppIcons.add_photo_alternate_outlined, size: 36, color: AppColors.neutral300),
                               const SizedBox(height: 8),
                               Text('Tap to select a photo', style: AppTextStyles.bodyMedium),
                             ],

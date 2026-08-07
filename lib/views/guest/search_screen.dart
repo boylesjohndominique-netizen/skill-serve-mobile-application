@@ -10,6 +10,8 @@ import '../../core/widgets/cards/provider_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/inputs/app_search_bar.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -52,7 +54,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           ActionChip(
                             label: Text(_recentSearches[i]),
                             onPressed: () => context.read<MarketplaceController>().search(_recentSearches[i]),
-                            avatar: const Icon(Icons.history_rounded, size: 16, color: AppColors.textMuted),
+                            avatar: const AppIcon(AppIcons.history_rounded, size: 16, color: AppColors.textMuted),
                           )
                               .animate()
                               .fadeIn(delay: Duration(milliseconds: 100 + i * 60), duration: 300.ms)
@@ -65,7 +67,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   ? const ShimmerCardList(count: 5, itemHeight: 100)
                   : marketplace.providers.isEmpty
                       ? const EmptyState(
-                          icon: Icons.search_off_rounded,
+                          icon: AppIcons.search_off_rounded,
                           title: 'No results found',
                           message: 'Try searching a different service or provider name.',
                         )

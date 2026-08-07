@@ -9,6 +9,7 @@ import '../../core/widgets/cards/booking_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/booking_model.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Client's booking list, filterable by status. [embedded] hides the
 /// AppBar when hosted inside [ClientShell]'s bottom-nav tab.
@@ -90,7 +91,7 @@ class _BookingList extends StatelessWidget {
       return const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList());
     }
     if (bookings.isEmpty) {
-      return const EmptyState(icon: Icons.calendar_month_outlined, title: 'No bookings here', message: 'Bookings in this category will show up here.');
+      return const EmptyState(icon: AppIcons.calendar_month_outlined, title: 'No bookings here', message: 'Bookings in this category will show up here.');
     }
     return ListView.separated(
       padding: const EdgeInsets.all(AppSizes.pageHPad),

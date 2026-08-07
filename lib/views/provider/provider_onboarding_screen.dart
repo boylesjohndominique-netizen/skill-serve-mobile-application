@@ -14,6 +14,8 @@ import '../../core/widgets/misc/status_badge.dart';
 import '../../core/widgets/misc/verification_seal.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/verification_document_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// P2 — Provider onboarding & verification gate.
 /// Step 1: professional profile · Step 2: upload documents ·
@@ -41,7 +43,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
       appBar: AppBar(
         title: const Text('Get Verified'),
         leading: _step > 0
-            ? IconButton(onPressed: () => setState(() => _step--), icon: const Icon(Icons.arrow_back_rounded))
+            ? IconButton(onPressed: () => setState(() => _step--), icon: const AppIcon(AppIcons.arrow_back_rounded))
             : null,
       ),
       body: SafeArea(
@@ -71,12 +73,12 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
           child: _step < 2
               ? PrimaryButton(
                   label: _step == 0 ? 'Continue' : 'Submit for review',
-                  icon: Icons.arrow_forward_rounded,
+                  icon: AppIcons.arrow_forward_rounded,
                   onPressed: () => setState(() => _step++),
                 )
               : PrimaryButton(
                   label: _verified ? 'Go to dashboard' : 'Continue to dashboard',
-                  icon: Icons.home_rounded,
+                  icon: AppIcons.home_rounded,
                   onPressed: () => context.go('/provider'),
                 ),
         ),
@@ -124,7 +126,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
             children: [
               IconButton(
                 onPressed: _yearsExperience > 1 ? () => setState(() => _yearsExperience--) : null,
-                icon: const Icon(Icons.remove_circle_outline_rounded),
+                icon: const AppIcon(AppIcons.remove_circle_outline_rounded),
                 color: AppColors.secondary,
               ),
               Expanded(
@@ -136,7 +138,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
               ),
               IconButton(
                 onPressed: () => setState(() => _yearsExperience++),
-                icon: const Icon(Icons.add_circle_outline_rounded),
+                icon: const AppIcon(AppIcons.add_circle_outline_rounded),
                 color: AppColors.secondary,
               ),
             ],
@@ -198,10 +200,10 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                     color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.warningBg,
                     borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                   ),
-                  child: Icon(
+                  child: AppIcon(
                     _docs[i].type == 'ID'
-                        ? Icons.badge_outlined
-                        : (_docs[i].type == 'Certificate' ? Icons.workspace_premium_outlined : Icons.description_outlined),
+                        ? AppIcons.badge_outlined
+                        : (_docs[i].type == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
                     size: 17,
                     color: _docs[i].status == 'approved' ? AppColors.success : AppColors.warning,
                   ),
@@ -226,7 +228,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
         const SizedBox(height: AppSizes.md),
         OutlinedAppButton(
           label: 'Add a document',
-          icon: Icons.upload_file_rounded,
+          icon: AppIcons.upload_file_rounded,
           onPressed: _pickDocType,
         ).animate().fadeIn(delay: 350.ms, duration: 300.ms),
       ],
@@ -250,12 +252,12 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
               for (final t in ['ID', 'Certificate', 'Document'])
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    t == 'ID' ? Icons.badge_outlined : (t == 'Certificate' ? Icons.workspace_premium_outlined : Icons.description_outlined),
+                  leading: AppIcon(
+                    t == 'ID' ? AppIcons.badge_outlined : (t == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
                     color: AppColors.secondary,
                   ),
                   title: Text(t, style: AppTextStyles.bodyLarge),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.neutral300),
+                  trailing: const AppIcon(AppIcons.chevron_right_rounded, color: AppColors.neutral300),
                   onTap: () => Navigator.of(context).pop(t),
                 ),
             ],
@@ -310,7 +312,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, color: AppColors.warning, size: 18),
+                  const AppIcon(AppIcons.info_outline_rounded, color: AppColors.warning, size: 18),
                   const SizedBox(width: AppSizes.sm),
                   Expanded(
                     child: Text(
@@ -366,7 +368,7 @@ class _OnboardStepper extends StatelessWidget {
                   ),
                   child: Center(
                     child: i < current
-                        ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                        ? const AppIcon(AppIcons.check_rounded, size: 16, color: Colors.white)
                         : Text(
                             '${i + 1}',
                             style: AppTextStyles.label.copyWith(

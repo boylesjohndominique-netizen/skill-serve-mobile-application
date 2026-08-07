@@ -5,9 +5,11 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../models/user_model.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 class DrawerAction {
-  final IconData icon;
+  final AppIconData icon;
   final String label;
   final VoidCallback onTap;
   const DrawerAction({required this.icon, required this.label, required this.onTap});
@@ -78,7 +80,7 @@ class AppDrawer extends StatelessWidget {
                 children: [
                   for (var i = 0; i < actions.length; i++)
                     ListTile(
-                      leading: Icon(actions[i].icon, color: isDark ? AppColors.textMutedDark : AppColors.textSecondary, size: 22),
+                      leading: AppIcon(actions[i].icon, color: isDark ? AppColors.textMutedDark : AppColors.textSecondary, size: 22),
                       title: Text(actions[i].label, style: AppTextStyles.bodyLarge),
                       onTap: actions[i].onTap,
                     )
@@ -93,7 +95,7 @@ class AppDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.logout_rounded, color: AppColors.error, size: 22),
+              leading: const AppIcon(AppIcons.logout_rounded, color: AppColors.error, size: 22),
               title: Text('Log out', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.error)),
               onTap: onLogout,
             )

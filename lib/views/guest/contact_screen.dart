@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -15,10 +17,10 @@ class ContactScreen extends StatelessWidget {
     final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
     const items = [
-      (Icons.mail_outline_rounded, 'Email', 'support@skillserve.ph'),
-      (Icons.call_outlined, 'Phone', '(032) 123 4567'),
-      (Icons.location_on_outlined, 'Office', 'Cebu City, Philippines'),
-      (Icons.schedule_outlined, 'Support hours', 'Mon–Sat, 8:00 AM – 8:00 PM'),
+      (AppIcons.mail_outline_rounded, 'Email', 'support@skillserve.ph'),
+      (AppIcons.call_outlined, 'Phone', '(032) 123 4567'),
+      (AppIcons.location_on_outlined, 'Office', 'Cebu City, Philippines'),
+      (AppIcons.schedule_outlined, 'Support hours', 'Mon–Sat, 8:00 AM – 8:00 PM'),
     ];
 
     return Scaffold(
@@ -51,7 +53,7 @@ class ContactScreen extends StatelessWidget {
                         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
-                      child: Icon(items[i].$1, color: AppColors.secondary, size: 20),
+                      child: AppIcon(items[i].$1, color: AppColors.secondary, size: 20),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Column(

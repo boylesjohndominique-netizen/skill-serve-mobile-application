@@ -13,6 +13,7 @@ import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/inputs/app_search_bar.dart';
 import '../../core/widgets/misc/section_header.dart';
 import '../../models/category_model.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Guest-accessible marketplace browser. Booking a provider from here
 /// prompts a login (see ProviderPreviewScreen).
@@ -91,7 +92,7 @@ class _BrowseServicesScreenState extends State<BrowseServicesScreen> {
               if (marketplace.isLoading)
                 const ShimmerCardList(count: 5, itemHeight: 100)
               else if (marketplace.providers.isEmpty)
-                const EmptyState(icon: Icons.search_off_rounded, title: 'No providers found', message: 'Try a different category or search term.')
+                const EmptyState(icon: AppIcons.search_off_rounded, title: 'No providers found', message: 'Try a different category or search term.')
               else
                 Column(
                   children: [

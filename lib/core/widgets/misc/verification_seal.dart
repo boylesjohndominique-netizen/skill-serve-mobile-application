@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// The signature VERIFICATION SEAL — a dashed circular "stamp" used
 /// everywhere trust is shown (verified provider, approved document,
@@ -29,14 +31,14 @@ class VerificationSeal extends StatelessWidget {
     this.showLabel = false,
   });
 
-  ({Color color, Color soft, IconData icon, String label}) get _state {
+  ({Color color, Color soft, AppIconData icon, String label}) get _state {
     switch (status.toLowerCase()) {
       case 'verified':
       case 'approved':
         return (
           color: AppColors.success,
           soft: AppColors.successBg,
-          icon: Icons.verified_rounded,
+          icon: AppIcons.verified_rounded,
           label: 'Verified',
         );
       case 'rejected':
@@ -44,14 +46,14 @@ class VerificationSeal extends StatelessWidget {
         return (
           color: AppColors.error,
           soft: AppColors.errorBg,
-          icon: Icons.close_rounded,
+          icon: AppIcons.close_rounded,
           label: 'Rejected',
         );
       case 'resubmission_requested':
         return (
           color: AppColors.warning,
           soft: AppColors.warningBg,
-          icon: Icons.rotate_left_rounded,
+          icon: AppIcons.rotate_left_rounded,
           label: 'Resubmit',
         );
       case 'pending':
@@ -59,7 +61,7 @@ class VerificationSeal extends StatelessWidget {
         return (
           color: AppColors.warning,
           soft: AppColors.warningBg,
-          icon: Icons.hourglass_top_rounded,
+          icon: AppIcons.hourglass_top_rounded,
           label: 'Under review',
         );
     }
@@ -92,7 +94,7 @@ class VerificationSeal extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          Icon(state.icon, color: state.color, size: size * 0.42),
+          AppIcon(state.icon, color: state.color, size: size * 0.42),
         ],
       ),
     );

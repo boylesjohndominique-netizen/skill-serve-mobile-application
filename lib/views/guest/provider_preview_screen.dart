@@ -12,6 +12,8 @@ import '../../core/widgets/misc/rating_widget.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../models/provider_model.dart';
 import '../../services/service_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Read-only provider profile for guests. Any booking action routes to
 /// Login instead of the booking form.
@@ -54,7 +56,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
               margin: const EdgeInsets.only(bottom: AppSizes.lg),
               decoration: BoxDecoration(color: AppColors.neutral200, borderRadius: BorderRadius.circular(2)),
             ),
-            const Icon(Icons.lock_outline_rounded, size: 36, color: AppColors.secondary)
+            const AppIcon(AppIcons.lock_outline_rounded, size: 36, color: AppColors.secondary)
                 .animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
             const SizedBox(height: AppSizes.md),
             Text('Log in to book this provider', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
@@ -101,7 +103,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                             Text(p.user.fullName, style: AppTextStyles.headlineLarge),
                             if (p.isVerified) ...[
                               const SizedBox(width: 6),
-                              const Icon(Icons.verified_rounded, size: 18, color: AppColors.secondary),
+                              const AppIcon(AppIcons.verified_rounded, size: 18, color: AppColors.secondary),
                             ],
                           ],
                         ),
@@ -117,7 +119,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                 children: [
                   RatingWidget(rating: p.averageRating, reviewCount: p.reviewCount, size: 16),
                   const SizedBox(width: AppSizes.lg),
-                  const Icon(Icons.work_outline_rounded, size: 16, color: AppColors.neutral300),
+                  const AppIcon(AppIcons.work_outline_rounded, size: 16, color: AppColors.neutral300),
                   const SizedBox(width: 4),
                   Text('${p.completedJobs} jobs completed', style: AppTextStyles.bodyMedium),
                 ],
@@ -157,7 +159,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                 ),
               SizedBox(
                 width: 180,
-                child: PrimaryButton(label: 'Book now', icon: Icons.calendar_month_rounded, onPressed: _promptLogin),
+                child: PrimaryButton(label: 'Book now', icon: AppIcons.calendar_month_rounded, onPressed: _promptLogin),
               ),
             ],
           ),

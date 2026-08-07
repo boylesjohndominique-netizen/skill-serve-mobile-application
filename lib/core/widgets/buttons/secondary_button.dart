@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Secondary button — ink-navy fill, used for actions that matter but
 /// shouldn't compete visually with the brass primary action.
@@ -9,7 +11,7 @@ import '../../constants/app_text_styles.dart';
 class SecondaryButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
-  final IconData? icon;
+  final AppIconData? icon;
   final bool fullWidth;
 
   const SecondaryButton({
@@ -46,7 +48,7 @@ class _SecondaryButtonState extends State<SecondaryButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.icon != null) ...[Icon(widget.icon, size: 18, color: Colors.white), const SizedBox(width: 8)],
+              if (widget.icon != null) ...[AppIcon(widget.icon, size: 18, color: Colors.white), const SizedBox(width: 8)],
               Text(widget.label, style: AppTextStyles.button.copyWith(color: Colors.white)),
             ],
           ),

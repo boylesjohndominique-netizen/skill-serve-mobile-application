@@ -6,6 +6,8 @@ import '../../core/widgets/feedback/loading_state.dart';
 import '../../models/service_model.dart';
 import '../../services/service_service.dart';
 import 'service_form.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class EditServiceScreen extends StatefulWidget {
   final String serviceId;
@@ -45,7 +47,7 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
         title: const Text('Edit Service'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded),
+            icon: const AppIcon(AppIcons.delete_outline_rounded),
             onPressed: () async {
               // Placeholder — DELETE /services/:id once the backend exists.
               if (context.mounted) {

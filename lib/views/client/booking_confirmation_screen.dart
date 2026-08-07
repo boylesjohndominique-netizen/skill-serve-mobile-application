@@ -8,6 +8,8 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/buttons/outlined_app_button.dart';
 import '../../core/widgets/buttons/primary_button.dart';
 import '../../models/booking_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Success screen shown right after a booking is created.
 class BookingConfirmationScreen extends StatelessWidget {
@@ -33,7 +35,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [BoxShadow(color: AppColors.success.withValues(alpha: 0.25), blurRadius: 20, spreadRadius: 2)],
                 ),
-                child: const Icon(Icons.check_rounded, color: AppColors.success, size: 44),
+                child: const AppIcon(AppIcons.check_rounded, color: AppColors.success, size: 44),
               ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
               const SizedBox(height: AppSizes.xl),
               Text(

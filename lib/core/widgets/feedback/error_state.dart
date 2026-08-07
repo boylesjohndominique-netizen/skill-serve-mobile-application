@@ -4,6 +4,8 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../buttons/outlined_app_button.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Shown when a request fails — pairs with a retry action.
 /// Features shake animation on the error icon and fade-in entrance.
@@ -25,7 +27,7 @@ class ErrorState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: const BoxDecoration(color: AppColors.errorBg, shape: BoxShape.circle),
-              child: const Icon(Icons.wifi_off_rounded, size: 30, color: AppColors.error),
+              child: const AppIcon(AppIcons.wifi_off_rounded, size: 30, color: AppColors.error),
             )
                 .animate()
                 .fadeIn(duration: 300.ms)
@@ -40,7 +42,7 @@ class ErrorState extends StatelessWidget {
                 .animate().fadeIn(delay: 300.ms, duration: 350.ms),
             if (onRetry != null) ...[
               const SizedBox(height: AppSizes.lg),
-              OutlinedAppButton(label: 'Try again', icon: Icons.refresh_rounded, onPressed: onRetry, fullWidth: false)
+              OutlinedAppButton(label: 'Try again', icon: AppIcons.refresh_rounded, onPressed: onRetry, fullWidth: false)
                   .animate().fadeIn(delay: 400.ms, duration: 300.ms).slideY(begin: 0.15, end: 0),
             ],
           ],

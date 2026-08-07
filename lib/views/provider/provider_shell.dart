@@ -5,13 +5,14 @@ import 'dashboard_screen.dart';
 import 'booking_requests_screen.dart';
 import 'my_services_screen.dart';
 import 'settings_screen.dart';
+import '../../core/constants/app_icons.dart';
 
 const _providerNavItems = [
-  NavItem(icon: Icons.grid_view_outlined, activeIcon: Icons.grid_view_rounded, label: 'Home'),
-  NavItem(icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today_rounded, label: 'Bookings'),
-  NavItem(icon: Icons.design_services_outlined, activeIcon: Icons.design_services_rounded, label: 'Services'),
-  NavItem(icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded, label: 'Messages'),
-  NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Profile'),
+  NavItem(icon: AppIcons.grid_view_outlined, activeIcon: AppIcons.grid_view_rounded, label: 'Home'),
+  NavItem(icon: AppIcons.calendar_today_outlined, activeIcon: AppIcons.calendar_today_rounded, label: 'Bookings'),
+  NavItem(icon: AppIcons.design_services_outlined, activeIcon: AppIcons.design_services_rounded, label: 'Services'),
+  NavItem(icon: AppIcons.chat_bubble_outline_rounded, activeIcon: AppIcons.chat_bubble_rounded, label: 'Messages'),
+  NavItem(icon: AppIcons.person_outline_rounded, activeIcon: AppIcons.person_rounded, label: 'Profile'),
 ];
 
 /// Bottom-nav shell for the Service Provider persona.

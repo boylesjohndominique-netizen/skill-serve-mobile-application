@@ -5,6 +5,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/misc/status_badge.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class _Withdrawal {
   final String id;
@@ -56,7 +58,7 @@ class WithdrawalHistoryScreen extends StatelessWidget {
                       color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                     ),
-                    child: const Icon(Icons.account_balance_wallet_outlined, color: AppColors.secondary, size: 18),
+                    child: const AppIcon(AppIcons.account_balance_wallet_outlined, color: AppColors.secondary, size: 18),
                   ),
                   const SizedBox(width: AppSizes.md),
                   Expanded(

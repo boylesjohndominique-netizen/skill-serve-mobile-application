@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// First screen shown on launch — brand beat with expanding ring and
 /// breathing background gradient.
@@ -53,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 84,
                   height: 84,
                   decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                  child: const Icon(Icons.check_rounded, color: Colors.white, size: 40),
+                  child: const AppIcon(AppIcons.check_rounded, color: Colors.white, size: 40),
                 )
                     .animate()
                     .scale(duration: 600.ms, curve: Curves.easeOutBack)

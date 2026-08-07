@@ -9,6 +9,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/cards/profile_card.dart';
 import '../../core/widgets/feedback/app_dialog.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Client's Profile / Settings tab. Reused as a template pattern for the
 /// Provider settings screen (see provider/settings_screen.dart).
@@ -45,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                 .animate()
                 .fadeIn(delay: 180.ms, duration: 300.ms),
             _Tile(
-                    icon: Icons.person_outline_rounded,
+                    icon: AppIcons.person_outline_rounded,
                     label: 'Edit profile',
                     onTap: () => context.push('/edit-profile'),
                     isDark: isDark)
@@ -53,7 +55,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 220.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.lock_outline_rounded,
+                    icon: AppIcons.lock_outline_rounded,
                     label: 'Change password',
                     onTap: () => context.push('/change-password'),
                     isDark: isDark)
@@ -61,7 +63,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 260.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.favorite_border_rounded,
+                    icon: AppIcons.favorite_border_rounded,
                     label: 'Favorite providers',
                     onTap: () => context.push('/favorites'),
                     isDark: isDark)
@@ -69,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 300.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.notifications_none_rounded,
+                    icon: AppIcons.notifications_none_rounded,
                     label: 'Notifications',
                     onTap: () => context.push('/notifications'),
                     isDark: isDark)
@@ -77,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 340.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.receipt_long_outlined,
+                    icon: AppIcons.receipt_long_outlined,
                     label: 'Payments & receipts',
                     onTap: () => context.push('/payments'),
                     isDark: isDark)
@@ -85,7 +87,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 360.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.flag_outlined,
+                    icon: AppIcons.flag_outlined,
                     label: 'My reports',
                     onTap: () => context.push('/my-reports'),
                     isDark: isDark)
@@ -97,7 +99,7 @@ class SettingsScreen extends StatelessWidget {
                 .animate()
                 .fadeIn(delay: 380.ms, duration: 300.ms),
             _SwitchTile(
-              icon: Icons.dark_mode_outlined,
+              icon: AppIcons.dark_mode_outlined,
               label: 'Dark mode',
               value: theme.mode == ThemeMode.dark,
               onChanged: (_) => theme.toggle(),
@@ -111,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
                 .animate()
                 .fadeIn(delay: 480.ms, duration: 300.ms),
             _Tile(
-                    icon: Icons.help_outline_rounded,
+                    icon: AppIcons.help_outline_rounded,
                     label: 'Help Center',
                     onTap: () => context.push('/help-center'),
                     isDark: isDark)
@@ -119,7 +121,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 500.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.info_outline_rounded,
+                    icon: AppIcons.info_outline_rounded,
                     label: 'About SkillServe',
                     onTap: () => context.push('/about'),
                     isDark: isDark)
@@ -127,7 +129,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 540.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.description_outlined,
+                    icon: AppIcons.description_outlined,
                     label: 'Terms & Conditions',
                     onTap: () => context.push('/terms'),
                     isDark: isDark)
@@ -135,7 +137,7 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 580.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: Icons.privacy_tip_outlined,
+                    icon: AppIcons.privacy_tip_outlined,
                     label: 'Privacy Policy',
                     onTap: () => context.push('/privacy'),
                     isDark: isDark)
@@ -145,7 +147,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: AppSizes.xl),
             if (user != null)
               _Tile(
-                icon: Icons.logout_rounded,
+                icon: AppIcons.logout_rounded,
                 label: 'Log out',
                 danger: true,
                 isDark: isDark,
@@ -166,7 +168,7 @@ class SettingsScreen extends StatelessWidget {
               ).animate().fadeIn(delay: 660.ms, duration: 300.ms)
             else
               _Tile(
-                      icon: Icons.login_rounded,
+                      icon: AppIcons.login_rounded,
                       label: 'Log in',
                       onTap: () => context.go('/login'),
                       isDark: isDark)
@@ -201,7 +203,7 @@ class _GuestCard extends StatelessWidget {
           const CircleAvatar(
               radius: 26,
               backgroundColor: AppColors.secondary,
-              child: Icon(Icons.person, color: Colors.white)),
+              child: AppIcon(AppIcons.person, color: Colors.white)),
           const SizedBox(width: AppSizes.md),
           Expanded(
             child: Column(
@@ -238,7 +240,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  final IconData icon;
+  final AppIconData icon;
   final String label;
   final VoidCallback onTap;
   final bool danger;
@@ -257,7 +259,7 @@ class _Tile extends StatelessWidget {
         : (isDark ? AppColors.textOnDark : AppColors.textPrimary);
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon,
+      leading: AppIcon(icon,
           color: danger
               ? AppColors.error
               : (isDark ? AppColors.textMutedDark : AppColors.textSecondary),
@@ -265,7 +267,7 @@ class _Tile extends StatelessWidget {
       title: Text(label, style: AppTextStyles.bodyLarge.copyWith(color: color)),
       trailing: danger
           ? null
-          : Icon(Icons.chevron_right_rounded,
+          : AppIcon(AppIcons.chevron_right_rounded,
               color: isDark ? AppColors.neutral400 : AppColors.neutral300),
       onTap: onTap,
     );
@@ -273,7 +275,7 @@ class _Tile extends StatelessWidget {
 }
 
 class _SwitchTile extends StatelessWidget {
-  final IconData icon;
+  final AppIconData icon;
   final String label;
   final bool value;
   final void Function(bool) onChanged;
@@ -289,7 +291,7 @@ class _SwitchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon,
+      leading: AppIcon(icon,
           color: isDark ? AppColors.textMutedDark : AppColors.textSecondary,
           size: 21),
       title: Text(label,

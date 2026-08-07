@@ -10,6 +10,8 @@ import '../../core/utils/validators.dart';
 import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -48,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 IconButton(
                   onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
-                  icon: const Icon(Icons.arrow_back_rounded),
+                  icon: const AppIcon(AppIcons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
                 ).animate().fadeIn(duration: 250.ms),
                 const SizedBox(height: AppSizes.md),
@@ -63,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   hint: 'you@email.com',
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.mail_outline_rounded,
+                  prefixIcon: AppIcons.mail_outline_rounded,
                   validator: Validators.email,
                 ).animate().fadeIn(delay: 220.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
@@ -72,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   hint: '••••••••',
                   controller: _password,
                   obscureText: true,
-                  prefixIcon: Icons.lock_outline_rounded,
+                  prefixIcon: AppIcons.lock_outline_rounded,
                   validator: Validators.password,
                 ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 Align(

@@ -7,6 +7,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Full category grid — tapping a category routes into Browse Services
 /// pre-filtered to that category.
@@ -112,7 +114,7 @@ class _CategoryTileState extends State<_CategoryTile> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.work_outline_rounded, color: AppColors.secondary, size: 26),
+                const AppIcon(AppIcons.work_outline_rounded, color: AppColors.secondary, size: 26),
                 const SizedBox(height: 8),
                 Text(widget.name, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),

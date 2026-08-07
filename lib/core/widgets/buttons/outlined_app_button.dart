@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Low-emphasis outlined button for secondary/tertiary actions
 /// (e.g. "Cancel", "View details").
@@ -9,7 +11,7 @@ import '../../constants/app_text_styles.dart';
 class OutlinedAppButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
-  final IconData? icon;
+  final AppIconData? icon;
   final bool fullWidth;
   final Color? color;
 
@@ -46,7 +48,7 @@ class _OutlinedAppButtonState extends State<OutlinedAppButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.icon != null) ...[Icon(widget.icon, size: 18, color: c), const SizedBox(width: 8)],
+              if (widget.icon != null) ...[AppIcon(widget.icon, size: 18, color: c), const SizedBox(width: 8)],
               Text(widget.label, style: AppTextStyles.button.copyWith(color: c)),
             ],
           ),

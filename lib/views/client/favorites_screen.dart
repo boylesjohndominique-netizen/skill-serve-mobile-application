@@ -7,6 +7,7 @@ import '../../controllers/marketplace_controller.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/widgets/cards/provider_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
+import '../../core/constants/app_icons.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -22,7 +23,7 @@ class FavoritesScreen extends StatelessWidget {
       body: SafeArea(
         child: favoriteProviders.isEmpty
             ? const EmptyState(
-                icon: Icons.favorite_border_rounded,
+                icon: AppIcons.favorite_border_rounded,
                 title: 'No favorites yet',
                 message: 'Tap the heart icon on a provider to save them here for quick access.',
               )

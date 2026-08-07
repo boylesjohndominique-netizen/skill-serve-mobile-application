@@ -3,10 +3,12 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 class NavItem {
-  final IconData icon;
-  final IconData activeIcon;
+  final AppIconData icon;
+  final AppIconData activeIcon;
   final String label;
   const NavItem({required this.icon, required this.activeIcon, required this.label});
 }
@@ -92,7 +94,7 @@ class _NavItemWidget extends StatelessWidget {
             curve: AppAnimations.springCurve,
             child: AnimatedSwitcher(
               duration: AppAnimations.fast,
-              child: Icon(
+              child: AppIcon(
                 selected ? item.activeIcon : item.icon,
                 key: ValueKey('${item.label}_$selected'),
                 size: 24,

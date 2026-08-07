@@ -9,13 +9,15 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/notification_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
-const Map<NotificationType, IconData> _typeIcons = {
-  NotificationType.booking: Icons.calendar_month_rounded,
-  NotificationType.message: Icons.chat_bubble_rounded,
-  NotificationType.system: Icons.info_rounded,
-  NotificationType.promo: Icons.local_offer_rounded,
-  NotificationType.verification: Icons.verified_user_rounded,
+const Map<NotificationType, AppIconData> _typeIcons = {
+  NotificationType.booking: AppIcons.calendar_month_rounded,
+  NotificationType.message: AppIcons.chat_bubble_rounded,
+  NotificationType.system: AppIcons.info_rounded,
+  NotificationType.promo: AppIcons.local_offer_rounded,
+  NotificationType.verification: AppIcons.verified_user_rounded,
 };
 
 /// Shared notifications feed for both Client and Service Provider.
@@ -49,7 +51,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 72))
             : controller.notifications.isEmpty
-                ? const EmptyState(icon: Icons.notifications_none_rounded, title: 'You\'re all caught up', message: 'New notifications will show up here.')
+                ? const EmptyState(icon: AppIcons.notifications_none_rounded, title: 'You\'re all caught up', message: 'New notifications will show up here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     itemCount: controller.notifications.length,
@@ -73,7 +75,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               Container(
                                 padding: const EdgeInsets.all(9),
                                 decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-                                child: Icon(_typeIcons[n.type] ?? Icons.notifications_rounded, size: 16, color: AppColors.secondary),
+                                child: AppIcon(_typeIcons[n.type] ?? AppIcons.notifications_rounded, size: 16, color: AppColors.secondary),
                               ),
                               const SizedBox(width: AppSizes.md),
                               Expanded(

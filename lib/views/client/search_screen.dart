@@ -11,6 +11,8 @@ import '../../core/widgets/cards/provider_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/inputs/app_search_bar.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Client's Search tab — same behavior as the guest Search screen, but
 /// results route into the authenticated Provider Profile (with booking).
@@ -59,7 +61,7 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
                                 ActionChip(
                                   label: Text(_recentSearches[i]),
                                   onPressed: () => context.read<MarketplaceController>().search(_recentSearches[i]),
-                                  avatar: const Icon(Icons.history_rounded, size: 16, color: AppColors.textMuted),
+                                  avatar: const AppIcon(AppIcons.history_rounded, size: 16, color: AppColors.textMuted),
                                 )
                                     .animate()
                                     .fadeIn(delay: Duration(milliseconds: 200 + i * 60), duration: 300.ms)
@@ -72,7 +74,7 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
                         ? const ShimmerCardList(count: 5, itemHeight: 100)
                         : marketplace.providers.isEmpty
                             ? const EmptyState(
-                                icon: Icons.search_off_rounded,
+                                icon: AppIcons.search_off_rounded,
                                 title: 'No results found',
                                 message: 'Try searching a different service or provider name.',
                               )

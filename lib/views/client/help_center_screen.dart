@@ -4,6 +4,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/inputs/app_search_bar.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class _Faq {
   final String question;
@@ -76,7 +78,7 @@ class HelpCenterScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.support_agent_rounded, color: AppColors.secondary, size: 28),
+                  const AppIcon(AppIcons.support_agent_rounded, color: AppColors.secondary, size: 28),
                   const SizedBox(width: AppSizes.md),
                   Expanded(
                     child: Column(

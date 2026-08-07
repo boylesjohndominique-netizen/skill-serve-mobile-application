@@ -21,6 +21,8 @@ import '../../models/review_model.dart';
 import '../../models/service_model.dart';
 import '../../services/review_service.dart';
 import '../../services/service_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Full public provider profile for signed-in clients — the mobile mirror of
 /// the admin Marketplace Preview → Profile tab.
@@ -78,8 +80,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             icon: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-              child: Icon(
-                favorites.isFavorite(p.id) ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              child: AppIcon(
+                favorites.isFavorite(p.id) ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
                 key: ValueKey(favorites.isFavorite(p.id)),
                 color: favorites.isFavorite(p.id) ? AppColors.error : null,
               ),
@@ -109,7 +111,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                             ),
                             if (p.isVerified) ...[
                               const SizedBox(width: 6),
-                              const Icon(Icons.verified_rounded, size: 18, color: AppColors.secondary),
+                              const AppIcon(AppIcons.verified_rounded, size: 18, color: AppColors.secondary),
                             ],
                           ],
                         ),
@@ -126,11 +128,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 children: [
                   RatingWidget(rating: p.averageRating, reviewCount: p.reviewCount, size: 16),
                   const SizedBox(width: AppSizes.lg),
-                  const Icon(Icons.work_outline_rounded, size: 16, color: AppColors.neutral300),
+                  const AppIcon(AppIcons.work_outline_rounded, size: 16, color: AppColors.neutral300),
                   const SizedBox(width: 4),
                   Text('${p.completedJobs} jobs', style: AppTextStyles.bodyMedium),
                   const SizedBox(width: AppSizes.lg),
-                  const Icon(Icons.timeline_rounded, size: 16, color: AppColors.neutral300),
+                  const AppIcon(AppIcons.timeline_rounded, size: 16, color: AppColors.neutral300),
                   const SizedBox(width: 4),
                   Text('${p.yearsExperience} yrs', style: AppTextStyles.bodyMedium),
                 ],
@@ -141,7 +143,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   Expanded(
                     child: OutlinedAppButton(
                       label: 'Message',
-                      icon: Icons.chat_bubble_outline_rounded,
+                      icon: AppIcons.chat_bubble_outline_rounded,
                       onPressed: () => context.push('/chat-conversation/${p.id}'),
                     ),
                   ),
@@ -149,7 +151,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   Expanded(
                     child: OutlinedAppButton(
                       label: 'Portfolio',
-                      icon: Icons.photo_library_outlined,
+                      icon: AppIcons.photo_library_outlined,
                       onPressed: () => context.push('/portfolio-gallery/${p.id}'),
                     ),
                   ),
@@ -266,7 +268,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 width: 190,
                 child: PrimaryButton(
                   label: 'Book ${p.user.firstName}',
-                  icon: Icons.calendar_month_rounded,
+                  icon: AppIcons.calendar_month_rounded,
                   onPressed: () => context.push('/booking-form/${p.id}'),
                 ),
               ),
@@ -305,7 +307,7 @@ class _BadgeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(badge.icon, size: 15, color: badge.color),
+          AppIcon(badge.icon, size: 15, color: badge.color),
           const SizedBox(width: 6),
           Text(
             badge.title,
@@ -346,7 +348,7 @@ class _ServiceRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.schedule_rounded, size: 13, color: AppColors.neutral300),
+                    const AppIcon(AppIcons.schedule_rounded, size: 13, color: AppColors.neutral300),
                     const SizedBox(width: 4),
                     Text(service.duration, style: AppTextStyles.bodySmall),
                     const SizedBox(width: 12),

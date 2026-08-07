@@ -8,6 +8,7 @@ import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../services/auth_service.dart';
+import '../../core/constants/app_icons.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -72,7 +73,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     hint: 'you@email.com',
                     controller: _email,
                     keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icons.mail_outline_rounded,
+                    prefixIcon: AppIcons.mail_outline_rounded,
                     validator: Validators.email,
                   ).animate().fadeIn(delay: 200.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                   const SizedBox(height: AppSizes.xl),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// "Section title + optional 'See all' action" header used throughout
 /// the Home dashboard and list screens.
@@ -46,7 +48,7 @@ class SectionHeader extends StatelessWidget {
                   style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.secondary),
+                const AppIcon(AppIcons.arrow_forward_ios_rounded, size: 12, color: AppColors.secondary),
               ],
             ),
           ),

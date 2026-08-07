@@ -16,6 +16,8 @@ import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/booking_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Provider's Bookings tab — every status in one place with contextual
 /// actions: accept/decline requests, start confirmed jobs, mark complete.
@@ -110,8 +112,8 @@ class _TabList extends StatelessWidget {
     if (bookings.isEmpty) {
       return EmptyState(
         icon: tabIndex == 0
-            ? Icons.inbox_outlined
-            : (tabIndex == 4 ? Icons.cancel_outlined : (tabIndex == 5 ? Icons.gavel_rounded : Icons.event_note_outlined)),
+            ? AppIcons.inbox_outlined
+            : (tabIndex == 4 ? AppIcons.cancel_outlined : (tabIndex == 5 ? AppIcons.gavel_rounded : AppIcons.event_note_outlined)),
         title: 'Nothing here',
         message: 'Bookings in this category will appear here.',
       );
@@ -155,7 +157,7 @@ class _ActionableCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedAppButton(
                     label: 'Message client',
-                    icon: Icons.chat_bubble_outline_rounded,
+                    icon: AppIcons.chat_bubble_outline_rounded,
                     onPressed: () => context.push('/chat-conversation/${booking.clientId}'),
                   ),
                 ),
@@ -163,7 +165,7 @@ class _ActionableCard extends StatelessWidget {
                 Expanded(
                   child: PrimaryButton(
                     label: 'Start job',
-                    icon: Icons.play_arrow_rounded,
+                    icon: AppIcons.play_arrow_rounded,
                     onPressed: () async {
                       await controller.start(booking.id);
                       if (context.mounted) AppSnackbar.success(context, 'Job started — good luck!');
@@ -182,7 +184,7 @@ class _ActionableCard extends StatelessWidget {
             const SizedBox(height: AppSizes.sm),
             PrimaryButton(
               label: 'Mark as completed',
-              icon: Icons.task_alt_rounded,
+              icon: AppIcons.task_alt_rounded,
               onPressed: () async {
                 await controller.complete(booking.id);
                 if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');
@@ -238,11 +240,11 @@ class _RequestCard extends StatelessWidget {
           Divider(height: AppSizes.lg, color: lineColor),
           Row(
             children: [
-              const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
+              const AppIcon(AppIcons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
               const SizedBox(width: 6),
               Text(Formatters.dateShort(booking.bookingDate), style: AppTextStyles.bodySmall),
               const SizedBox(width: 14),
-              const Icon(Icons.access_time_rounded, size: 14, color: AppColors.neutral300),
+              const AppIcon(AppIcons.access_time_rounded, size: 14, color: AppColors.neutral300),
               const SizedBox(width: 6),
               Text(booking.schedule, style: AppTextStyles.bodySmall),
             ],

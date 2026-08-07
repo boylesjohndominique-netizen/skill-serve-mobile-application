@@ -3,6 +3,8 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
+import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/constants/app_icons.dart';
 
 /// Search field with an optional trailing filter button — used on Browse,
 /// Search, and Home screens.
@@ -74,7 +76,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
                   prefixIcon: AnimatedRotation(
                     turns: _focused ? 0.05 : 0,
                     duration: AppAnimations.md,
-                    child: const Icon(Icons.search_rounded, color: AppColors.neutral300),
+                    child: const AppIcon(AppIcons.search_rounded, color: AppColors.neutral300),
                   ),
                 ),
               ),
@@ -92,7 +94,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              child: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+              child: const AppIcon(AppIcons.tune_rounded, color: Colors.white, size: 20),
             ),
           ),
         ],

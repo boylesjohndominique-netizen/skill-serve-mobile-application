@@ -4,6 +4,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../data/mock/mock_data.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Deeper performance view — completed jobs trend, rating breakdown.
 class StatisticsScreen extends StatelessWidget {
@@ -27,17 +29,17 @@ class StatisticsScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: _StatCard(label: 'Avg. Rating', value: provider.averageRating.toStringAsFixed(1), icon: Icons.star_rounded, index: 0)),
+                Expanded(child: _StatCard(label: 'Avg. Rating', value: provider.averageRating.toStringAsFixed(1), icon: AppIcons.star_rounded, index: 0)),
                 const SizedBox(width: AppSizes.md),
-                Expanded(child: _StatCard(label: 'Total Jobs', value: '${provider.completedJobs}', icon: Icons.task_alt_rounded, index: 1)),
+                Expanded(child: _StatCard(label: 'Total Jobs', value: '${provider.completedJobs}', icon: AppIcons.task_alt_rounded, index: 1)),
               ],
             ),
             const SizedBox(height: AppSizes.md),
             Row(
               children: [
-                Expanded(child: _StatCard(label: 'Total Reviews', value: '${provider.reviewCount}', icon: Icons.reviews_rounded, index: 2)),
+                Expanded(child: _StatCard(label: 'Total Reviews', value: '${provider.reviewCount}', icon: AppIcons.reviews_rounded, index: 2)),
                 const SizedBox(width: AppSizes.md),
-                Expanded(child: _StatCard(label: 'Years Active', value: '${provider.yearsExperience}', icon: Icons.timeline_rounded, index: 3)),
+                Expanded(child: _StatCard(label: 'Years Active', value: '${provider.yearsExperience}', icon: AppIcons.timeline_rounded, index: 3)),
               ],
             ),
             const SizedBox(height: AppSizes.xl),
@@ -90,7 +92,7 @@ class StatisticsScreen extends StatelessWidget {
                   children: [
                     Text('${5 - i}', style: AppTextStyles.label),
                     const SizedBox(width: 4),
-                    const Icon(Icons.star_rounded, size: 13, color: AppColors.star),
+                    const AppIcon(AppIcons.star_rounded, size: 13, color: AppColors.star),
                     const SizedBox(width: AppSizes.sm),
                     Expanded(
                       child: ClipRRect(
@@ -125,7 +127,7 @@ class StatisticsScreen extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final AppIconData icon;
   final int index;
   const _StatCard({required this.label, required this.value, required this.icon, required this.index});
 
@@ -143,7 +145,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.secondary, size: 20),
+          AppIcon(icon, color: AppColors.secondary, size: 20),
           const SizedBox(height: 8),
           Text(value, style: AppTextStyles.headlineMedium),
           Text(label, style: AppTextStyles.bodySmall),

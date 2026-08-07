@@ -10,6 +10,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/inputs/app_search_bar.dart';
+import '../../core/constants/app_icons.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -49,7 +50,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 child: chat.isLoading
                     ? const ShimmerCardList(itemHeight: 64)
                     : chat.conversations.isEmpty
-                        ? const EmptyState(icon: Icons.chat_bubble_outline_rounded, title: 'No messages yet', message: 'Your conversations with providers will appear here.')
+                        ? const EmptyState(icon: AppIcons.chat_bubble_outline_rounded, title: 'No messages yet', message: 'Your conversations with providers will appear here.')
                         : ListView.separated(
                             itemCount: chat.conversations.length,
                             separatorBuilder: (_, __) => Divider(height: AppSizes.lg, color: isDark ? AppColors.lineDark : AppColors.line),

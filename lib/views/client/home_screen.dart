@@ -19,6 +19,8 @@ import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../models/provider_model.dart';
 import '../../services/service_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Client's primary landing tab — the SkillServe "Discover" experience:
 /// hero, category chips, featured strip, and a 2-column provider grid.
@@ -98,7 +100,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Icon(Icons.notifications_outlined, size: 20),
+                      child: const AppIcon(AppIcons.notifications_outlined, size: 20),
                     ),
                   ).animate().fadeIn(delay: 100.ms, duration: 300.ms).scale(begin: const Offset(0.7, 0.7), curve: Curves.easeOutBack),
                 ],
@@ -127,7 +129,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           gradient: AppColors.brassGradient,
                           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                         ),
-                        child: const Icon(Icons.event_available_rounded, color: Colors.white, size: 20),
+                        child: const AppIcon(AppIcons.event_available_rounded, color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: AppSizes.md),
                       Expanded(
@@ -163,7 +165,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   itemBuilder: (context, i) {
                     final name = i == 0 ? 'All' : marketplace.categories[i - 1].name;
                     final icon = i == 0
-                        ? Icons.apps_rounded
+                        ? AppIcons.apps_rounded
                         : _categoryIcon(marketplace.categories[i - 1].icon);
                     return _CategoryChip(
                       label: name,
@@ -197,7 +199,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   ),
                 )
               else if (_featured.isEmpty)
-                const EmptyState(icon: Icons.workspace_premium_outlined, title: 'No featured pros yet', message: 'Verified providers will appear here.')
+                const EmptyState(icon: AppIcons.workspace_premium_outlined, title: 'No featured pros yet', message: 'Verified providers will appear here.')
               else
                 SizedBox(
                   height: 168,
@@ -226,7 +228,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 const ShimmerCardList(count: 4, itemHeight: 100)
               else if (marketplace.providers.isEmpty)
                 const EmptyState(
-                  icon: Icons.search_off_rounded,
+                  icon: AppIcons.search_off_rounded,
                   title: 'No providers found',
                   message: 'Try a different category — or be the first to book when a pro joins.',
                 )
@@ -263,22 +265,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     );
   }
 
-  IconData _categoryIcon(String key) {
+  AppIconData _categoryIcon(String key) {
     switch (key) {
       case 'plumbing':
-        return Icons.plumbing_rounded;
+        return AppIcons.plumbing_rounded;
       case 'bolt':
-        return Icons.bolt_rounded;
+        return AppIcons.bolt_rounded;
       case 'school':
-        return Icons.school_rounded;
+        return AppIcons.school_rounded;
       case 'brush':
-        return Icons.brush_rounded;
+        return AppIcons.brush_rounded;
       case 'photo_camera':
-        return Icons.photo_camera_rounded;
+        return AppIcons.photo_camera_rounded;
       case 'carpenter':
-        return Icons.carpenter_rounded;
+        return AppIcons.carpenter_rounded;
       default:
-        return Icons.work_outline_rounded;
+        return AppIcons.work_outline_rounded;
     }
   }
 }
@@ -358,7 +360,7 @@ class _DiscoverHero extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.verified_rounded, size: 14, color: AppColors.secondaryLight),
+                        const AppIcon(AppIcons.verified_rounded, size: 14, color: AppColors.secondaryLight),
                         const SizedBox(width: 5),
                         Text(
                           'Verified local professionals',
@@ -394,7 +396,7 @@ class _DiscoverHero extends StatelessWidget {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.search_rounded, color: Colors.white70, size: 20),
+                      AppIcon(AppIcons.search_rounded, color: Colors.white70, size: 20),
                       SizedBox(width: AppSizes.sm),
                       Expanded(
                         child: Padding(
@@ -405,7 +407,7 @@ class _DiscoverHero extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Icon(Icons.tune_rounded, color: AppColors.secondaryLight, size: 18),
+                      AppIcon(AppIcons.tune_rounded, color: AppColors.secondaryLight, size: 18),
                     ],
                   ),
                 ),
@@ -421,7 +423,7 @@ class _DiscoverHero extends StatelessWidget {
 /// ─── Category filter chip (brass-filled when selected) ───
 class _CategoryChip extends StatefulWidget {
   final String label;
-  final IconData icon;
+  final AppIconData icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -466,7 +468,7 @@ class _CategoryChipState extends State<_CategoryChip> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(widget.icon, size: 15, color: widget.selected ? Colors.white : AppColors.secondary),
+              AppIcon(widget.icon, size: 15, color: widget.selected ? Colors.white : AppColors.secondary),
               const SizedBox(width: 6),
               Text(
                 widget.label,
@@ -522,7 +524,7 @@ class _FeaturedCard extends StatelessWidget {
                     right: 0,                      child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: const BoxDecoration(color: AppColors.surfaceDark, shape: BoxShape.circle),
-                      child: const Icon(Icons.verified_rounded, size: 14, color: AppColors.secondaryLight),
+                      child: const AppIcon(AppIcons.verified_rounded, size: 14, color: AppColors.secondaryLight),
                     ),
                   ),
               ],
@@ -539,7 +541,7 @@ class _FeaturedCard extends StatelessWidget {
             const Spacer(),
             Row(
               children: [
-                const Icon(Icons.star_rounded, size: 14, color: AppColors.star),
+                const AppIcon(AppIcons.star_rounded, size: 14, color: AppColors.star),
                 const SizedBox(width: 3),
                 Text(
                   provider.averageRating.toStringAsFixed(1),
@@ -623,8 +625,8 @@ class _GridProviderCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), shape: BoxShape.circle),
-                      child: Icon(
-                        isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      child: AppIcon(
+                        isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
                         size: 15,
                         color: isFavorite ? AppColors.error : Colors.white,
                       ),
@@ -659,7 +661,7 @@ class _GridProviderCard extends StatelessWidget {
                       if (provider.isVerified)
                         const Padding(
                           padding: EdgeInsets.only(left: 3),
-                          child: Icon(Icons.verified_rounded, size: 15, color: AppColors.secondary),
+                          child: AppIcon(AppIcons.verified_rounded, size: 15, color: AppColors.secondary),
                         ),
                     ],
                   ),
@@ -667,15 +669,15 @@ class _GridProviderCard extends StatelessWidget {
                   const SizedBox(height: 5),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, size: 13, color: AppColors.star),
+                      const AppIcon(AppIcons.star_rounded, size: 13, color: AppColors.star),
                       const SizedBox(width: 3),
                       Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(width: 7),
-                      const Icon(Icons.work_outline_rounded, size: 12, color: AppColors.neutral300),
+                      const AppIcon(AppIcons.work_outline_rounded, size: 12, color: AppColors.neutral300),
                       const SizedBox(width: 2),
                       Text('${provider.completedJobs}', style: AppTextStyles.bodySmall),
                       const SizedBox(width: 7),
-                      const Icon(Icons.timeline_rounded, size: 12, color: AppColors.neutral300),
+                      const AppIcon(AppIcons.timeline_rounded, size: 12, color: AppColors.neutral300),
                       const SizedBox(width: 2),
                       Text('${provider.yearsExperience}y', style: AppTextStyles.bodySmall),
                     ],
@@ -706,7 +708,7 @@ class _GridProviderCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.calendar_month_rounded, size: 15, color: Colors.white),
+                          const AppIcon(AppIcons.calendar_month_rounded, size: 15, color: Colors.white),
                           const SizedBox(width: 5),
                           Text('Book now', style: AppTextStyles.label.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
                         ],

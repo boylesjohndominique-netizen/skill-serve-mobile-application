@@ -11,16 +11,18 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
-IconData _methodIcon(String method) {
+AppIconData _methodIcon(String method) {
   switch (method) {
     case 'GCash':
     case 'Maya':
-      return Icons.account_balance_wallet_rounded;
+      return AppIcons.account_balance_wallet_rounded;
     case 'Card':
-      return Icons.credit_card_rounded;
+      return AppIcons.credit_card_rounded;
     default:
-      return Icons.payments_outlined;
+      return AppIcons.payments_outlined;
   }
 }
 
@@ -54,7 +56,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 84))
             : controller.payments.isEmpty
-                ? const EmptyState(icon: Icons.receipt_long_outlined, title: 'No payments yet', message: 'Your payment history will appear here.')
+                ? const EmptyState(icon: AppIcons.receipt_long_outlined, title: 'No payments yet', message: 'Your payment history will appear here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     itemCount: controller.payments.length,
@@ -80,7 +82,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                   color: AppColors.secondary.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                                 ),
-                                child: Icon(_methodIcon(p.method), size: 18, color: AppColors.secondary),
+                                child: AppIcon(_methodIcon(p.method), size: 18, color: AppColors.secondary),
                               ),
                               const SizedBox(width: AppSizes.md),
                               Expanded(

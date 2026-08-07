@@ -14,6 +14,8 @@ import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/service_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// Provider's own service listings — add, edit, and toggle active/hidden.
 class MyServicesScreen extends StatefulWidget {
@@ -69,7 +71,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                     .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
                 IconButton(
                   onPressed: () => context.push('/add-service'),
-                  icon: const Icon(Icons.add_circle_rounded, color: AppColors.secondary, size: 26),
+                  icon: const AppIcon(AppIcons.add_circle_rounded, color: AppColors.secondary, size: 26),
                 ),
               ],
             ),
@@ -78,7 +80,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
 
     final list = _services.isEmpty
         ? EmptyState(
-            icon: Icons.design_services_outlined,
+            icon: AppIcons.design_services_outlined,
             title: 'No services yet',
             message: 'Add your first service so clients can find and book you.',
             actionLabel: 'Add a service',
@@ -110,7 +112,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Services'),
-        actions: [IconButton(onPressed: () => context.push('/add-service'), icon: const Icon(Icons.add_rounded))],
+        actions: [IconButton(onPressed: () => context.push('/add-service'), icon: const AppIcon(AppIcons.add_rounded))],
       ),
       body: SafeArea(child: list),
     );

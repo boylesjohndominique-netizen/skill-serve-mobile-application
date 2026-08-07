@@ -10,6 +10,8 @@ import '../../core/widgets/buttons/primary_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../services/profile_service.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -85,7 +87,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                          child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                          child: const AppIcon(AppIcons.camera_alt_rounded, size: 16, color: Colors.white),
                         ),
                       ),
                     ],
@@ -104,14 +106,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   label: 'Phone number',
                   controller: _phone,
                   keyboardType: TextInputType.phone,
-                  prefixIcon: Icons.call_outlined,
+                  prefixIcon: AppIcons.call_outlined,
                   validator: Validators.phone,
                 ).animate().fadeIn(delay: 180.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Address',
                   controller: _address,
-                  prefixIcon: Icons.location_on_outlined,
+                  prefixIcon: AppIcons.location_on_outlined,
                   validator: Validators.required,
                 ).animate().fadeIn(delay: 260.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.xxl),

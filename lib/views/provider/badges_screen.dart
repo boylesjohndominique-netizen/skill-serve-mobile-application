@@ -6,6 +6,8 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/badge_model.dart';
+import '../../core/widgets/misc/app_icon.dart';
+import '../../core/constants/app_icons.dart';
 
 /// P9 — Provider recognition: earned badges + next-badge progress hints.
 class BadgesScreen extends StatelessWidget {
@@ -34,8 +36,8 @@ class BadgesScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 6))],
                   ),
-                  child: Icon(
-                    earned.isNotEmpty ? earned.first.icon : Icons.workspace_premium_rounded,
+                  child: AppIcon(
+                    earned.isNotEmpty ? earned.first.icon : AppIcons.workspace_premium_rounded,
                     color: Colors.white,
                     size: 30,
                   ),
@@ -123,7 +125,7 @@ class _NextBadgeCard extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: badge.color.withValues(alpha: 0.4), width: 1.2),
             ),
-            child: Icon(badge.icon, color: badge.color, size: 22),
+            child: AppIcon(badge.icon, color: badge.color, size: 22),
           ),
           const SizedBox(width: AppSizes.md),
           Expanded(
@@ -185,7 +187,7 @@ class _EarnedBadgeCard extends StatelessWidget {
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(badge.icon, color: Colors.white, size: 20),
+            child: AppIcon(badge.icon, color: Colors.white, size: 20),
           ),
           const SizedBox(width: AppSizes.md),
           Expanded(
@@ -198,7 +200,7 @@ class _EarnedBadgeCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
+          const AppIcon(AppIcons.check_circle_rounded, color: AppColors.success, size: 18),
         ],
       ),
     )
