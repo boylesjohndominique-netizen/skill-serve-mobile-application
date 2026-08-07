@@ -476,12 +476,12 @@ class _CategoryChipState extends State<_CategoryChip> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppIcon(widget.icon, size: 15, color: widget.selected ? Colors.white : AppColors.secondary),
+              AppIcon(widget.icon, size: 15, color: widget.selected ? AppColors.primary : AppColors.secondary),
               const SizedBox(width: 6),
               Text(
                 widget.label,
                 style: AppTextStyles.label.copyWith(
-                  color: widget.selected ? Colors.white : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
+                  color: widget.selected ? AppColors.primary : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
                   fontWeight: FontWeight.w600,
                 ),
               ),

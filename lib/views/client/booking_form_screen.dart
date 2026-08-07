@@ -578,7 +578,7 @@ class _RadioCard extends StatelessWidget {
                 color: selected ? AppColors.secondary : Colors.transparent,
                 border: Border.all(color: selected ? AppColors.secondary : AppColors.neutral300, width: 1.6),
               ),
-              child: selected ? const AppIcon(AppIcons.check_rounded, size: 13, color: Colors.white) : null,
+              child: selected ? const AppIcon(AppIcons.check_rounded, size: 13, color: AppColors.primary) : null,
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(
