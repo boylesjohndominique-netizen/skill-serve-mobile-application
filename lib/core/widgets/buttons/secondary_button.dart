@@ -49,7 +49,14 @@ class _SecondaryButtonState extends State<SecondaryButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.icon != null) ...[AppIcon(widget.icon, size: 18, color: Colors.white), const SizedBox(width: 8)],
-              Text(widget.label, style: AppTextStyles.button.copyWith(color: Colors.white)),
+              Flexible(
+                child: Text(
+                  widget.label,
+                  style: AppTextStyles.button.copyWith(color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

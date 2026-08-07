@@ -56,9 +56,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onPressed: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
                   icon: const AppIcon(AppIcons.chevron_left_rounded),
                 ),
-                Text(
-                  '${_monthName(_month.month)} ${_month.year}',
-                  style: AppTextStyles.titleLarge,
+                Expanded(
+                  child: Text(
+                    '${_monthName(_month.month)} ${_month.year}',
+                    style: AppTextStyles.titleLarge,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 IconButton(
                   onPressed: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),

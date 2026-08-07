@@ -46,14 +46,21 @@ class _PrimaryButtonState extends State<PrimaryButton> {
               key: ValueKey('loading'),
               height: 20,
               width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primary),
             )
           : Row(
               key: const ValueKey('content'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.icon != null) ...[AppIcon(widget.icon, size: AppSizes.iconMd, color: Colors.white), const SizedBox(width: 8)],
-                Text(widget.label, style: AppTextStyles.button.copyWith(color: Colors.white)),
+                if (widget.icon != null) ...[AppIcon(widget.icon, size: AppSizes.iconMd, color: AppColors.primary), const SizedBox(width: 8)],
+                Flexible(
+                  child: Text(
+                    widget.label,
+                    style: AppTextStyles.button.copyWith(color: AppColors.primary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
     );

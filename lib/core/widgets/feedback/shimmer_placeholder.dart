@@ -40,14 +40,14 @@ class ShimmerCardList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        count,
-        (i) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSizes.md),
-          child: ShimmerPlaceholder(height: itemHeight, borderRadius: AppSizes.radiusLg),
-        ),
-      ),
+    // ListView (shrink-wrapped, non-scrollable) so the skeleton never
+    // overflows whatever bounded height it is dropped into.
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: count,
+      separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
+      itemBuilder: (_, i) => ShimmerPlaceholder(height: itemHeight, borderRadius: AppSizes.radiusLg),
     );
   }
 }

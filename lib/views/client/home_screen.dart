@@ -82,14 +82,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('SkillServe', style: AppTextStyles.displayMedium)
-                          .animate().fadeIn(duration: 300.ms).slideX(begin: -0.06, end: 0),
-                      Text('Find trusted talent, fast.', style: AppTextStyles.bodySmall)
-                          .animate().fadeIn(delay: 80.ms, duration: 300.ms),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('SkillServe', style: AppTextStyles.displayMedium, maxLines: 1, overflow: TextOverflow.ellipsis)
+                            .animate().fadeIn(duration: 300.ms).slideX(begin: -0.06, end: 0),
+                        Text('Find trusted talent, fast.', style: AppTextStyles.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)
+                            .animate().fadeIn(delay: 80.ms, duration: 300.ms),
+                      ],
+                    ),
                   ),
                   InkWell(
                     onTap: () => context.push('/notifications'),
@@ -350,26 +352,32 @@ class _DiscoverHero extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                      border: Border.all(color: AppColors.secondary.withValues(alpha: 0.5), width: 1),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const AppIcon(AppIcons.verified_rounded, size: 14, color: AppColors.secondaryLight),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Verified local professionals',
-                          style: AppTextStyles.caption.copyWith(color: AppColors.textOnDark, fontWeight: FontWeight.w600),
-                        ),
-                      ],
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.5), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const AppIcon(AppIcons.verified_rounded, size: 14, color: AppColors.secondaryLight),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              'Verified local professionals',
+                              style: AppTextStyles.caption.copyWith(color: AppColors.textOnDark, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   const VerificationSeal(status: 'verified', size: 34),
                 ],
               ),

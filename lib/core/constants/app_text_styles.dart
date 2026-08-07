@@ -15,9 +15,11 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  static final TextStyle _display = GoogleFonts.spaceGrotesk();
-  static final TextStyle _body = GoogleFonts.inter();
-  static final TextStyle _mono = GoogleFonts.ibmPlexMono();
+  static final TextStyle _outfit = GoogleFonts.outfit();
+
+  static final TextStyle _display = _outfit;
+  static final TextStyle _body = _outfit;
+  static final TextStyle _mono = _outfit;
 
   // ---- Display ----
   static TextStyle displayLarge = _display.copyWith(

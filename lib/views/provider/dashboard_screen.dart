@@ -60,12 +60,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Hi, ${user?.firstName ?? 'there'} 👋', style: AppTextStyles.headlineLarge),
-                      Text('Here\'s your business at a glance', style: AppTextStyles.bodyMedium),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Hi, ${user?.firstName ?? 'there'} 👋', style: AppTextStyles.headlineLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text('Here\'s your business at a glance', style: AppTextStyles.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
                   ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.06, end: 0),
                   InkWell(
                     onTap: () => context.push('/notifications'),

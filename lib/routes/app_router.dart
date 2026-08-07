@@ -65,17 +65,16 @@ import '../views/shared/reviews_screen.dart';
 /// Client, and Provider each own their sub-tree, with a few screens
 /// (Notifications, Reviews, Booking Details, static info pages) shared
 /// across personas via top-level routes.
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/splash',
-  routes: [
+/// Top-level route table — also importable by tests that build a fresh
+/// [GoRouter] per scenario (avoids shared-router state bleed).
+final List<RouteBase> appRoutes = [
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
     GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
-
-    // Guest-accessible marketplace browsing (also reused as push destinations for Client)
     GoRoute(path: '/browse', builder: (context, state) => const BrowseServicesScreen()),
     GoRoute(path: '/categories', builder: (context, state) => const CategoriesScreen()),
     GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
@@ -176,6 +175,11 @@ final GoRouter appRouter = GoRouter(
       path: '/reviews/:providerId',
       builder: (context, state) => ReviewsScreen(providerId: state.pathParameters['providerId']!),
     ),
-  ],
+];
+
+/// The app's canonical [GoRouter], built from [appRoutes].
+final GoRouter appRouter = GoRouter(
+  initialLocation: '/splash',
+  routes: appRoutes,
 );
 

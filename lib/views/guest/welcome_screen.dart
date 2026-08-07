@@ -17,11 +17,16 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.xl),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : 0.0),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.xl),
+                  child: Column(
+                    children: [
+                      const Spacer(flex: 2),
               // Logo with glow pulse
               Stack(
                 alignment: Alignment.center,
@@ -44,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
                     width: 96,
                     height: 96,
                     decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                    child: const AppIcon(AppIcons.check_rounded, color: Colors.white, size: 46),
+                    child: const AppIcon(AppIcons.check_rounded, color: AppColors.primary, size: 46),
                   ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
                 ],
               ),
@@ -79,7 +84,11 @@ class WelcomeScreen extends StatelessWidget {
                   style: AppTextStyles.button.copyWith(color: AppColors.textMutedDark),
                 ),
               ).animate().fadeIn(delay: 550.ms),
-            ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

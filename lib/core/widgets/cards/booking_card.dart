@@ -78,15 +78,33 @@ class _BookingCardState extends State<BookingCard> {
                 children: [
                   const AppIcon(AppIcons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
                   const SizedBox(width: 6),
-                  Text(Formatters.dateShort(widget.booking.bookingDate), style: AppTextStyles.bodySmall),
+                  Flexible(
+                    child: Text(
+                      Formatters.dateShort(widget.booking.bookingDate),
+                      style: AppTextStyles.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const SizedBox(width: 14),
                   const AppIcon(AppIcons.access_time_rounded, size: 14, color: AppColors.neutral300),
                   const SizedBox(width: 6),
-                  Text(widget.booking.schedule, style: AppTextStyles.bodySmall),
+                  Flexible(
+                    child: Text(
+                      widget.booking.schedule,
+                      style: AppTextStyles.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const Spacer(),
-                  Text(
-                    Formatters.peso(widget.booking.amount),
-                    style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary),
+                  Flexible(
+                    child: Text(
+                      Formatters.peso(widget.booking.amount),
+                      style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

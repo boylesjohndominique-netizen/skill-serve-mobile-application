@@ -82,9 +82,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   final slide = _slides[i];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSizes.xxl),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: constraints.maxHeight.isFinite ? constraints.maxHeight : 0.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
                         // Icon with glow ring
                         Stack(
                           alignment: Alignment.center,
@@ -128,6 +132,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             .animate(key: ValueKey('d$i'))
                             .fadeIn(delay: 200.ms, duration: 350.ms),
                       ],
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -140,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _slides.length,
                 (i) => AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutBack,
+                  curve: Curves.easeOutCubic,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: i == _index ? 24 : 6,
                   height: 6,

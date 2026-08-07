@@ -340,12 +340,18 @@ class _OnboardStepper extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad),
-      child: Row(
-        children: [
-          for (var i = 0; i < names.length; i++) ...[
-            if (i > 0)
-              Expanded(
-                child: Container(
+      // FittedBox keeps the whole stepper readable on narrow screens or with
+      // large accessibility text — it scales down instead of overflowing.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < names.length; i++) ...[
+              if (i > 0)
+                Container(
+                  width: 18,
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
@@ -353,8 +359,7 @@ class _OnboardStepper extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-            Column(
+              Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedContainer(
@@ -387,6 +392,7 @@ class _OnboardStepper extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }

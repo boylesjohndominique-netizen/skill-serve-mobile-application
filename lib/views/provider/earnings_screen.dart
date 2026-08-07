@@ -95,13 +95,33 @@ class _EarningsScreenState extends State<EarningsScreen> {
                 children: [
                   Text('Total earnings', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark)),
                   const SizedBox(height: 4),
-                  Text(Formatters.peso(total), style: AppTextStyles.onDark(AppTextStyles.displayLarge)),
+                  // FittedBox scales the big amount down instead of overflowing.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(Formatters.peso(total), style: AppTextStyles.onDark(AppTextStyles.displayLarge)),
+                  ),
                   const SizedBox(height: AppSizes.md),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('This month: ${Formatters.peso(thisMonth)}', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark)),
-                      Text('${completed.length} completed jobs', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark)),
+                      Flexible(
+                        child: Text(
+                          'This month: ${Formatters.peso(thisMonth)}',
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: AppSizes.sm),
+                      Flexible(
+                        child: Text(
+                          '${completed.length} completed jobs',
+                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -177,12 +197,19 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(completed[i].serviceTitle, style: AppTextStyles.titleMedium),
-                          Text('${completed[i].clientName} • ${Formatters.dateShort(completed[i].bookingDate)}', style: AppTextStyles.bodySmall),
+                          Text(completed[i].serviceTitle, style: AppTextStyles.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text('${completed[i].clientName} • ${Formatters.dateShort(completed[i].bookingDate)}', style: AppTextStyles.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
-                    Text('+${Formatters.peso(completed[i].amount)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
+                    Flexible(
+                      child: Text(
+                        '+${Formatters.peso(completed[i].amount)}',
+                        style: AppTextStyles.titleMedium.copyWith(color: AppColors.success),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               )

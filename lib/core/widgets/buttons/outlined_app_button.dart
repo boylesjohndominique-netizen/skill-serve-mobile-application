@@ -49,7 +49,14 @@ class _OutlinedAppButtonState extends State<OutlinedAppButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.icon != null) ...[AppIcon(widget.icon, size: 18, color: c), const SizedBox(width: 8)],
-              Text(widget.label, style: AppTextStyles.button.copyWith(color: c)),
+              Flexible(
+                child: Text(
+                  widget.label,
+                  style: AppTextStyles.button.copyWith(color: c),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

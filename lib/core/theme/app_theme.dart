@@ -37,9 +37,8 @@ class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary:
-          AppColors.secondary, // Brass drives interactive elements on mobile
-      onPrimary: Colors.white,
+      primary: AppColors.secondary,
+      onPrimary: AppColors.primary,
       secondary: AppColors.primary,
       onSecondary: Colors.white,
       error: AppColors.error,
@@ -92,7 +91,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.secondary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.neutral200,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           textStyle: AppTextStyles.button,

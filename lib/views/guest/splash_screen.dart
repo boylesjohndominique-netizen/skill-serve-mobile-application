@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 84,
                   height: 84,
                   decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                  child: const AppIcon(AppIcons.check_rounded, color: Colors.white, size: 40),
+                  child: const AppIcon(AppIcons.check_rounded, color: AppColors.primary, size: 40),
                 )
                     .animate()
                     .scale(duration: 600.ms, curve: Curves.easeOutBack)
