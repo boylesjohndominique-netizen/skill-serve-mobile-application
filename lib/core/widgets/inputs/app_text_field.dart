@@ -84,15 +84,29 @@ class _AppTextFieldState extends State<AppTextField> {
               style: AppTextStyles.bodyLarge,
               decoration: InputDecoration(
                 hintText: widget.hint,
+                prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 prefixIcon: widget.prefixIcon != null
-                    ? AppIcon(widget.prefixIcon, size: 20, color: _focused ? AppColors.secondary : AppColors.neutral300)
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 14, right: 10),
+                        child: AppIcon(
+                          widget.prefixIcon,
+                          size: 18,
+                          strokeWidth: 1.5,
+                          color: _focused ? AppColors.secondary : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
+                        ),
+                      )
                     : null,
                 suffixIcon: widget.obscureText
                     ? IconButton(
+                        splashRadius: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                         icon: AppIcon(
                           _obscured ? AppIcons.visibility_off_outlined : AppIcons.visibility_outlined,
-                          size: 20,
-                          color: _focused ? AppColors.secondary : AppColors.neutral300,
+                          size: 18,
+                          strokeWidth: 1.5,
+                          color: _focused ? AppColors.secondary : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
                         ),
                         onPressed: () => setState(() => _obscured = !_obscured),
                       )

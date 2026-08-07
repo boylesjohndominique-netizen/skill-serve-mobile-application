@@ -28,9 +28,9 @@ class AppIcon extends StatelessWidget {
     if (i == null) return const SizedBox.shrink();
     return HugeIcon(
       icon: i,
-      size: size ?? 20.0,
+      size: size ?? 18.0,
       color: color ?? IconTheme.of(context).color ?? const Color(0xFF1C2128),
-      strokeWidth: strokeWidth ?? 1.8,
+      strokeWidth: strokeWidth ?? 1.5,
     );
   }
 }
