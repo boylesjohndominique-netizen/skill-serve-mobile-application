@@ -6,6 +6,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../models/user_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
 
 class DrawerAction {
@@ -42,13 +43,9 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(AppSizes.lg),
               child: Row(
                 children: [
-                  CircleAvatar(
+                  AppAvatar(
+                    initials: user?.initials ?? 'G',
                     radius: 26,
-                    backgroundColor: AppColors.primary,
-                    child: Text(
-                      user?.initials ?? 'G',
-                      style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
-                    ),
                   )
                       .animate()
                       .scale(

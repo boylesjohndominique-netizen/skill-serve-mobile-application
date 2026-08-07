@@ -6,21 +6,17 @@ import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-/// Primary call-to-action button. Pass [isLoading] to show an inline
-/// spinner and disable interaction — this doubles as the "Loading Button"
-/// variant so state stays in one place instead of two near-identical widgets.
-///
-/// Rendered with the brand brass gradient (135° #E3AD50 → #C9852E → #A66B22),
-/// ink text, and a brass-tinted glow shadow. Pressing scales the button down
-/// (0.97) with a smooth cubic-bezier curve for tactile feedback.
-class PrimaryButton extends StatefulWidget {
+/// Destructive action button (delete, decline, cancel, resubmit) — red fill,
+/// white content, red glow, press-scale feedback. Pairs with the tone-aware
+/// confirm dialogs from [AppDialog].
+class DangerButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
   final AppIconData? icon;
   final bool fullWidth;
 
-  const PrimaryButton({
+  const DangerButton({
     super.key,
     required this.label,
     this.onPressed,
@@ -30,10 +26,10 @@ class PrimaryButton extends StatefulWidget {
   });
 
   @override
-  State<PrimaryButton> createState() => _PrimaryButtonState();
+  State<DangerButton> createState() => _DangerButtonState();
 }
 
-class _PrimaryButtonState extends State<PrimaryButton> {
+class _DangerButtonState extends State<DangerButton> {
   bool _pressed = false;
 
   bool get _disabled => widget.isLoading || widget.onPressed == null;
@@ -42,24 +38,22 @@ class _PrimaryButtonState extends State<PrimaryButton> {
   Widget build(BuildContext context) {
     final child = AnimatedSwitcher(
       duration: AppAnimations.fast,
-      switchInCurve: AppAnimations.defaultCurve,
-      switchOutCurve: AppAnimations.defaultCurve,
       child: widget.isLoading
           ? const SizedBox(
               key: ValueKey('loading'),
               height: 20,
               width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primary),
+              child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
             )
           : Row(
               key: const ValueKey('content'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.icon != null) ...[AppIcon(widget.icon, size: AppSizes.iconMd, color: AppColors.primary), const SizedBox(width: 8)],
+                if (widget.icon != null) ...[AppIcon(widget.icon, size: AppSizes.iconMd, color: Colors.white), const SizedBox(width: 8)],
                 Flexible(
                   child: Text(
                     widget.label,
-                    style: AppTextStyles.button.copyWith(color: AppColors.primary),
+                    style: AppTextStyles.button.copyWith(color: Colors.white),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -84,8 +78,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                 ? []
                 : [
                     BoxShadow(
-                      color: AppColors.secondary.withValues(alpha: _pressed ? 0.3 : 0.45),
-                      blurRadius: _pressed ? 10 : 24,
+                      color: AppColors.error.withValues(alpha: _pressed ? 0.3 : 0.4),
+                      blurRadius: _pressed ? 10 : 22,
                       offset: Offset(0, _pressed ? 2 : 8),
                     ),
                   ],
@@ -97,13 +91,13 @@ class _PrimaryButtonState extends State<PrimaryButton> {
               borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               child: Ink(
                 decoration: BoxDecoration(
-                  gradient: AppColors.brassGradient,
+                  color: AppColors.error,
                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                 ),
                 child: InkWell(
                   onTap: _disabled ? null : widget.onPressed,
                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                  splashColor: Colors.black.withValues(alpha: 0.14),
+                  splashColor: Colors.white.withValues(alpha: 0.16),
                   highlightColor: Colors.transparent,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),

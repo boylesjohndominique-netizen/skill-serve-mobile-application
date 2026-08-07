@@ -10,6 +10,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/inputs/app_search_bar.dart';
+import '../../core/widgets/misc/app_avatar.dart';
 import '../../core/constants/app_icons.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -65,10 +66,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     children: [
                                       Stack(
                                         children: [
-                                          CircleAvatar(
+                                          AppAvatar(
+                                            initials: c.participantName.isNotEmpty ? c.participantName[0].toUpperCase() : '?',
                                             radius: 24,
-                                            backgroundColor: AppColors.primary,
-                                            child: Text(c.participantName[0], style: const TextStyle(color: Colors.white)),
                                           ),
                                           if (c.isOnline)
                                             Positioned(
@@ -108,7 +108,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                               decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(999)),
-                                              child: Text('${c.unreadCount}', style: AppTextStyles.caption.copyWith(color: Colors.white)),
+                                              child: Text('${c.unreadCount}', style: AppTextStyles.caption.copyWith(color: AppColors.primary)),
                                             ).animate().scale(begin: const Offset(0.5, 0.5), duration: 300.ms, curve: Curves.easeOutBack),
                                           ],
                                         ],

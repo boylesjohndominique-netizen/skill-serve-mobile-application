@@ -10,6 +10,7 @@ import '../../core/widgets/buttons/outlined_app_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/misc/status_badge.dart';
+import '../../core/widgets/misc/info_row.dart';
 import '../../models/payment_model.dart';
 import '../../services/payment_service.dart';
 import '../../core/widgets/misc/app_icon.dart';
@@ -107,14 +108,14 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                 ),
                 child: Column(
                   children: [
-                    _row('Receipt ID', p.id, mono: true),
-                    _row('Booking ref', p.bookingId, mono: true),
-                    _row('Transaction ref', p.reference, mono: true),
+                    InfoRow(label: 'Receipt ID', value: p.id, mono: true, emphasize: true),
+                    InfoRow(label: 'Booking ref', value: p.bookingId, mono: true),
+                    InfoRow(label: 'Transaction ref', value: p.reference, mono: true),
                     Divider(height: AppSizes.xl, color: isDark ? AppColors.lineDark : AppColors.line),
-                    _row('Client', p.clientName),
-                    _row('Provider', p.providerName),
-                    _row('Method', p.method),
-                    _row('Date', Formatters.dateTime(p.paidAt)),
+                    InfoRow(label: 'Client', value: p.clientName),
+                    InfoRow(label: 'Provider', value: p.providerName),
+                    InfoRow(label: 'Method', value: p.method),
+                    InfoRow(label: 'Date', value: Formatters.dateTime(p.paidAt)),
                   ],
                 ),
               ).animate().fadeIn(delay: 150.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
@@ -137,22 +138,4 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
     );
   }
 
-  Widget _row(String label, String value, {bool mono = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTextStyles.bodyMedium),
-          Flexible(
-            child: Text(
-              value,
-              style: mono ? AppTextStyles.monoMd.copyWith(color: AppColors.secondary) : AppTextStyles.titleMedium,
-              textAlign: TextAlign.right,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

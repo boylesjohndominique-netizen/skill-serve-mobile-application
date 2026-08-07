@@ -78,7 +78,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
               AnimatedRotation(
                 turns: widget.selected ? 0.02 : 0,
                 duration: AppAnimations.md,
-                child: AppIcon(icon, color: widget.selected ? Colors.white : AppColors.secondary, size: 24),
+                child: AppIcon(icon, color: widget.selected ? AppColors.primary : AppColors.secondary, size: 24),
               ),
               const SizedBox(height: 8),
               Text(
@@ -87,7 +87,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.caption.copyWith(
-                  color: widget.selected ? Colors.white : (isDark ? AppColors.textMutedDark : AppColors.textSecondary),
+                  color: widget.selected ? AppColors.primary : (isDark ? AppColors.textMutedDark : AppColors.textSecondary),
                   fontWeight: FontWeight.w600,
                 ),
               ),

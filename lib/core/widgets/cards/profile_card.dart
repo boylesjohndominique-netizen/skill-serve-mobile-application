@@ -4,6 +4,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../models/user_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
 
 /// Header card showing avatar, name, and role — used at the top of Profile
@@ -39,13 +40,11 @@ class ProfileCard extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.secondary.withValues(alpha: 0.6), width: 2),
             ),
-            child: CircleAvatar(
+            child: AppAvatar(
+              initials: user.initials,
               radius: 28,
               backgroundColor: AppColors.secondary,
-              child: Text(
-                user.initials,
-                style: AppTextStyles.headlineMedium.copyWith(color: Colors.white),
-              ),
+              foregroundColor: AppColors.primary,
             ),
           ),
           const SizedBox(width: AppSizes.md),

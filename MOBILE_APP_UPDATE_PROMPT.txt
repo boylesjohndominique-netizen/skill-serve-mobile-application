@@ -1,694 +1,675 @@
-================================================================================
-SKILLSERVE MOBILE APP — FULL AI BUILD / UPDATE PROMPT
-(Flutter · Client App + Provider App)
-================================================================================
-Version: 1.0
-Prepared from: a complete review of the SkillServe Admin Console (React frontend,
-admin-frontend repo — routes, pages, components, models, controllers, mock data,
-and design system). This document is written to be pasted directly into an AI
-coding assistant to update your existing Dart/Flutter mobile application.
-
-HOW TO USE THIS PROMPT
---------------------------------------------------------------------------------
-1. Read this entire document before writing code.
-2. You may use it as ONE prompt, or split it: Section 7 (Client App) and
-   Section 8 (Provider App) work independently.
-3. The admin console is the SINGLE SOURCE OF TRUTH for field names, status
-   enums, and business rules. Match them EXACTLY (they are already in
-   snake_case and are displayed by the admin panel).
-4. Where the backend is not yet live, build a thin mock/repository layer with
-   the same interface so the app runs end-to-end with sample data, then swap in
-   the real Laravel API by changing the repository implementation.
-5. Keep the app consistent with the SkillServe brand (Section 10) so the
-   mobile experience feels like the same product as the admin console.
-
---------------------------------------------------------------------------------
-SECTION 1 — YOUR ROLE
---------------------------------------------------------------------------------
-You are a senior Flutter engineer. Your task is to update the existing
-SkillServe mobile application — a services marketplace connecting households
-with verified local service professionals — for TWO user types:
-
-  • CLIENT  — people who discover providers and book services.
-  • PROVIDER — service professionals who list services, manage bookings, and
-               get paid.
-
-The app is one Flutter application with role-based navigation, OR two app
-variants sharing one codebase (feature flags / flavors). You decide the
-cleanest structure given the existing code.
-
-You must:
-- Reuse and modernize existing Dart/Flutter code where it matches the spec below.
-- Add every missing screen, model, state, and interaction defined in this doc.
-- Match the admin console's data contract and design language exactly.
-- Prioritize a premium, polished, production-quality result.
-
---------------------------------------------------------------------------------
-SECTION 2 — PRODUCT CONTEXT
---------------------------------------------------------------------------------
-Platform name:  SkillServe
-Tagline:        "Find trusted talent, fast."
-Elevator pitch: SkillServe bridges service accessibility and talent visibility
-                through an integrated skills marketplace and service management
-                platform. It connects households in the Visayas region
-                (Cebu City, Tagbilaran/Bohol, Dumaguete, Lapu-Lapu City,
-                Mandaue City, Talisay/Cebu, Panglao/Bohol, Bacolod) with
-                verified local service professionals.
-
-Currency:  Philippine Peso (PHP). Format money as ₱1,250 (no decimals,
-           thousands separators). Example slot prices range ₱350 – ₱8,500.
-Phone:     Philippine format — 09XX XXX XXXX.
-Language:  English UI (user data may contain Filipino names).
-
-Service categories (managed by admins, each has an icon):
-  Plumbing (Wrench) · Electrician (Zap) · Tutor (GraduationCap) ·
-  Graphic Designer (PenTool) · Photographer (Camera) · Carpenter (Hammer)
-
-Payment methods: GCash · Maya · Cash on hand · Card
-Example available time slots: 8:00 AM, 9:30 AM, 11:00 AM, 1:30 PM, 3:00 PM, 4:30 PM
-
-The signature brand motif is a VERIFICATION SEAL — a dashed circular "stamp"
-used everywhere trust is shown (verified provider, approved document, account
-status). Carry this motif into the mobile app.
-
---------------------------------------------------------------------------------
-SECTION 3 — SOURCE OF TRUTH: THE ADMIN CONSOLE
---------------------------------------------------------------------------------
-The admin web console has these modules. Everything a client or provider can do
-in the mobile app must produce data the admin console can manage, and vice
-versa. Review the module list, then map each one to mobile features:
-
-ADMIN MODULE                  WHAT ADMINS DO THERE                      MOBILE IMPACT
----------------------------------------------------------------------------------------------
-Dashboard                     KPIs, charts, quick actions, top          Provider app home mirrors
-                              providers, recent activity feed           this as the provider's
-                                                                        personal dashboard
-User Management               View/edit users; suspend, activate,       Auth, profile edit; suspended
-                              delete, reset password                    accounts blocked from login
-Verification Management       Approve / reject / request resubmission   Provider onboarding uploads
-                              of provider IDs, certificates, docs       ID/certificates; tracks status
-Category Management           Add / edit / delete service categories    Client Discover filter chips;
-                                                                        provider service category picker
-Service Management            Add / edit / hide / delete services       Provider CRUD for own services;
-                              (title, description, price, duration)     client sees active ones only
-Booking Management            View all bookings, cancel, resolve        Client: create/track/cancel;
-                              disputes                                 Provider: accept/decline,
-                                                                        advance status, dispute
-Payment Management            Transactions, refunds, status             Client: pay + receipts; Provider:
-                                                                        earnings, payout status
-Message Monitoring            Read-only view of client<->provider       Client + Provider in-app chat
-                              threads; flag / archive                   (1:1 conversations)
-Portfolio Moderation          Approve / reject / remove work samples    Provider uploads portfolio
-                                                                        images; approved shown publicly
-Reports (complaints)          Investigate / warn / suspend / close      Client + Provider file reports
-                              user-submitted reports                   with reason + details; track status
-Reviews                       Hide / remove abusive reviews             Client writes reviews; both read;
-                                                                        provider can flag abusive
-CMS                           Edit homepage, About, FAQs, Terms,        Client/Provider app pulls
-                              Privacy                                    homepage + About + FAQs +
-                                                                        Terms + Privacy content
-Notifications                 Broadcast announcements by audience       In-app push notifications
-                              (all / clients / providers)               targeted by audience
-Reports & Analytics           Generate + export PDF/Excel reports       (admin-only; no mobile screen)
-Provider Recognition          Badges, leaderboard, featured providers   Provider earns badges, sees
-                                                                        leaderboard; clients see
-                                                                        badges on provider profiles
-Marketplace Preview           Simulates the PUBLIC client experience:   THE MOBILE APP IS THE REAL
-                              Discover → Provider Profile → Booking     VERSION OF THIS. Build every
-                              Flow (4-step wizard + confirmation)       element shown there.
-Settings / Admin Permissions  Admin profile, roles                       (admin-only)
-
-CROSS-CUTTING (also needed in mobile):
-  • Global search, pagination, CSV export (admin-only)
-  • Loading skeletons (shimmer), empty states, error states with retry
-  • Micro-interactions: press feedback, hover-lift (mobile: press scale),
-    spring pop animations for modals/toasts
-  • Keyboard/screen-reader accessibility + reduced-motion support
-
---------------------------------------------------------------------------------
-SECTION 4 — CORE DATA MODELS & ENUMS (MATCH EXACTLY)
---------------------------------------------------------------------------------
-Use these exact field names (snake_case, matching the backend) and enum values.
-All statuses render in the admin as Title Case with underscores replaced by
-spaces (e.g. "resubmission_requested" → "Resubmission Requested").
-
-USER
-  user_id (string, e.g. "CL-1001", "PR-2001"), role: "client" | "provider" | "admin",
-  firstname, lastname, email, phone, address, profile_picture, status, created_at
-  Derived: fullName = "$firstname $lastname"; initials = first letters.
-  status: "active" | "suspended" | "pending"
-
-PROVIDER (extends User)
-  provider_id (e.g. "PV-1"), user_id, bio, years_experience (int),
-  verification_status, average_rating (float 1.0–5.0), category_name,
-  completed_jobs (int)
-  verification_status: "verified" | "pending" | "rejected" | "resubmission_requested"
-
-CATEGORY
-  category_id, category_name, icon, provider_count, status ("active")
-
-SERVICE (offered by a provider under a category)
-  service_id (e.g. "SV-1001"), provider_id, provider_name, category_name,
-  title, description, price (int, PHP), duration ("1 hour" | "2 hours" |
-  "Half day" | "Full day" | "2–3 days"), status, created_at
-  status: "active" | "hidden"   (clients only ever see "active")
-
-BOOKING
-  booking_id (e.g. "BK-5001"), client_id, client_name, provider_id,
-  provider_name, service_id, service_title, booking_date (ISO date),
-  schedule ("9:00 AM"), status, amount (PHP)
-  status: "pending" | "confirmed" | "in_progress" | "completed" |
-          "cancelled" | "disputed"
-
-PAYMENT
-  payment_id (e.g. "PAY-8001"), booking_id, client_name, provider_name,
-  method ("GCash" | "Maya" | "Cash on hand" | "Card"), amount, status,
-  reference ("TXN-123456" or "COD-123456"), paid_at
-  status: "paid" | "pending" | "failed" | "refunded"
-
-MESSAGE / CONVERSATION
-  conversation_id (e.g. "MSG-901"), client_name, provider_name, last_message,
-  last_sender ("client" | "provider"), sent_at, unread (int), status, thread[]
-  thread message: { id, from: "client"|"provider", text, sent_at }
-  status: "active" | "flagged" | "archived"
-
-PORTFOLIO (provider work samples)
-  portfolio_id (e.g. "PF-1"), provider_id, provider_name, image (cover),
-  images[] (list), title, description, status, submitted_at
-  status: "pending" | "approved" | "rejected"   (public shows approved only)
-
-REPORT (complaint / dispute filed by a user)
-  report_id (e.g. "RP-1"), reporter_id, reporter_name, reported_user,
-  reported_name, reason, details, status, created_at
-  Example reasons: "No-show for scheduled booking", "Inappropriate messages",
-  "Overcharging beyond quote", "Fake portfolio images", "Harassment",
-  "Poor workmanship / unresolved damage"
-  status: "open" | "investigating" | "warned" | "suspended" | "closed"
-
-REVIEW
-  review_id (e.g. "RV-1"), booking_id, client_name, provider_name, rating (1–5),
-  review (text), status, flagged_reason, created_at
-  status: "visible" | "flagged" | "hidden"   (public shows visible only)
-
-VERIFICATION DOCUMENT
-  document_id (e.g. "VD-1"), provider_id, provider_name, category, type
-  ("ID" | "Certificate" | "Document"), file, status, submitted_at
-  status: "pending" | "approved" | "rejected" | "resubmission_requested"
-
-NOTIFICATION (admin broadcast)
-  notification_id, title, message, audience ("all" | "clients" | "providers" |
-  "admin"), status ("sent"), created_at
-
-RECOGNITION BADGES (awarded automatically by performance rules):
-  top_rated           "Top Rated"           — 4.5+ avg rating AND 20+ completed jobs
-  rising_star         "Rising Star"         — high rating + rapid booking growth (60 days)
-  veteran             "Veteran"             — 5+ years experience AND 100+ completed jobs
-  verified_pro        "Verified Pro"        — full document verification + approved portfolio
-  community_favorite  "Community Favorite"  — most-reviewed provider with positive feedback
-
---------------------------------------------------------------------------------
-SECTION 5 — API REFERENCE
---------------------------------------------------------------------------------
-Base URL (from admin repo): import.meta.env.VITE_API_BASE_URL, default
-http://localhost:8000/api. Auth: Bearer token (admin stores it under
-"skilllink_admin_token"; mobile should store it in secure storage).
-Flip USE_LIVE_API = true once the Laravel backend is live.
-
-Admin-only endpoints (for reference; mobile never calls these):
-  GET/PATCH/DELETE /api/admin/users..., /api/admin/verifications...,
-  /api/admin/categories, /api/admin/services, /api/admin/bookings,
-  /api/admin/payments, /api/admin/messages, /api/admin/portfolios,
-  /api/admin/reports, /api/admin/reviews, /api/admin/cms/:page,
-  /api/admin/notifications, /api/admin/recognition...,
-  /api/admin/dashboard, /api/admin/reports/generate|export
-
-Mobile-facing endpoints to implement on the backend (mirror admin shapes):
-  Auth            POST /api/login (email+password → { token, user })
-                  POST /api/logout · POST /api/forgot-password ·
-                  POST /api/register · GET /api/me
-  Discover        GET /api/categories · GET /api/providers?category=&search=&page=
-                  GET /api/providers/:id (profile + services + portfolio +
-                  reviews) · GET /api/services/:id
-  Bookings        POST /api/bookings (client creates) ·
-                  GET /api/bookings?role=client|provider&status= ·
-                  GET /api/bookings/:id · PATCH /api/bookings/:id/status
-                  (provider: confirm / start / complete; client: cancel) ·
-                  POST /api/bookings/:id/dispute
-  Payments        GET /api/payments (own) · POST /api/payments (initiate) ·
-                  GET /api/payments/:id · POST /api/payments/:id/refund (admin)
-  Chat            GET /api/conversations · GET /api/conversations/:id ·
-                  POST /api/conversations/:id/messages (send) ·
-                  PATCH /api/conversations/:id/read
-  Portfolio       GET /api/providers/:id/portfolio ·
-                  POST /api/portfolio (provider upload) ·
-                  PATCH /api/portfolio/:id (provider edit)
-  Verification    GET /api/me/verification · POST /api/verification
-                  (provider uploads ID/certificate) ·
-                  DELETE /api/verification/:id
-  Reviews         POST /api/bookings/:id/review (client, after completion) ·
-                  GET /api/providers/:id/reviews
-  Reports         POST /api/reports (file complaint) · GET /api/reports/mine
-  Notifications   GET /api/notifications · PATCH /api/notifications/:id/read ·
-                  Push via FCM; admin broadcasts map to audience
-  CMS             GET /api/cms/homepage · /about · /faqs · /terms · /privacy
-  Recognition     GET /api/providers/:id/badges ·
-                  GET /api/recognition/leaderboard
-
-Rules: every list endpoint supports server pagination (page size 10/20/50),
-search, and status filters. Errors return a consistent { message, errors? }
-shape with proper HTTP codes; the mobile app must surface friendly messages.
-
---------------------------------------------------------------------------------
-SECTION 6 — APP STRATEGY
---------------------------------------------------------------------------------
-ONE Flutter app, role-based:
-  • On login/registration the user picks or is assigned a role.
-  • Navigation shells differ by role (Client bottom nav vs Provider bottom nav).
-  • Shared code: auth, models, repositories, chat, notifications, design system.
-
-User flows to support end-to-end:
-  CLIENT:  Register/Login → Discover → Provider profile → Book (4 steps) →
-           Manage bookings → Chat → Pay → Review → File report
-  PROVIDER: Register/Login → Complete profile + Verification (upload docs) →
-           Add services → Upload portfolio → Accept bookings → Chat →
-           Complete job → Get paid → Earn badges
-
---------------------------------------------------------------------------------
-SECTION 7 — CLIENT APP — SCREEN-BY-SCREEN SPEC
---------------------------------------------------------------------------------
-Bottom navigation (5 tabs): Home · Explore · Bookings · Messages · Profile
-
-C1. SPLASH / ONBOARDING
-    - Brand splash (logo + tagline "Find trusted talent, fast.").
-    - 2–3 swipeable onboarding slides (trust/verification, wide category
-      coverage, easy booking), skip button, "Get started" CTA.
-    - If logged in, route to role home; else to Login.
-
-C2. AUTH — LOGIN / REGISTER / FORGOT PASSWORD
-    - Login: email + password, show/hide password, "Remember me", forgot
-      password link. Demo hint styling not needed in production.
-    - Register: full name, email, phone (09XX XXX XXXX validation), address,
-      password + confirm, role picker (I'm a client / I'm a provider).
-      (Provider registrants are routed to the Provider app after signup.)
-    - Forgot password: email → success state with instructions.
-    - Validation inline; errors surface via snackbars; loading spinner on
-      submit; biometric unlock (optional, secure storage-backed).
-
-C3. HOME / DISCOVER (tab 1)
-    Mirror the admin "Marketplace Preview → Discover" tab exactly:
-    - Hero card: gradient ink/navy with brass glow orbs, "Verified local
-      professionals" chip, headline "Find trusted talent, fast.", search field.
-    - Search: providers or services by name/category (debounced).
-    - Category chips: "All categories" + each category (icon); horizontal
-      scroll; selected chip = brass filled.
-    - Featured providers strip: horizontal cards (avatar, name, brass
-      BadgeCheck if verified, category, star rating). Tapped → profile.
-    - Provider grid (2 columns on mobile): card shows avatar + name + verified
-      icon, category, VerificationSeal, rating, jobs count, years experience,
-      bio preview (2 lines), "from ₱X" min price, "Book now" button →
-      starts booking flow.
-    - Pull-to-refresh; skeleton shimmer while loading; empty state with CTA.
-
-C4. PROVIDER PROFILE (public)
-    Mirror the admin profile tab:
-    - Header: large avatar, name, verification seal (large), verified badge,
-      category. Stats row: Rating | Jobs | Exp. (years).
-    - About section (bio).
-    - Services section: list of ACTIVE services (title, duration, price,
-      Book button).
-    - Work samples: grid of APPROVED portfolio images with title overlay;
-      tap → full-screen lightbox with all images + description.
-    - Reviews section: client name, star rating, review text.
-    - Recognition: earned badges shown as chips (e.g. Top Rated, Veteran).
-    - Sticky "Book {First Name}" CTA → booking flow.
-
-C5. BOOKING FLOW (4-step wizard — replicate exactly)
-    Steps: 1 Service → 2 Schedule → 3 Details & Payment → 4 Confirm.
-    - Stepper UI at top (numbered circles, brass when reached/completed).
-    - Step 1: choose one service (radio cards: title, duration, category, price).
-    - Step 2: date picker (min = today) + time slot chips.
-    - Step 3: full name, phone, address (service location), payment method
-      selector (GCash / Maya / Cash on hand / Card).
-    - Step 4: summary panel (provider, service, schedule, client, payment)
-      + total (ink/navy total bar, mono font) → "Confirm booking".
-    - Confirmation screen: big emerald check, "You're all set, {name}!",
-      booking reference (mono font), summary card, "Make another booking".
-    - Back/Continue navigation with validation on each step; booking hits
-      POST /api/bookings.
-
-C6. MY BOOKINGS (tab 3)
-    - Status tabs: All / Pending / Confirmed / In Progress / Completed /
-      Cancelled / Disputed.
-    - Booking cards: service title, provider name, date · time, amount,
-      status pill (colored per Section 10).
-    - Detail screen: full booking info, provider mini-card, amount breakdown,
-      timeline of status changes, and contextual actions:
-        • Pending/Confirmed  → Cancel booking
-        • Completed          → "Leave a review" (stars + text)
-        • Disputed           → view dispute status + contact support
-      Cancel → confirm dialog → toast/snackbar confirmation.
-
-C7. CHAT / MESSAGES (tab 4)
-    - Conversation list: avatar, other party name, last message preview,
-      time ago, unread count badge; badge dot/row highlight when unread.
-    - Chat thread: bubble UI (client right / provider left), timestamps,
-      input bar with send; optimistic send + retry on failure; mark read.
-    - Threads are 1:1 client↔provider, tied to a booking or general inquiry.
-    - Pull-to-refresh + pagination (load older).
-
-C8. PAYMENTS & RECEIPTS
-    - Payment history (my payments): payment id, booking ref, method icon,
-      amount, status pill (paid/pending/failed/refunded), date, reference no.
-    - Payment detail: full receipt (client, provider, method, reference,
-      amount, paid_at) + "Download/share receipt" (PDF/image optional).
-    - In booking flow, payment initiation per chosen method (GCash/Maya =
-      e-wallet intent/link; Card = card form; Cash on hand = pay at service).
-
-C9. REVIEWS
-    - Write review (post-completion): 1–5 stars, optional comment, submit.
-      One review per completed booking.
-    - Read provider reviews on their profile (Section C4).
-
-C10. REPORTS / SUPPORT (from Profile or Booking)
-    - File a report: choose reason (picklist from Section 4), details textarea,
-      optional linked booking; submit → confirmation with report id.
-    - My reports: list with status pills (open/investigating/warned/
-      suspended/closed) + timeline of admin actions.
-
-C11. NOTIFICATIONS
-    - In-app list from admin broadcasts (audience "all" or "clients") + own
-      activity (booking updates, provider replies, verification updates).
-    - Unread badge on icon; mark-all-read; tap → deep link to related screen.
-    - Push via FCM; deep-link routes.
-
-C12. PROFILE & SETTINGS (tab 5)
-    - Profile card: avatar, name, role, member since.
-    - Edit profile: name, phone, address, avatar upload.
-    - Saved addresses (optional), preferred payment method.
-    - Notification preferences (toggles).
-    - Security: change password, 2FA toggle, biometric login toggle.
-    - Help: FAQs (from CMS), contact support, Terms & Privacy (from CMS).
-    - Logout.
-
---------------------------------------------------------------------------------
-SECTION 8 — PROVIDER APP — SCREEN-BY-SCREEN SPEC
---------------------------------------------------------------------------------
-Bottom navigation (5 tabs): Home · Bookings · Services · Messages · Profile
-
-P1. AUTH
-    Same as C2. After first login, if the provider has NOT completed
-    verification, show the Onboarding/Verification gate (P2) before the home.
-
-P2. PROVIDER ONBOARDING & VERIFICATION
-    - Step 1: Professional profile — bio, years of experience, category
-      (single select from admin categories).
-    - Step 2: Upload documents — one or more of: ID, Certificate, Document
-      (image/PDF picker, camera option). Show list with statuses.
-    - Step 3: Status screen — a large VerificationSeal. States:
-        pending: brass seal "Under review"
-        approved/verified: emerald seal "You're verified! Now list services."
-        rejected: red seal + reason + "Upload again" (resubmit)
-        resubmission_requested: brass seal + admin note + "Resubmit"
-    - Push notification + in-app banner when status changes.
-
-P3. PROVIDER HOME / DASHBOARD (tab 1)
-    Personal KPI dashboard (mirrors admin Dashboard, scoped to self):
-    - Greeting header + verification seal/banner if not verified.
-    - Stat cards: Total Bookings · Active Bookings · Earnings (₱) ·
-      Average Rating · Completed Jobs (grid).
-    - Quick actions: Add service, Upload portfolio, View verification.
-    - Upcoming bookings list (next confirmed/in_progress, with time).
-    - Recent activity: new bookings, new reviews, badge earned.
-    - Pull-to-refresh + shimmer skeleton.
-
-P4. BOOKINGS (tab 2)
-    - Status tabs: Requests (pending) / Confirmed / In Progress / Completed /
-      Cancelled / Disputed.
-    - Request card: service title, client name, schedule, amount,
-      Accept / Decline buttons (accept → confirmed).
-    - Confirmed card: schedule, client, amount → "Start job" (→ in_progress),
-      "Message client".
-    - In progress → "Mark completed" (→ completed; prompts client to pay/
-      review).
-    - Detail screen: booking info, client card, timeline, contextual actions.
-    - Disputed booking: banner explaining dispute + link to reports/support.
-
-P5. SERVICES MANAGER (tab 3)
-    - My services list: title, price, duration, status toggle (active/hidden),
-      edit / delete (with confirm).
-    - Add/Edit service form: title, description, category (locked to own),
-      price, duration. Validation + save → snackbar.
-    - Insights: views/bookings per service (optional if backend provides).
-
-P6. PORTFOLIO MANAGER
-    - My portfolio grid: cover image, title, status pill
-      (pending/approved/rejected), delete.
-    - Add item: title, description, multiple image upload (with preview,
-      reorder optional).
-    - Rejected items: banner with reason + "Edit & resubmit".
-    - Approved items only appear publicly.
-
-P7. EARNINGS / PAYOUTS
-    - Earnings summary: total earned (₱), pending payout, this month,
-      per-booking list.
-    - Payout history: status (paid/pending/failed/refunded), reference, dates.
-    - Payout method setup (GCash/Maya/Card — same method list as payments).
-    - Money shown in mono font; ₱ formatting per Section 2.
-
-P8. CHAT / MESSAGES (tab 4)
-    Same as C7 (mirrored: provider bubbles right, client left). Accepting a
-    booking can auto-open a thread; quick-reply chips optional.
-
-P9. REVIEWS & RECOGNITION
-    - My reviews: list of visible reviews with ratings; average rating stat.
-    - Flag abusive review → opens report flow prefilled (reason:
-      "Inappropriate messages" / custom).
-    - My badges: earned recognition badges (Section 4) with criteria tooltips;
-      "Next badge to earn" progress hints (e.g. 18/20 jobs to Top Rated).
-    - Leaderboard position (optional): my rank among providers.
-
-P10. PROFILE & SETTINGS
-    - Public profile preview (what clients see — reuse C4 renderer).
-    - Edit: bio, years experience, avatar, category, contact info.
-    - Verification status card → deep link to P2.
-    - Notification preferences, security (password/2FA/biometric), help
-      (FAQs/Terms/Privacy from CMS), logout.
-
---------------------------------------------------------------------------------
-SECTION 9 — SHARED SCREENS & COMPONENTS
---------------------------------------------------------------------------------
-Shared screens: Auth, Notifications (C11), Chat (C7/P8), Reports (C10), CMS
-content pages (Homepage/About/FAQs/Terms/Privacy rendered from CMS data).
-
-Shared widget kit (design tokens in Section 10):
-  - StatusPill: colored pill (icon + label) for every enum in Section 4.
-  - VerificationSeal: dashed circular stamp (sizes 26/34/44/60) with status
-    color + icon (ShieldCheck verified, Clock pending, RotateCcw resubmit, X
-    rejected).
-  - Avatar: initials circle; tones ink/brass; photo support.
-  - RatingStars: 5 stars (brass fill), optional numeric value.
-  - StatCard, SectionHeader (eyebrow label + title), InfoRow (label/value),
-    EmptyState (icon + title + hint + optional CTA), ErrorState (message +
-    retry), ShimmerSkeleton (light sweep, not flat pulse).
-  - PrimaryButton (brass gradient + glow), SecondaryButton (ink/outline),
-    DangerButton, press scale feedback.
-  - Bottom sheet + full dialog (spring pop animation), ConfirmDialog
-    (tone-aware: brass/danger), Toast/Snackbar with pop animation.
-  - SearchBar, FilterChips, SegmentedTabs, Stepper, Toggle, TextField styles
-    (focus = brass border + soft ring).
-
---------------------------------------------------------------------------------
-SECTION 10 — DESIGN SYSTEM (MOBILE ADAPTATION)
---------------------------------------------------------------------------------
-Recreate the admin console's design language in Flutter (Material 3 or
-Cupertino styling, whichever fits the existing codebase, themed with these
-tokens):
-
-COLORS (exact hex):
-  ink        #101828  — structure, primary text, dark surfaces, primary buttons
-  ink-600    #1F273D  — secondary text on light
-  ink-900    #0A0F1C  — deepest navy (hero/login panel)
-  brass      #C9852E  — accent: CTAs, active states, seals, highlights
-  brass-100  #F6E4C4  — light brass fills/rings
-  brass-700  #7D501A  — brass text on light fills
-  canvas     #F5F4F1  — app background (warm slate)
-  surface    #FFFFFF  — cards, sheets
-  line       #E6E4DE  — all 1px hairline borders
-  text       #475467  — body copy
-  muted      #8A8F98  — labels, dates, placeholders
-Semantic status colors: emerald (success/verified/paid/completed),
-red (danger/suspended/rejected/cancelled/disputed/flagged/failed/refunded→
-  orange-adjacent if needed; keep red family for failure states),
-blue (in progress / investigating), brass (pending/confirmed/sent),
-ink-50 (hidden/closed/archived neutral).
-
-GRADIENTS:
-  brass gradient  135°: #E3AD50 → #C9852E → #A66B22  (primary CTAs)
-  ink gradient    160°: #1F273D → #101828 → #0A0F1C  (hero, dark panels)
-  surface gradient: white → #FDFCFA (cards)
-
-TYPOGRAPHY:
-  Display:  Space Grotesk — page titles, card titles, big numbers
-  Body/UI:  Inter — default body text
-  Mono:     IBM Plex Mono — IDs (BK-5001), prices, counts, timestamps,
-            reference numbers
-  Hierarchy: eyebrow labels (11px, mono, uppercase, wide letter-spacing,
-  muted) → title → body (14px) → meta (12px muted).
-  Use google_fonts package; provide graceful fallbacks.
-
-ELEVATION / DEPTH (shadows):
-  Resting cards: subtle ambient+key shadow
-  Raised/selected: stronger; Modals/dialogs/bottom sheets: deepest
-  Primary CTA glow: brass-tinted shadow (e.g. 0 8px 24px -6px rgba(201,133,46,.45))
-  Buttons: active press scale 0.97 + smooth cubic-bezier(0.22,1,0.36,1)
-
-MICRO-INTERACTIONS:
-  - Press feedback (scale + ripple) on all tappables.
-  - Spring "pop" for dialogs/toasts/sheets (cubic-bezier 0.34,1.56,0.64,1).
-  - FadeUp for screen/section entry.
-  - Shimmer skeletons (animated light sweep) for loading.
-  - Haptics on confirm/error (HapticFeedback).
-  - Respect reduced-motion accessibility setting.
-
-STATUS PILL COLOR MAP (consistent with admin Badge component):
-  active/verified/approved/completed/visible/sent  → emerald
-  pending/confirmed/resubmission_requested         → brass
-  in_progress/investigating                        → blue
-  warned                                           → orange
-  suspended/rejected/cancelled/disputed/flagged/open → red
-  hidden/closed/archived                           → neutral (ink-50)
-  paid                                             → emerald · failed → red ·
-  refunded                                         → orange · pending (payment) → brass
-
---------------------------------------------------------------------------------
-SECTION 11 — CRITICAL WORKFLOWS (STATE MACHINES)
---------------------------------------------------------------------------------
-BOOKING LIFECYCLE (client + provider):
-  pending ──provider accepts──▶ confirmed ──provider starts──▶ in_progress
-  pending ──client cancels──▶ cancelled
-  in_progress ──provider completes──▶ completed ──client reviews──▶ review
-  any ──client disputes / report filed──▶ disputed ──admin resolves──▶
-  completed or cancelled
-  Rules: client can cancel pending/confirmed; provider can accept/decline
-  pending, start confirmed, complete in_progress. Each transition pushes a
-  notification to the other party and adds a timeline entry.
-
-VERIFICATION FLOW (provider):
-  pending ──admin approves──▶ verified (seal emerald)
-  pending ──admin rejects──▶ rejected ──provider resubmits──▶ pending
-  pending ──admin requests resubmission──▶ resubmission_requested
-  ──provider resubmits──▶ pending
-  Only verified providers can go fully public (featured/leaderboard qualify).
-
-PAYMENT FLOW:
-  Booking confirmed → payment pending → paid (GCash/Maya/Card/Cash) →
-  on refund/dispute resolution → refunded.
-  Provider sees earnings only for paid/refunded-tracked payments.
-
-RECOGNITION RULES (computed automatically; see Section 4 badge criteria).
-  Badges appear on provider profile (client app) and in provider's
-  Recognition screen. Admin can feature providers; featured providers appear
-  in the client Discover "Featured" strip.
-
-NOTIFICATIONS:
-  Admin broadcasts target audience: all | clients | providers. Mobile
-  registers for FCM topics per audience bucket + user-specific topics
-  (booking updates, verification updates, payouts).
-
---------------------------------------------------------------------------------
-SECTION 12 — FLUTTER ARCHITECTURE & STATE MANAGEMENT
---------------------------------------------------------------------------------
-Recommended (adapt to existing code; consistency beats dogma):
-  - Clean architecture-lite: presentation (widgets/pages/state) → domain
-    (models, enums, repositories interfaces) → data (API client, repositories
-    impl, mocks, local cache).
-  - State management: Riverpod or Bloc (pick what the existing app already
-    uses if any); at minimum: isolated per-feature states, no setState sprawl.
-  - HTTP: dio with an interceptor that attaches Bearer token from
-    flutter_secure_storage, maps errors to a friendly AppException, and
-    supports a base URL switch (dev/staging/prod).
-  - JSON: json_serializable or freezed for all models in Section 4.
-  - Local persistence: shared_preferences for prefs; flutter_secure_storage
-    for tokens; drift/hive for offline cache of discover lists + chat threads.
-  - Push notifications: firebase_messaging; FCM topics per audience; handle
-    background/terminated taps with deep links.
-  - Uploads: image_picker + file upload (multipart) for verification docs and
-    portfolio images; compression for images.
-  - Formatting: intl (PHP currency via NumberFormat.currency(locale: 'en_PH',
-    symbol: '₱'), date/time helpers).
-  - Pagination: infinite scroll on lists (Discover, bookings, messages,
-    earnings) with pull-to-refresh.
-  - Connectivity: connectivity_plus — show offline banner, queue chat sends.
-  - Testing: unit tests for models/enums/state machines; widget tests for the
-    booking wizard and verification gate.
-
---------------------------------------------------------------------------------
-SECTION 13 — QUALITY BAR & POLISH
---------------------------------------------------------------------------------
-Every screen must have all four states handled:
-  LOADING (shimmer skeleton, not blank) · DATA (primary layout) ·
-  EMPTY (friendly empty state with icon + hint + CTA) ·
-  ERROR (message + retry, never a frozen screen)
-Also required:
-  - Input validation with inline error text and disabled submit buttons.
-  - Confirm dialogs for destructive actions (cancel booking, delete service,
-    delete portfolio, logout).
-  - Toast/snackbar feedback after every action ("Booking BK-5241 confirmed",
-    "Document approved", "Service hidden").
-  - Pull-to-refresh on all list screens; pagination/infinite scroll.
-  - Optimistic updates for chat and toggles, with rollback on failure.
-  - Deep linking: notification tap routes to the right screen.
-  - Accessibility: screen-reader labels, ≥ 4.5:1 contrast, large tap targets
-    (44dp), reduced-motion support.
-  - Responsive: phone + tablet layouts; landscape does not break.
-  - Performance: lazy lists (ListView.builder), cached images (cached_network
-    _image), no jank on scroll.
-
---------------------------------------------------------------------------------
-SECTION 14 — ACCEPTANCE CHECKLIST
---------------------------------------------------------------------------------
-Client app:
-  [ ] Discover, search, category filter, featured strip, provider grid
-  [ ] Provider profile (seal, services, portfolio, reviews, badges)
-  [ ] 4-step booking flow + confirmation with reference
-  [ ] My bookings with all status tabs + cancel + dispute
-  [ ] Chat (list + thread, unread, optimistic send)
-  [ ] Payments & receipts (GCash/Maya/Card/Cash)
-  [ ] Write review after completion
-  [ ] File & track reports
-  [ ] Notifications (list + push + deep links)
-  [ ] Profile, settings, CMS pages
-
-Provider app:
-  [ ] Verification gate + document upload + status seal tracking
-  [ ] Personal dashboard (KPIs, quick actions, upcoming bookings)
-  [ ] Bookings: accept/decline/start/complete + dispute banner
-  [ ] Services CRUD with active/hidden toggle
-  [ ] Portfolio upload + moderation status
-  [ ] Earnings & payouts
-  [ ] Chat
-  [ ] Reviews view + flag abusive
-  [ ] Recognition: badges + leaderboard position
-  [ ] Profile/settings + public profile preview
-
-Cross-cutting:
-  [ ] All enum values match Section 4 exactly (rendered labels match admin)
-  [ ] PHP currency + PH phone/date formats everywhere
-  [ ] Full design system compliance (Section 10)
-  [ ] Loading/empty/error states on every screen
-  [ ] Push notifications wired to admin broadcast audiences
-  [ ] Data created in mobile (bookings, services, docs, reviews, reports)
-      is visible and manageable in the admin console
-
---------------------------------------------------------------------------------
-SECTION 15 — OPEN QUESTIONS / PLACEHOLDERS
---------------------------------------------------------------------------------
-- Confirm final backend endpoint paths (Section 5) with the Laravel developer.
-- Payment gateway choice for GCash/Maya/Card (e-wallet redirect vs SDK) is
-  TBD; build a PaymentRepository interface so the implementation can swap.
-- Whether biometric login ships in v1.
-- Tablet layout priority.
-If any of these are unresolved, make a sensible decision, document it in a
-README, and keep the interface swappable.
-
---- END OF PROMPT ---
+# **Complete UI Redesign Prompt — Flutter Mobile Application (iOS 26-Inspired Design Language)**
+
+> **Role**
+>
+> Act as a Senior Flutter Developer, Senior Mobile UI/UX Designer, Motion Designer, and Product Designer with expertise in premium mobile experiences. Your objective is to completely redesign my existing Flutter (Dart) application by adopting a modern, spatial, and highly polished design language inspired by the latest generation of mobile operating systems. **Do not copy Apple's proprietary assets, icons, layouts, or branding.** Instead, recreate the design philosophy: layered depth, fluid motion, premium materials, and tactile interactions while preserving my application's functionality and navigation.
+
+---
+
+# Primary Goal
+
+Redesign **only the user interface and user experience**.
+
+Do **NOT** change:
+
+- Business logic
+- API integration
+- Firebase implementation
+- Database structure
+- Models
+- Navigation flow
+- State management
+- Backend functionality
+
+The redesign must preserve all existing features while replacing the entire visual presentation with a more premium, immersive experience.
+
+---
+
+# Design Philosophy
+
+The application should feel:
+
+- Elegant
+- Spacious
+- Premium
+- Minimal
+- Intelligent
+- Modern
+- Soft
+- Immersive
+- Layered
+- Three-dimensional
+- Highly interactive
+
+Every screen should feel alive through subtle motion, depth, and responsive interactions.
+
+Avoid flat, rigid, or outdated interfaces.
+
+---
+
+# Overall Visual Language
+
+Create a true layered interface.
+
+Each screen should consist of:
+
+```
+Background Layer
+
+↓
+
+Blur Material Layer
+
+↓
+
+Floating Content Cards
+
+↓
+
+Interactive Components
+
+↓
+
+Floating Navigation
+
+↓
+
+Bottom Sheets
+
+↓
+
+Dialogs
+
+↓
+
+System Overlays
+```
+
+Every layer should have a different elevation.
+
+Nothing should appear glued to the background.
+
+---
+
+# Layout Principles
+
+Improve every screen by:
+
+- Increasing whitespace
+- Improving spacing consistency
+- Aligning content precisely
+- Reducing visual clutter
+- Improving hierarchy
+- Making interfaces easier to scan
+- Making actions more obvious
+
+Every page should feel balanced and breathable.
+
+---
+
+# Cards
+
+Replace flat containers with floating cards.
+
+Each card should have:
+
+- Large rounded corners
+- Soft elevation
+- Multi-layer shadows
+- Subtle highlights
+- Background blur where appropriate
+- Thin borders with low opacity
+- Proper internal padding
+- Smooth transitions
+
+Cards should visually float above the background.
+
+---
+
+# Buttons
+
+Redesign every button.
+
+Primary buttons:
+
+- Pill-shaped
+- Rounded
+- Floating
+- Large touch targets
+- Soft shadow
+- Smooth gradients only if subtle
+- Comfortable spacing
+
+Interaction:
+
+On Press:
+
+- Compress slightly
+- Reduce elevation
+- Tighten shadow
+- Small haptic feedback (if supported)
+- Smooth spring animation
+
+Hover (Desktop/Web):
+
+- Slight lift
+- Increased brightness
+- Expanded shadow
+
+Disabled:
+
+- Lower opacity
+- Reduced elevation
+
+---
+
+# Navigation Bar
+
+Modernize the bottom navigation.
+
+Requirements:
+
+Floating container
+
+Rounded corners
+
+Blurred background
+
+Independent elevation
+
+Smooth page transitions
+
+Animated active indicator
+
+Icons animate when selected
+
+Navigation should never appear attached to screen edges.
+
+---
+
+# App Bar
+
+Replace rigid app bars.
+
+Create:
+
+Floating top bar
+
+Blurred material
+
+Rounded bottom edges when appropriate
+
+Large page titles
+
+Collapsing animation while scrolling
+
+Dynamic opacity
+
+Smooth transition effects
+
+---
+
+# Typography
+
+Improve typography hierarchy.
+
+Use:
+
+Large Title
+
+Title
+
+Headline
+
+Body
+
+Caption
+
+Labels
+
+Requirements:
+
+Consistent spacing
+
+Better readability
+
+Comfortable line heights
+
+Strong visual hierarchy
+
+Balanced font weights
+
+Avoid dense text.
+
+---
+
+# Search Bars
+
+Redesign search components.
+
+Rounded capsule
+
+Floating appearance
+
+Blur material
+
+Animated focus
+
+Leading icon
+
+Clear button
+
+Smooth expansion
+
+Shadow increases during focus.
+
+---
+
+# Input Fields
+
+Modernize all forms.
+
+Each field should include:
+
+Rounded corners
+
+Soft shadow
+
+Inset lighting
+
+Comfortable padding
+
+Floating labels
+
+Animated focus state
+
+Smooth validation transitions
+
+Support helper text naturally.
+
+---
+
+# Lists
+
+Transform all lists.
+
+Each item becomes:
+
+Floating card
+
+Soft spacing
+
+Rounded corners
+
+Hover animation
+
+Press animation
+
+Swipe animation
+
+Smooth insertion/removal
+
+Selection animation
+
+Lists should never feel crowded.
+
+---
+
+# Dialogs
+
+Replace default dialogs.
+
+Requirements:
+
+Floating modal
+
+Large rounded corners
+
+Blurred background
+
+Soft shadows
+
+Animated appearance
+
+Spring entrance
+
+Interactive dismiss animation
+
+---
+
+# Bottom Sheets
+
+Redesign every bottom sheet.
+
+Characteristics:
+
+Rounded top corners
+
+Material blur
+
+Floating appearance
+
+Smooth drag interaction
+
+Elastic closing animation
+
+Proper elevation
+
+---
+
+# Icons
+
+Icons should feel premium.
+
+Requirements:
+
+Consistent stroke width
+
+Rounded style
+
+Animated selection
+
+Subtle scaling
+
+Rotation where appropriate
+
+Smooth morphing transitions
+
+Avoid rigid icon changes.
+
+---
+
+# Shadows
+
+Replace single shadows.
+
+Use layered shadows:
+
+Ambient shadow
+
+Soft shadow
+
+Directional shadow
+
+Contact shadow
+
+Shadows respond dynamically to interaction.
+
+---
+
+# Glass Material
+
+Where appropriate, use refined translucent surfaces:
+
+Background blur
+
+Soft transparency
+
+Light diffusion
+
+Subtle highlights
+
+Thin borders
+
+Maintain readability.
+
+Do NOT overuse glass effects.
+
+---
+
+# 3D Depth
+
+Every component should have spatial hierarchy.
+
+Use:
+
+Elevation
+
+Perspective
+
+Lighting
+
+Layer separation
+
+Soft highlights
+
+Subtle depth
+
+The interface should feel dimensional without becoming skeuomorphic.
+
+---
+
+# Motion Design
+
+Every interaction must be animated.
+
+Use:
+
+Spring animations
+
+Natural easing
+
+Momentum
+
+Acceleration
+
+Deceleration
+
+Elastic movement
+
+Smooth interpolation
+
+Nothing should snap instantly.
+
+---
+
+# Microinteractions
+
+Every component should react.
+
+Examples:
+
+Buttons compress
+
+Cards lift
+
+Icons bounce
+
+Search expands
+
+Tabs morph
+
+Lists animate
+
+Inputs glow
+
+Sheets spring
+
+Menus fade
+
+Navigation slides
+
+Everything should feel responsive.
+
+---
+
+# Screen Transitions
+
+Use premium page transitions.
+
+Recommended:
+
+Shared element transitions
+
+Fade through
+
+Zoom
+
+Depth transitions
+
+Slide with parallax
+
+Morphing containers
+
+Navigation should feel continuous.
+
+---
+
+# Scroll Behavior
+
+Improve scrolling.
+
+Requirements:
+
+Momentum
+
+Elastic overscroll
+
+Collapsing headers
+
+Floating navigation response
+
+Parallax where appropriate
+
+Smooth animations
+
+---
+
+# Loading States
+
+Replace spinners where possible.
+
+Use:
+
+Skeleton loading
+
+Animated placeholders
+
+Gradient shimmer
+
+Morphing indicators
+
+Breathing animations
+
+---
+
+# Empty States
+
+Every empty page should include:
+
+Illustration placeholder
+
+Headline
+
+Helpful description
+
+Primary action
+
+Secondary action if needed
+
+Proper spacing
+
+---
+
+# Feedback States
+
+Improve:
+
+Success
+
+Error
+
+Warning
+
+Information
+
+Use:
+
+Animated banners
+
+Snackbars
+
+Floating notifications
+
+Subtle icon animations
+
+Smooth appearance/disappearance
+
+---
+
+# Accessibility
+
+Maintain:
+
+High contrast
+
+Large tap targets
+
+Responsive layouts
+
+Dynamic text support
+
+Screen reader compatibility
+
+Proper spacing
+
+---
+
+# Responsive Design
+
+The UI should adapt smoothly to:
+
+Small phones
+
+Large phones
+
+Foldables
+
+Tablets
+
+Landscape mode
+
+Maintain consistent spacing and proportions.
+
+---
+
+# Flutter Implementation
+
+Use modern Flutter widgets and best practices.
+
+Preferred approaches:
+
+- Material 3 as a base, customized for a premium aesthetic
+- `AnimatedContainer`
+- `AnimatedScale`
+- `AnimatedOpacity`
+- `Hero`
+- `TweenAnimationBuilder`
+- `ImplicitlyAnimatedWidgets`
+- `CustomPainter` only where necessary
+- Smooth scrolling physics
+- Reusable custom widgets
+- Theme extensions for consistent styling
+- Centralized design tokens (spacing, corner radius, elevations, animation durations)
+
+Avoid hardcoded values where reusable theme definitions are appropriate.
+
+---
+
+# Code Quality
+
+While redesigning:
+
+- Preserve existing architecture
+- Keep widgets modular
+- Improve component reusability
+- Reduce duplicate UI code
+- Follow Flutter best practices
+- Maintain clean project structure
+- Keep animations performant (60–120 FPS where supported)
+
+---
+
+# Final Objective
+
+Transform the application into a **premium, modern, spatial mobile experience** that feels refined, fluid, and highly interactive. Every screen should feature consistent spacing, layered depth, floating components, smooth spring animations, subtle three-dimensionality, and polished microinteractions, while preserving the app's existing functionality and user flow. The result should convey craftsmanship, clarity, and responsiveness without imitating proprietary Apple assets or branding.

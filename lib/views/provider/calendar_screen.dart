@@ -123,13 +123,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('$day', style: AppTextStyles.bodyMedium.copyWith(color: selected ? Colors.white : textColor)),
+                            Text('$day', style: AppTextStyles.bodyMedium.copyWith(color: selected ? AppColors.primary : textColor)),
                             if (hasBooking)
                               Container(
                                 margin: const EdgeInsets.only(top: 2),
                                 width: 4,
                                 height: 4,
-                                decoration: BoxDecoration(color: selected ? Colors.white : AppColors.secondary, shape: BoxShape.circle),
+                                decoration: BoxDecoration(color: selected ? AppColors.primary : AppColors.secondary, shape: BoxShape.circle),
                               ),
                           ],
                         ),

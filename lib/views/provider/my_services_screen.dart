@@ -180,7 +180,14 @@ class _ServiceCard extends StatelessWidget {
                     children: [
                       StatusBadge.fromStatus(service.status),
                       const SizedBox(width: AppSizes.sm),
-                      Text(service.status == 'hidden' ? 'Hidden' : 'Visible to clients', style: AppTextStyles.bodySmall),
+                      Flexible(
+                        child: Text(
+                          service.status == 'hidden' ? 'Hidden' : 'Visible to clients',
+                          style: AppTextStyles.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ],

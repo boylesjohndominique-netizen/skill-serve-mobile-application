@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/widgets/buttons/danger_button.dart';
 import '../../core/widgets/buttons/outlined_app_button.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/misc/status_badge.dart';
@@ -155,13 +156,10 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
                       style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
                     ),
                     const SizedBox(height: AppSizes.md),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _resubmit,
-                        style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-                        child: Text('Resubmit', style: AppTextStyles.label.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
-                      ),
+                    DangerButton(
+                      label: 'Resubmit',
+                      icon: AppIcons.rotate_left_rounded,
+                      onPressed: _resubmit,
                     ),
                   ],
                 ),
@@ -186,7 +184,7 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.warningBg,
+                        color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.secondarySoft,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
                       child: AppIcon(
@@ -194,7 +192,7 @@ class _VerificationStatusScreenState extends State<VerificationStatusScreen> {
                             ? AppIcons.badge_outlined
                             : (_docs[i].type == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
                         size: 17,
-                        color: _docs[i].status == 'approved' ? AppColors.success : AppColors.warning,
+                        color: _docs[i].status == 'approved' ? AppColors.success : AppColors.secondaryDeep,
                       ),
                     ),
                     const SizedBox(width: AppSizes.md),

@@ -300,7 +300,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                 selected: _slot == _slots[i],
                 selectedColor: AppColors.secondary,
                 labelStyle: AppTextStyles.label.copyWith(
-                  color: _slot == _slots[i] ? Colors.white : null,
+                  color: _slot == _slots[i] ? AppColors.primary : null,
                   fontWeight: FontWeight.w600,
                 ),
                 showCheckmark: false,
@@ -496,11 +496,11 @@ class _WizardStepper extends StatelessWidget {
                   ),
                   child: Center(
                     child: i < current
-                        ? const AppIcon(AppIcons.check_rounded, size: 16, color: Colors.white)
+                        ? const AppIcon(AppIcons.check_rounded, size: 16, color: AppColors.primary)
                         : Text(
                             '${i + 1}',
                             style: AppTextStyles.label.copyWith(
-                              color: i == current ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? AppColors.textMutedDark : AppColors.textMuted),
+                              color: i == current ? AppColors.primary : (Theme.of(context).brightness == Brightness.dark ? AppColors.textMutedDark : AppColors.textMuted),
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -635,7 +635,7 @@ class _MethodTile extends StatelessWidget {
                 color: selected ? AppColors.secondary : (isDark ? AppColors.surfaceDark : Colors.white),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSm),
               ),
-              child: AppIcon(icon, size: 17, color: selected ? Colors.white : AppColors.neutral400),
+              child: AppIcon(icon, size: 17, color: selected ? AppColors.primary : AppColors.neutral400),
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(

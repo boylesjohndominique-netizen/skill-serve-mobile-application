@@ -157,7 +157,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                 selected: _category == MockData.categories[i].name,
                 selectedColor: AppColors.secondary,
                 labelStyle: AppTextStyles.label.copyWith(
-                  color: _category == MockData.categories[i].name ? Colors.white : null,
+                  color: _category == MockData.categories[i].name ? AppColors.primary : null,
                   fontWeight: FontWeight.w600,
                 ),
                 showCheckmark: false,
@@ -197,7 +197,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.warningBg,
+                    color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.secondarySoft,
                     borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                   ),
                   child: AppIcon(
@@ -205,7 +205,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                         ? AppIcons.badge_outlined
                         : (_docs[i].type == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
                     size: 17,
-                    color: _docs[i].status == 'approved' ? AppColors.success : AppColors.warning,
+                    color: _docs[i].status == 'approved' ? AppColors.success : AppColors.secondaryDeep,
                   ),
                 ),
                 const SizedBox(width: AppSizes.md),
@@ -307,17 +307,17 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
             Container(
               padding: const EdgeInsets.all(AppSizes.md),
               decoration: BoxDecoration(
-                color: AppColors.warningBg,
+                color: AppColors.secondarySoft,
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               ),
               child: Row(
                 children: [
-                  const AppIcon(AppIcons.info_outline_rounded, color: AppColors.warning, size: 18),
+                  const AppIcon(AppIcons.info_outline_rounded, color: AppColors.secondaryDeep, size: 18),
                   const SizedBox(width: AppSizes.sm),
                   Expanded(
                     child: Text(
                       'You can still explore the app while verification is in progress.',
-                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.warning),
+                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondaryDeep),
                     ),
                   ),
                 ],
@@ -373,11 +373,11 @@ class _OnboardStepper extends StatelessWidget {
                   ),
                   child: Center(
                     child: i < current
-                        ? const AppIcon(AppIcons.check_rounded, size: 16, color: Colors.white)
+                        ? const AppIcon(AppIcons.check_rounded, size: 16, color: AppColors.primary)
                         : Text(
                             '${i + 1}',
                             style: AppTextStyles.label.copyWith(
-                              color: i <= current ? Colors.white : AppColors.textMuted,
+                              color: i <= current ? AppColors.primary : AppColors.textMuted,
                               fontWeight: FontWeight.w700,
                             ),
                           ),

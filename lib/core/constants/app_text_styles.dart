@@ -2,16 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Typography system for SkillServe.
-///
-/// Display / Headline / Title -> Space Grotesk (matches the admin web's
-/// technical, distinctive display face).
-/// Body / Caption / Button / Label -> Inter (matches the admin web's UI face).
-/// Mono (IDs, prices, references, timestamps) -> IBM Plex Mono.
-///
-/// Colors are intentionally omitted from static styles so that every text
-/// widget inherits the correct color from the theme's [DefaultTextStyle].
-/// This ensures all text remains visible in both light and dark modes.
+/// Typography system for SkillServe powered by Google Fonts Outfit.
 class AppTextStyles {
   AppTextStyles._();
 

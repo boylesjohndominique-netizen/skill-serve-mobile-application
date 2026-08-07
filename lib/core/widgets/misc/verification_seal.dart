@@ -51,16 +51,16 @@ class VerificationSeal extends StatelessWidget {
         );
       case 'resubmission_requested':
         return (
-          color: AppColors.warning,
-          soft: AppColors.warningBg,
+          color: AppColors.secondary,
+          soft: AppColors.secondarySoft,
           icon: AppIcons.rotate_left_rounded,
           label: 'Resubmit',
         );
       case 'pending':
       default:
         return (
-          color: AppColors.warning,
-          soft: AppColors.warningBg,
+          color: AppColors.secondary,
+          soft: AppColors.secondarySoft,
           icon: AppIcons.hourglass_top_rounded,
           label: 'Under review',
         );

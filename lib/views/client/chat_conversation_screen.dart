@@ -8,6 +8,7 @@ import '../../core/constants/app_text_styles.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/misc/app_icon.dart';
+import '../../core/widgets/misc/app_avatar.dart';
 import '../../core/constants/app_icons.dart';
 
 class ChatConversationScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            const CircleAvatar(radius: 17, backgroundColor: AppColors.primary, child: AppIcon(AppIcons.person, color: Colors.white, size: 18)),
+            const AppAvatar(fallbackIcon: AppIcons.person, radius: 17),
             const SizedBox(width: AppSizes.sm),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,12 +111,12 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                               children: [
                                 Text(
                                   m.content,
-                                  style: AppTextStyles.bodyLarge.copyWith(color: fromMe ? Colors.white : (isDark ? AppColors.textOnDark : AppColors.textPrimary)),
+                                  style: AppTextStyles.bodyLarge.copyWith(color: fromMe ? AppColors.primary : (isDark ? AppColors.textOnDark : AppColors.textPrimary)),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   Formatters.time(m.sentAt),
-                                  style: AppTextStyles.caption.copyWith(color: fromMe ? Colors.white70 : AppColors.textMuted),
+                                  style: AppTextStyles.caption.copyWith(color: fromMe ? AppColors.primary.withValues(alpha: 0.65) : AppColors.textMuted),
                                 ),
                               ],
                             ),
@@ -159,7 +160,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))],
                               ),
-                              child: const AppIcon(AppIcons.send_rounded, color: Colors.white, size: 18),
+                              child: const AppIcon(AppIcons.send_rounded, color: AppColors.primary, size: 18),
                             ),
                           ),
                         ],

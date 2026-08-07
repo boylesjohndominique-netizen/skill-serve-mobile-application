@@ -39,8 +39,8 @@ class AppTheme {
       brightness: brightness,
       primary: AppColors.secondary,
       onPrimary: AppColors.primary,
-      secondary: AppColors.primary,
-      onSecondary: Colors.white,
+      secondary: AppColors.secondary,
+      onSecondary: AppColors.primary,
       error: AppColors.error,
       onError: Colors.white,
       surface: surface,
@@ -103,6 +103,25 @@ class AppTheme {
         ),
       ),
 
+      // ── Filled buttons (e.g. inline "Book now" actions) ──
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.secondary,
+          foregroundColor: AppColors.primary,
+          disabledBackgroundColor: AppColors.neutral200,
+          textStyle: AppTextStyles.button,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+        ),
+      ),
+
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: AppColors.secondary,
+        selectionColor: AppColors.secondary.withValues(alpha: 0.25),
+        selectionHandleColor: AppColors.secondary,
+      ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: onSurface,
@@ -121,6 +140,12 @@ class AppTheme {
           foregroundColor: AppColors.secondary,
           textStyle: AppTextStyles.button,
         ),
+      ),
+
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.secondary,
+        linearTrackColor: AppColors.secondarySoft,
+        circularTrackColor: AppColors.secondarySoft,
       ),
 
       inputDecorationTheme: InputDecorationTheme(
@@ -183,7 +208,8 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor:
             isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-        selectedColor: AppColors.secondary.withValues(alpha: 0.15),
+        selectedColor: AppColors.secondary,
+        checkmarkColor: AppColors.primary,
         labelStyle: AppTextStyles.label,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         shape: RoundedRectangleBorder(
@@ -206,6 +232,24 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) return Colors.transparent;
           return isDark ? AppColors.lineDark : AppColors.neutral200;
         }),
+      ),
+
+      // ── Radio / checkbox — brass when active ──
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.secondary
+              : AppColors.neutral300,
+        ),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.secondary
+              : Colors.transparent,
+        ),
+        checkColor: const WidgetStatePropertyAll(AppColors.primary),
+        side: const BorderSide(color: AppColors.neutral300, width: 1.6),
       ),
 
       snackBarTheme: SnackBarThemeData(

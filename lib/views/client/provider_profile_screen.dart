@@ -368,7 +368,7 @@ class _ServiceRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
               ),
-              child: Text('Book', style: AppTextStyles.label.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+              child: Text('Book', style: AppTextStyles.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
             ),
           ),
         ],

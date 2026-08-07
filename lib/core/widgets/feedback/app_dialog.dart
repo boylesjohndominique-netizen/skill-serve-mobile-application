@@ -4,6 +4,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../buttons/primary_button.dart';
+import '../buttons/danger_button.dart';
 
 /// Confirmation dialog used for destructive or important actions
 /// (cancel booking, log out, delete portfolio item…).
@@ -79,10 +80,15 @@ class AppDialog {
                       ),
                       const SizedBox(width: AppSizes.sm),
                       Expanded(
-                        child: PrimaryButton(
-                          label: confirmLabel,
-                          onPressed: () => Navigator.of(context).pop(true),
-                        ),
+                        child: danger
+                            ? DangerButton(
+                                label: confirmLabel,
+                                onPressed: () => Navigator.of(context).pop(true),
+                              )
+                            : PrimaryButton(
+                                label: confirmLabel,
+                                onPressed: () => Navigator.of(context).pop(true),
+                              ),
                       ),
                     ],
                   ),

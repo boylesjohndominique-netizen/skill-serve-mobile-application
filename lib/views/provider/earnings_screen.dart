@@ -154,7 +154,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                         gradient: AppColors.brassGradient,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
-                      child: const AppIcon(AppIcons.account_balance_wallet_rounded, color: Colors.white, size: 18),
+                      child: const AppIcon(AppIcons.account_balance_wallet_rounded, color: AppColors.primary, size: 18),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Expanded(

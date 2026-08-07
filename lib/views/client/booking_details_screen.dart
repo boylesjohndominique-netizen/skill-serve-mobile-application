@@ -15,6 +15,7 @@ import '../../core/widgets/feedback/app_dialog.dart';
 import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/feedback/loading_state.dart';
 import '../../core/widgets/misc/status_badge.dart';
+import '../../core/widgets/misc/info_row.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../core/widgets/misc/app_icon.dart';
@@ -93,9 +94,9 @@ class BookingDetailsScreen extends StatelessWidget {
                 title: 'Schedule',
                 isDark: isDark,
                 children: [
-                  _detailRow(AppIcons.calendar_today_rounded, 'Date', Formatters.dateShort(booking.bookingDate)),
-                  _detailRow(AppIcons.access_time_rounded, 'Time', booking.schedule),
-                  _detailRow(AppIcons.location_on_outlined, 'Address', booking.address.isEmpty ? '—' : booking.address),
+                  InfoRow(icon: AppIcons.calendar_today_rounded, label: 'Date', value: Formatters.dateShort(booking.bookingDate)),
+                  InfoRow(icon: AppIcons.access_time_rounded, label: 'Time', value: booking.schedule),
+                  InfoRow(icon: AppIcons.location_on_outlined, label: 'Address', value: booking.address.isEmpty ? '—' : booking.address),
                 ],
               ).animate().fadeIn(delay: 150.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.lg),
@@ -103,9 +104,9 @@ class BookingDetailsScreen extends StatelessWidget {
                 title: 'Parties',
                 isDark: isDark,
                 children: [
-                  _detailRow(AppIcons.person_outline_rounded, 'Client', booking.clientName),
-                  _detailRow(AppIcons.handyman_outlined, 'Provider', booking.providerName),
-                  _detailRow(AppIcons.account_balance_wallet_rounded, 'Payment', booking.paymentMethod),
+                  InfoRow(icon: AppIcons.person_outline_rounded, label: 'Client', value: booking.clientName),
+                  InfoRow(icon: AppIcons.handyman_outlined, label: 'Provider', value: booking.providerName),
+                  InfoRow(icon: AppIcons.account_balance_wallet_rounded, label: 'Payment', value: booking.paymentMethod),
                 ],
               ).animate().fadeIn(delay: 250.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               if (booking.notes != null && booking.notes!.isNotEmpty) ...[
@@ -260,21 +261,6 @@ class BookingDetailsScreen extends StatelessWidget {
     return Column(children: actions);
   }
 
-  Widget _detailRow(AppIconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          AppIcon(icon, size: 16, color: AppColors.neutral300),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
-          Flexible(
-            child: Text(value, style: AppTextStyles.titleMedium, textAlign: TextAlign.right, overflow: TextOverflow.ellipsis),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _SectionCard extends StatelessWidget {
@@ -324,8 +310,11 @@ class _Timeline extends StatelessWidget {
       case 'cancelled':
       case 'disputed':
         return AppColors.error;
+      case 'pending':
+      case 'confirmed':
+        return AppColors.secondary; // brass
       default:
-        return AppColors.warning;
+        return AppColors.neutral400;
     }
   }
 

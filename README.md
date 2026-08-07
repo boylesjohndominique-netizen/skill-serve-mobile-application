@@ -15,7 +15,7 @@ layer that's pre-shaped for a future Laravel REST API.
 - **provider** — state management (MVC-style Controllers as `ChangeNotifier`s)
 - **go_router** — declarative navigation across Guest / Client / Provider route trees
 - **dio** — REST API client, ready to point at a Laravel backend
-- **google_fonts** — Space Grotesk (display) + Inter (body), matching the admin web app
+- **google_fonts** — Space Grotesk (display) + Inter (body) + IBM Plex Mono (IDs/prices/timestamps), matching the admin web app
 - **flutter_svg**, **lottie**, **cached_network_image**, **flutter_animate**, **shimmer** — visuals & motion
 - **flutter_screenutil**, **responsive_framework** — responsive layout across phones/tablets
 - **shared_preferences** — placeholder for session persistence
@@ -52,8 +52,16 @@ Both **light and dark themes** are implemented in `lib/core/theme/app_theme.dart
 entirely from the tokens in `lib/core/constants/` — change a color or type size there and
 it propagates through every screen and component.
 
-Typography: **Space Grotesk** for Display/Headline/Title, **Inter** for Body/Caption/Button/Label
-— see `lib/core/constants/app_text_styles.dart`.
+Typography: **Space Grotesk** for Display/Headline/Title, **Inter** for Body/Caption/Button/Label,
+**IBM Plex Mono** for IDs (BK-5001), prices (₱1,250), references, and timestamps —
+see `lib/core/constants/app_text_styles.dart`.
+
+The signature **VerificationSeal** (dashed circular "stamp") is used everywhere trust is
+shown — verified provider, approved document, account status — implemented in
+`lib/core/widgets/misc/verification_seal.dart` with brass/emerald/red status tones.
+All statuses render through `StatusBadge` (icon + label pill) using the admin console's
+color map (emerald = success, brass = pending, blue = in progress, orange = warned,
+red = blocked/flagged, neutral = hidden/closed).
 
 ## Folder structure (MVC)
 
@@ -113,12 +121,13 @@ Client and Provider each have a bottom-navigation **shell** (`client_shell.dart`
 
 ## Reusable components (`lib/core/widgets/`)
 
-- **buttons/** — `PrimaryButton` (with built-in loading state), `SecondaryButton`, `OutlinedAppButton`
+- **buttons/** — `PrimaryButton` (brass gradient + glow, built-in loading state), `SecondaryButton`,
+  `OutlinedAppButton`, `DangerButton` (destructive actions)
 - **cards/** — `ProviderCard`, `CategoryCard`, `BookingCard`, `ReviewCard`, `ProfileCard`
 - **inputs/** — `AppTextField`, `AppSearchBar`
-- **feedback/** — `EmptyState`, `ErrorState`, `LoadingState`, `ShimmerPlaceholder`/`ShimmerCardList`, `AppSnackbar`, `AppDialog`, `AppBottomSheet`
+- **feedback/** — `EmptyState`, `ErrorState`, `LoadingState`, `ShimmerPlaceholder`/`ShimmerCardList`, `AppSnackbar`, `AppDialog` (tone-aware confirm), `AppBottomSheet`
 - **navigation/** — `AppBottomNav`, `AppDrawer`
-- **misc/** — `RatingWidget`, `StatusBadge` (mirrors the admin web's verification "seal" concept), `SectionHeader`, `ImageCarousel`
+- **misc/** — `VerificationSeal`, `StatusBadge`, `RatingWidget`, `SectionHeader`, `ImageCarousel`, `AppAvatar`, `StatCard`, `InfoRow`
 
 ## Notes for the team
 

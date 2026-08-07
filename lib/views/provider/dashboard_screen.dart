@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/provider_booking_controller.dart';
-import '../../core/constants/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -13,6 +12,7 @@ import '../../core/widgets/cards/booking_card.dart';
 import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/status_badge.dart';
+import '../../core/widgets/misc/stat_card.dart';
 import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../core/widgets/misc/app_icon.dart';
@@ -138,12 +138,24 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 crossAxisCount: 2,
                 mainAxisSpacing: AppSizes.md,
                 crossAxisSpacing: AppSizes.md,
-                childAspectRatio: 1.5,
+                childAspectRatio: 1.35,
                 children: [
-                  _StatTile(label: 'Pending Requests', value: '${bookings.requests.length}', icon: AppIcons.pending_actions_rounded, index: 0, onTap: () => context.push('/booking-requests')),
-                  _StatTile(label: 'Active Jobs', value: '${bookings.active.length}', icon: AppIcons.work_rounded, index: 1, onTap: () => context.push('/active-jobs')),
-                  _StatTile(label: 'Completed', value: '${bookings.completed.length}', icon: AppIcons.task_alt_rounded, index: 2, onTap: () => context.push('/completed-jobs')),
-                  _StatTile(label: 'This Month', value: Formatters.peso(earningsThisMonth), icon: AppIcons.payments_rounded, index: 3, onTap: () => context.push('/earnings')),
+                  StatCard(label: 'Pending Requests', value: '${bookings.requests.length}', icon: AppIcons.pending_actions_rounded, onTap: () => context.push('/booking-requests'))
+                      .animate()
+                      .fadeIn(delay: 250.ms, duration: 350.ms)
+                      .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+                  StatCard(label: 'Active Jobs', value: '${bookings.active.length}', icon: AppIcons.work_rounded, onTap: () => context.push('/active-jobs'))
+                      .animate()
+                      .fadeIn(delay: 330.ms, duration: 350.ms)
+                      .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+                  StatCard(label: 'Completed', value: '${bookings.completed.length}', icon: AppIcons.task_alt_rounded, onTap: () => context.push('/completed-jobs'))
+                      .animate()
+                      .fadeIn(delay: 410.ms, duration: 350.ms)
+                      .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+                  StatCard(label: 'This Month', value: Formatters.peso(earningsThisMonth), icon: AppIcons.payments_rounded, onTap: () => context.push('/earnings'))
+                      .animate()
+                      .fadeIn(delay: 490.ms, duration: 350.ms)
+                      .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
                 ],
               ),
 
@@ -152,7 +164,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Upcoming Bookings', style: AppTextStyles.headlineMedium),
+                  Flexible(
+                    child: Text(
+                      'Upcoming Bookings',
+                      style: AppTextStyles.headlineMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
                   TextButton(onPressed: () => context.push('/booking-requests'), child: const Text('See all')),
                 ],
               ).animate().fadeIn(delay: 420.ms, duration: 300.ms),
@@ -179,7 +199,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('New Requests', style: AppTextStyles.headlineMedium),
+                  Flexible(
+                    child: Text(
+                      'New Requests',
+                      style: AppTextStyles.headlineMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
                   TextButton(onPressed: () => context.push('/booking-requests'), child: const Text('See all')),
                 ],
               ).animate().fadeIn(delay: 520.ms, duration: 300.ms),
@@ -209,65 +237,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 }
 
-class _StatTile extends StatefulWidget {
-  final String label;
-  final String value;
-  final AppIconData icon;
-  final int index;
-  final VoidCallback onTap;
-
-  const _StatTile({required this.label, required this.value, required this.icon, required this.index, required this.onTap});
-
-  @override
-  State<_StatTile> createState() => _StatTileState();
-}
-
-class _StatTileState extends State<_StatTile> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
-    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? AppAnimations.cardPressScale : 1.0,
-        duration: AppAnimations.fast,
-        curve: AppAnimations.defaultCurve,
-        child: Container(
-          padding: const EdgeInsets.all(AppSizes.md),
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
-            boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AppIcon(widget.icon, color: AppColors.secondary, size: 20),
-              const SizedBox(height: 8),
-              Text(widget.value, style: AppTextStyles.titleLarge.copyWith(fontFamily: AppTextStyles.headlineLarge.fontFamily)),
-              Text(widget.label, style: AppTextStyles.bodySmall),
-            ],
-          ),
-        ),
-      ),
-    )                  .animate()
-                  .fadeIn(delay: Duration(milliseconds: 250 + widget.index * 80), duration: 350.ms)
-                  .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack);
-  }
-}
-
 /// Compact quick-action tile for the dashboard.
 class _QuickAction extends StatelessWidget {
   final AppIconData icon;
@@ -292,13 +261,21 @@ class _QuickAction extends StatelessWidget {
             boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               AppIcon(icon, size: 22, color: AppColors.secondary),
               const SizedBox(height: 6),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
               ),
             ],
           ),
@@ -339,7 +316,7 @@ class _UpcomingTile extends StatelessWidget {
                 gradient: AppColors.brassGradient,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              child: const AppIcon(AppIcons.event_available_rounded, color: Colors.white, size: 18),
+              child: const AppIcon(AppIcons.event_available_rounded, color: AppColors.primary, size: 18),
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(

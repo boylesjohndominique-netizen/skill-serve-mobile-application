@@ -5,6 +5,7 @@ import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
 import '../../../models/review_model.dart';
 import '../misc/rating_widget.dart';
+import '../misc/app_avatar.dart';
 
 /// Single review entry used on Provider Profile and the provider's own
 /// Reviews screen. Features soft shadow and dark-mode-aware colors.
@@ -33,13 +34,9 @@ class ReviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
+              AppAvatar(
+                initials: review.clientName.isNotEmpty ? review.clientName[0].toUpperCase() : '?',
                 radius: 16,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  review.clientName.isNotEmpty ? review.clientName[0] : '?',
-                  style: AppTextStyles.caption.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
               ),
               const SizedBox(width: AppSizes.sm),
               Expanded(

@@ -17,6 +17,7 @@ import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../models/booking_model.dart';
 import '../../core/widgets/misc/app_icon.dart';
+import '../../core/widgets/misc/app_avatar.dart';
 import '../../core/constants/app_icons.dart';
 
 /// Provider's Bookings tab — every status in one place with contextual
@@ -223,7 +224,10 @@ class _RequestCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 20, backgroundColor: AppColors.primary, child: Text(booking.clientName[0], style: const TextStyle(color: Colors.white))),
+              AppAvatar(
+                initials: booking.clientName.isNotEmpty ? booking.clientName[0].toUpperCase() : '?',
+                radius: 20,
+              ),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(

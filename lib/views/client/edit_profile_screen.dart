@@ -11,6 +11,7 @@ import '../../core/widgets/feedback/app_snackbar.dart';
 import '../../core/widgets/inputs/app_text_field.dart';
 import '../../services/profile_service.dart';
 import '../../core/widgets/misc/app_icon.dart';
+import '../../core/widgets/misc/app_avatar.dart';
 import '../../core/constants/app_icons.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -76,10 +77,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Center(
                   child: Stack(
                     children: [
-                      CircleAvatar(
+                      AppAvatar(
+                        initials: user?.initials ?? '?',
                         radius: 44,
-                        backgroundColor: AppColors.primary,
-                        child: Text(user?.initials ?? '?', style: const TextStyle(color: Colors.white, fontSize: 28)),
                       ),
                       Positioned(
                         bottom: 0,
@@ -87,7 +87,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                          child: const AppIcon(AppIcons.camera_alt_rounded, size: 16, color: Colors.white),
+                          child: const AppIcon(AppIcons.camera_alt_rounded, size: 16, color: AppColors.primary),
                         ),
                       ),
                     ],

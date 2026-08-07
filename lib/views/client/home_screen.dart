@@ -20,6 +20,7 @@ import '../../models/booking_model.dart';
 import '../../models/provider_model.dart';
 import '../../services/service_service.dart';
 import '../../core/widgets/misc/app_icon.dart';
+import '../../core/widgets/misc/app_avatar.dart';
 import '../../core/constants/app_icons.dart';
 
 /// Client's primary landing tab — the SkillServe "Discover" experience:
@@ -131,7 +132,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                           gradient: AppColors.brassGradient,
                           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                         ),
-                        child: const AppIcon(AppIcons.event_available_rounded, color: Colors.white, size: 20),
+                        child: const AppIcon(AppIcons.event_available_rounded, color: AppColors.primary, size: 20),
                       ),
                       const SizedBox(width: AppSizes.md),
                       Expanded(
@@ -521,10 +522,11 @@ class _FeaturedCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                CircleAvatar(
+                AppAvatar(
+                  initials: provider.user.initials,
                   radius: 24,
                   backgroundColor: AppColors.secondary,
-                  child: Text(provider.user.initials, style: AppTextStyles.titleLarge.copyWith(color: Colors.white)),
+                  foregroundColor: AppColors.primary,
                 ),
                 if (provider.isVerified)
                   Positioned(
@@ -716,9 +718,9 @@ class _GridProviderCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const AppIcon(AppIcons.calendar_month_rounded, size: 15, color: Colors.white),
+                          const AppIcon(AppIcons.calendar_month_rounded, size: 15, color: AppColors.primary),
                           const SizedBox(width: 5),
-                          Text('Book now', style: AppTextStyles.label.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+                          Text('Book now', style: AppTextStyles.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),

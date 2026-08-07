@@ -10,6 +10,7 @@ import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/cards/profile_card.dart';
 import '../../core/widgets/feedback/app_dialog.dart';
 import '../../core/widgets/misc/app_icon.dart';
+import '../../core/widgets/misc/app_avatar.dart';
 import '../../core/constants/app_icons.dart';
 
 /// Client's Profile / Settings tab. Reused as a template pattern for the
@@ -200,10 +201,12 @@ class _GuestCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-              radius: 26,
-              backgroundColor: AppColors.secondary,
-              child: AppIcon(AppIcons.person, color: Colors.white)),
+          const AppAvatar(
+            fallbackIcon: AppIcons.person,
+            radius: 26,
+            backgroundColor: AppColors.secondary,
+            foregroundColor: AppColors.primary,
+          ),
           const SizedBox(width: AppSizes.md),
           Expanded(
             child: Column(
