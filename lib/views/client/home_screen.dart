@@ -637,7 +637,8 @@ class _GridProviderCard extends StatelessWidget {
                       decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), shape: BoxShape.circle),
                       child: AppIcon(
                         isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
-                        size: 15,
+                        size: 14,
+                        strokeWidth: 1.5,
                         color: isFavorite ? AppColors.error : Colors.white,
                       ),
                     ),

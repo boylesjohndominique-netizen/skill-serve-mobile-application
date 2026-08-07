@@ -62,12 +62,15 @@ class ProfileCard extends StatelessWidget {
           if (onEdit != null)
             Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppSizes.radiusSm),
               ),
               child: IconButton(
                 onPressed: onEdit,
-                icon: const AppIcon(AppIcons.edit_rounded, color: Colors.white, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                splashRadius: 18,
+                icon: const AppIcon(AppIcons.edit_rounded, color: Colors.white, size: 15, strokeWidth: 1.5),
               ),
             ),
         ],

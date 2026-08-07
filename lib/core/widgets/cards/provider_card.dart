@@ -140,7 +140,8 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                             ),
                             child: AppIcon(
                               widget.isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
-                              size: 19,
+                              size: 16,
+                              strokeWidth: 1.5,
                               color: widget.isFavorite ? AppColors.error : AppColors.neutral300,
                             ),
                           ),

@@ -73,10 +73,19 @@ class _AppSearchBarState extends State<AppSearchBar> {
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
-                  prefixIcon: AnimatedRotation(
-                    turns: _focused ? 0.05 : 0,
-                    duration: AppAnimations.md,
-                    child: const AppIcon(AppIcons.search_rounded, color: AppColors.neutral300),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 42),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(left: 14, right: 10),
+                    child: AnimatedRotation(
+                      turns: _focused ? 0.05 : 0,
+                      duration: AppAnimations.md,
+                      child: AppIcon(
+                        AppIcons.search_rounded,
+                        size: 17,
+                        strokeWidth: 1.5,
+                        color: _focused ? AppColors.secondary : AppColors.neutral300,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -94,7 +103,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              child: const AppIcon(AppIcons.tune_rounded, color: Colors.white, size: 20),
+              child: const AppIcon(AppIcons.tune_rounded, color: Colors.white, size: 16, strokeWidth: 1.5),
             ),
           ),
         ],
