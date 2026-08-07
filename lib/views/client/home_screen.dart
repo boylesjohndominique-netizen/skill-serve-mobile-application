@@ -243,7 +243,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     crossAxisCount: 2,
                     mainAxisSpacing: AppSizes.md,
                     crossAxisSpacing: AppSizes.md,
-                    childAspectRatio: 0.66,
+                    childAspectRatio: 0.52,
                   ),
                   itemCount: marketplace.providers.length,
                   itemBuilder: (context, i) {
@@ -654,7 +654,7 @@ class _GridProviderCard extends StatelessWidget {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(AppSizes.md),
+              padding: const EdgeInsets.all(AppSizes.sm),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -671,56 +671,50 @@ class _GridProviderCard extends StatelessWidget {
                       if (provider.isVerified)
                         const Padding(
                           padding: EdgeInsets.only(left: 3),
-                          child: AppIcon(AppIcons.verified_rounded, size: 15, color: AppColors.secondary),
+                          child: AppIcon(AppIcons.verified_rounded, size: 14, color: AppColors.secondary),
                         ),
                     ],
                   ),
-                  Text(provider.categoryName, style: AppTextStyles.bodySmall),
-                  const SizedBox(height: 5),
+                  Text(provider.categoryName, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary)),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
-                      const AppIcon(AppIcons.star_rounded, size: 13, color: AppColors.star),
-                      const SizedBox(width: 3),
-                      Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 7),
-                      const AppIcon(AppIcons.work_outline_rounded, size: 12, color: AppColors.neutral300),
+                      const AppIcon(AppIcons.star_rounded, size: 12, color: AppColors.star),
                       const SizedBox(width: 2),
-                      Text('${provider.completedJobs}', style: AppTextStyles.bodySmall),
-                      const SizedBox(width: 7),
-                      const AppIcon(AppIcons.timeline_rounded, size: 12, color: AppColors.neutral300),
-                      const SizedBox(width: 2),
-                      Text('${provider.yearsExperience}y', style: AppTextStyles.bodySmall),
+                      Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 6),
+                      Text('${provider.completedJobs} jobs', style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary)),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     provider.bio,
-                    style: AppTextStyles.bodySmall.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary),
+                    style: AppTextStyles.bodySmall.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary, fontSize: 11),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.sm),
+                  const SizedBox(height: 4),
                   Text(
                     'From ${Formatters.peso(provider.startingPrice ?? 0)}',
-                    style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.monoSm.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   SizedBox(
                     width: double.infinity,
-                    height: 36,
+                    height: 32,
                     child: FilledButton(
                       onPressed: onBook,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.secondary,
                         padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusSm)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const AppIcon(AppIcons.calendar_month_rounded, size: 15, color: AppColors.primary),
-                          const SizedBox(width: 5),
-                          Text('Book now', style: AppTextStyles.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                          const AppIcon(AppIcons.calendar_month_rounded, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 4),
+                          Text('Book now', style: AppTextStyles.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),
