@@ -17,12 +17,20 @@ class AppIcon extends StatelessWidget {
   /// Icon color.
   final Color? color;
 
-  const AppIcon(this.icon, {super.key, this.size, this.color});
+  /// Stroke width for crisp vector rendering.
+  final double? strokeWidth;
+
+  const AppIcon(this.icon, {super.key, this.size, this.color, this.strokeWidth});
 
   @override
   Widget build(BuildContext context) {
     final i = icon;
     if (i == null) return const SizedBox.shrink();
-    return HugeIcon(icon: i, size: size, color: color);
+    return HugeIcon(
+      icon: i,
+      size: size ?? 20.0,
+      color: color ?? IconTheme.of(context).color ?? const Color(0xFF1C2128),
+      strokeWidth: strokeWidth ?? 1.8,
+    );
   }
 }
