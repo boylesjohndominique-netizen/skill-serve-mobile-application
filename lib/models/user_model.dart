@@ -29,7 +29,31 @@ class UserModel {
 
   String get fullName => '$firstName $lastName'.trim();
   String get initials =>
-      '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'.toUpperCase();
+      '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}'
+          .toUpperCase();
+
+  UserModel copyWith({
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? address,
+    String? profilePicture,
+    bool clearProfilePicture = false,
+    String? status,
+  }) =>
+      UserModel(
+        id: id,
+        role: role,
+        firstName: firstName ?? this.firstName,
+        lastName: lastName ?? this.lastName,
+        email: email,
+        phone: phone ?? this.phone,
+        address: address ?? this.address,
+        profilePicture:
+            clearProfilePicture ? null : profilePicture ?? this.profilePicture,
+        status: status ?? this.status,
+        createdAt: createdAt,
+      );
 
   /// Placeholder — maps a future `GET /me` / `GET /users/:id` JSON payload.
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -42,7 +66,8 @@ class UserModel {
         address: json['address'] as String? ?? '',
         profilePicture: json['profile_picture'] as String?,
         status: json['status'] as String? ?? 'active',
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+            DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {

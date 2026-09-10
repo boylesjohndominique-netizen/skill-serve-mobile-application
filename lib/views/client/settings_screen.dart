@@ -88,6 +88,14 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 360.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
+                    icon: AppIcons.history_rounded,
+                    label: 'Activity history',
+                    onTap: () => context.push('/activity-history'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 380.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            _Tile(
                     icon: AppIcons.flag_outlined,
                     label: 'My reports',
                     onTap: () => context.push('/my-reports'),
@@ -103,12 +111,32 @@ class SettingsScreen extends StatelessWidget {
               icon: AppIcons.dark_mode_outlined,
               label: 'Dark mode',
               value: theme.mode == ThemeMode.dark,
-              onChanged: (_) => theme.toggle(),
+              onChanged: (_) async => theme.toggle(),
               isDark: isDark,
             )
                 .animate()
                 .fadeIn(delay: 420.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
+            _Tile(
+                icon: AppIcons.notifications_none_rounded,
+                label: 'Notification preferences',
+                onTap: () => context.push('/notification-preferences'),
+                isDark: isDark),
+            _Tile(
+                icon: AppIcons.privacy_tip_outlined,
+                label: 'Privacy settings',
+                onTap: () => context.push('/privacy-settings'),
+                isDark: isDark),
+            _Tile(
+                icon: AppIcons.apps_rounded,
+                label: 'Application preferences',
+                onTap: () => context.push('/application-preferences'),
+                isDark: isDark),
+            _Tile(
+                icon: AppIcons.verified_user_outlined,
+                label: 'Security activity',
+                onTap: () => context.push('/security-activity'),
+                isDark: isDark),
             const SizedBox(height: AppSizes.lg),
             const _SectionLabel('Support')
                 .animate()

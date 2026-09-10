@@ -20,7 +20,11 @@ class ContactScreen extends StatelessWidget {
       (AppIcons.mail_outline_rounded, 'Email', 'support@skillserve.ph'),
       (AppIcons.call_outlined, 'Phone', '(032) 123 4567'),
       (AppIcons.location_on_outlined, 'Office', 'Cebu City, Philippines'),
-      (AppIcons.schedule_outlined, 'Support hours', 'Mon–Sat, 8:00 AM – 8:00 PM'),
+      (
+        AppIcons.schedule_outlined,
+        'Support hours',
+        'Mon–Sat, 8:00 AM – 8:00 PM'
+      ),
     ];
 
     return Scaffold(
@@ -30,10 +34,14 @@ class ContactScreen extends StatelessWidget {
           padding: const EdgeInsets.all(AppSizes.pageHPad),
           children: [
             Text("We're here to help", style: AppTextStyles.displayMedium)
-                .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
+                .animate()
+                .fadeIn(duration: 300.ms)
+                .slideY(begin: 0.08, end: 0),
             const SizedBox(height: 6),
-            Text('Reach out with questions about bookings, verification, or your account.', style: AppTextStyles.bodyLarge)
-                .animate().fadeIn(delay: 80.ms, duration: 300.ms),
+            Text('Reach out with questions about bookings, verification, or your account.',
+                    style: AppTextStyles.bodyLarge)
+                .animate()
+                .fadeIn(delay: 80.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.xl),
             for (var i = 0; i < items.length; i++)
               Container(
@@ -42,7 +50,8 @@ class ContactScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: surfaceColor,
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                  border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
+                  border: Border.all(
+                      color: lineColor.withValues(alpha: 0.5), width: 0.8),
                   boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
                 ),
                 child: Row(
@@ -50,24 +59,33 @@ class ContactScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+                        color: isDark
+                            ? AppColors.surfaceAltDark
+                            : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
-                      child: AppIcon(items[i].$1, color: AppColors.secondary, size: 20),
+                      child: AppIcon(items[i].$1,
+                          color: AppColors.secondary, size: 20),
                     ),
                     const SizedBox(width: AppSizes.md),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(items[i].$2, style: AppTextStyles.caption),
-                        Text(items[i].$3, style: AppTextStyles.titleMedium),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(items[i].$2, style: AppTextStyles.caption),
+                          Text(items[i].$3,
+                              style: AppTextStyles.titleMedium,
+                              overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               )
                   .animate()
-                  .fadeIn(delay: Duration(milliseconds: 150 + i * 80), duration: 350.ms)
+                  .fadeIn(
+                      delay: Duration(milliseconds: 150 + i * 80),
+                      duration: 350.ms)
                   .slideY(begin: 0.06, end: 0),
           ],
         ),

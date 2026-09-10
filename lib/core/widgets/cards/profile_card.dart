@@ -6,6 +6,7 @@ import '../../../models/user_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/widgets/misc/status_badge.dart';
 
 /// Header card showing avatar, name, and role — used at the top of Profile
 /// / Settings screens for both Client and Provider.
@@ -15,7 +16,8 @@ class ProfileCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final Widget? trailingBadge;
 
-  const ProfileCard({super.key, required this.user, this.onEdit, this.trailingBadge});
+  const ProfileCard(
+      {super.key, required this.user, this.onEdit, this.trailingBadge});
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +40,12 @@ class ProfileCard extends StatelessWidget {
             padding: const EdgeInsets.all(2.5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.6), width: 2),
+              border: Border.all(
+                  color: AppColors.secondary.withValues(alpha: 0.6), width: 2),
             ),
             child: AppAvatar(
               initials: user.initials,
+              photoUrl: user.profilePicture,
               radius: 28,
               backgroundColor: AppColors.secondary,
               foregroundColor: AppColors.primary,
@@ -52,10 +56,26 @@ class ProfileCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.fullName, style: AppTextStyles.onDark(AppTextStyles.titleLarge)),
+                Text(user.fullName,
+                    style: AppTextStyles.onDark(AppTextStyles.titleLarge)),
                 const SizedBox(height: 2),
-                Text(user.email, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark)),
-                if (trailingBadge != null) ...[const SizedBox(height: 8), trailingBadge!],
+                Text(user.email,
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: AppColors.textMutedDark)),
+                const SizedBox(height: 8),
+                StatusBadge.fromStatus(user.status),
+                if (user.status.toLowerCase() != 'active') ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Account access is currently ${user.status.toLowerCase()}.',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.warning),
+                  ),
+                ],
+                if (trailingBadge != null) ...[
+                  const SizedBox(height: 8),
+                  trailingBadge!
+                ],
               ],
             ),
           ),
@@ -70,7 +90,8 @@ class ProfileCard extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                 splashRadius: 18,
-                icon: const AppIcon(AppIcons.edit_rounded, color: Colors.white, size: 15, strokeWidth: 1.5),
+                icon: const AppIcon(AppIcons.edit_rounded,
+                    color: Colors.white, size: 15, strokeWidth: 1.5),
               ),
             ),
         ],

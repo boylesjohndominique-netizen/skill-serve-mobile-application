@@ -11,12 +11,16 @@ import 'controllers/marketplace_controller.dart';
 import 'controllers/notification_controller.dart';
 import 'controllers/payment_controller.dart';
 import 'controllers/portfolio_controller.dart';
+import 'controllers/preferences_controller.dart';
 import 'controllers/report_controller.dart';
 import 'controllers/provider_booking_controller.dart';
 import 'controllers/theme_controller.dart';
 import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
+
+final _runtimeAuthController = AuthController()..initialize();
+final _runtimeRouter = createAuthenticatedRouter(_runtimeAuthController);
 
 void main() {
   runApp(const SkillLinkApp());
@@ -29,8 +33,10 @@ class SkillLinkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthController()),
-        ChangeNotifierProvider(create: (_) => ThemeController()),
+        ChangeNotifierProvider.value(value: _runtimeAuthController),
+        ChangeNotifierProvider(create: (_) => ThemeController()..initialize()),
+        ChangeNotifierProvider(
+            create: (_) => PreferencesController()..initialize()),
         ChangeNotifierProvider(create: (_) => MarketplaceController()),
         ChangeNotifierProvider(create: (_) => FavoritesController()),
         ChangeNotifierProvider(create: (_) => BookingController()),
@@ -53,7 +59,7 @@ class SkillLinkApp extends StatelessWidget {
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
               themeMode: themeController.mode,
-              routerConfig: appRouter,
+              routerConfig: _runtimeRouter,
               builder: (context, widget) => ResponsiveBreakpoints.builder(
                 child: widget ?? const SizedBox.shrink(),
                 breakpoints: const [

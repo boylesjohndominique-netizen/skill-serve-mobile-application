@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../controllers/auth_controller.dart';
 
 import '../data/mock/mock_data.dart';
 import '../models/booking_model.dart';
@@ -60,6 +61,9 @@ import '../views/provider/badges_screen.dart';
 // Shared
 import '../views/shared/notifications_screen.dart';
 import '../views/shared/reviews_screen.dart';
+import '../views/shared/activity_history_screen.dart';
+import '../views/shared/preferences_screens.dart';
+import '../views/shared/security_notifications_screen.dart';
 
 /// Central route table. Grouped by persona to mirror lib/views/ — Guest,
 /// Client, and Provider each own their sub-tree, with a few screens
@@ -68,118 +72,229 @@ import '../views/shared/reviews_screen.dart';
 /// Top-level route table — also importable by tests that build a fresh
 /// [GoRouter] per scenario (avoids shared-router state bleed).
 final List<RouteBase> appRoutes = [
-    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-    GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
-    GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
-    GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-    GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
-    GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
-    GoRoute(path: '/browse', builder: (context, state) => const BrowseServicesScreen()),
-    GoRoute(path: '/categories', builder: (context, state) => const CategoriesScreen()),
-    GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
-    GoRoute(
-      path: '/provider-preview/:id',
-      builder: (context, state) => ProviderPreviewScreen(providerId: state.pathParameters['id']!),
-    ),
-    GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
-    GoRoute(path: '/contact', builder: (context, state) => const ContactScreen()),
-    GoRoute(path: '/terms', builder: (context, state) => const TermsScreen()),
-    GoRoute(path: '/privacy', builder: (context, state) => const PrivacyScreen()),
+  GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+  GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+  GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen()),
+  GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
+  GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+  GoRoute(
+      path: '/register', builder: (context, state) => const RegisterScreen()),
+  GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen()),
+  GoRoute(
+      path: '/browse',
+      builder: (context, state) => const BrowseServicesScreen()),
+  GoRoute(
+      path: '/categories',
+      builder: (context, state) => const CategoriesScreen()),
+  GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+  GoRoute(
+    path: '/provider-preview/:id',
+    builder: (context, state) =>
+        ProviderPreviewScreen(providerId: state.pathParameters['id']!),
+  ),
+  GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
+  GoRoute(path: '/contact', builder: (context, state) => const ContactScreen()),
+  GoRoute(path: '/terms', builder: (context, state) => const TermsScreen()),
+  GoRoute(path: '/privacy', builder: (context, state) => const PrivacyScreen()),
 
-    // Client shell (bottom-nav: Home / Search / Bookings / Chat / Profile)
-    GoRoute(path: '/client', builder: (context, state) => const ClientShell()),
-    GoRoute(
-      path: '/provider-profile/:id',
-      builder: (context, state) => ProviderProfileScreen(providerId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/service-details/:id',
-      builder: (context, state) => ServiceDetailsScreen(serviceId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/portfolio-gallery/:id',
-      builder: (context, state) => PortfolioGalleryScreen(providerId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/booking-form/:providerId',
-      builder: (context, state) => BookingFormScreen(providerId: state.pathParameters['providerId']!),
-    ),
-    GoRoute(
-      path: '/booking-confirmation',
-      builder: (context, state) => BookingConfirmationScreen(booking: state.extra as BookingModel),
-    ),
-    GoRoute(path: '/booking-history', builder: (context, state) => const BookingHistoryScreen()),
-    GoRoute(
-      path: '/booking-details/:id',
-      builder: (context, state) => BookingDetailsScreen(bookingId: state.pathParameters['id']!),
-    ),
-    GoRoute(path: '/favorites', builder: (context, state) => const FavoritesScreen()),
-    GoRoute(
-      path: '/chat-conversation/:id',
-      builder: (context, state) => ChatConversationScreen(conversationId: state.pathParameters['id']!),
-    ),
-    GoRoute(path: '/payments', builder: (context, state) => const PaymentsScreen()),
-    GoRoute(
-      path: '/payment-details/:id',
-      builder: (context, state) => PaymentDetailsScreen(paymentId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/file-report',
-      builder: (context, state) => FileReportScreen(bookingId: state.uri.queryParameters['bookingId']),
-    ),
-    GoRoute(path: '/my-reports', builder: (context, state) => const MyReportsScreen()),
-    GoRoute(
-      path: '/write-review/:bookingId',
-      builder: (context, state) => WriteReviewScreen(bookingId: state.pathParameters['bookingId']!),
-    ),
-    GoRoute(path: '/edit-profile', builder: (context, state) => const EditProfileScreen()),
-    GoRoute(path: '/change-password', builder: (context, state) => const ChangePasswordScreen()),
-    GoRoute(path: '/help-center', builder: (context, state) => const HelpCenterScreen()),
+  // Client shell (bottom-nav: Home / Search / Bookings / Chat / Profile)
+  GoRoute(path: '/client', builder: (context, state) => const ClientShell()),
+  GoRoute(
+    path: '/provider-profile/:id',
+    builder: (context, state) =>
+        ProviderProfileScreen(providerId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+    path: '/service-details/:id',
+    builder: (context, state) =>
+        ServiceDetailsScreen(serviceId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+    path: '/portfolio-gallery/:id',
+    builder: (context, state) =>
+        PortfolioGalleryScreen(providerId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+    path: '/booking-form/:providerId',
+    builder: (context, state) =>
+        BookingFormScreen(providerId: state.pathParameters['providerId']!),
+  ),
+  GoRoute(
+    path: '/booking-confirmation',
+    builder: (context, state) =>
+        BookingConfirmationScreen(booking: state.extra as BookingModel),
+  ),
+  GoRoute(
+      path: '/booking-history',
+      builder: (context, state) => const BookingHistoryScreen()),
+  GoRoute(
+    path: '/booking-details/:id',
+    builder: (context, state) =>
+        BookingDetailsScreen(bookingId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+      path: '/favorites', builder: (context, state) => const FavoritesScreen()),
+  GoRoute(
+    path: '/chat-conversation/:id',
+    builder: (context, state) =>
+        ChatConversationScreen(conversationId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+      path: '/payments', builder: (context, state) => const PaymentsScreen()),
+  GoRoute(
+    path: '/payment-details/:id',
+    builder: (context, state) =>
+        PaymentDetailsScreen(paymentId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+    path: '/file-report',
+    builder: (context, state) =>
+        FileReportScreen(bookingId: state.uri.queryParameters['bookingId']),
+  ),
+  GoRoute(
+      path: '/my-reports',
+      builder: (context, state) => const MyReportsScreen()),
+  GoRoute(
+    path: '/write-review/:bookingId',
+    builder: (context, state) =>
+        WriteReviewScreen(bookingId: state.pathParameters['bookingId']!),
+  ),
+  GoRoute(
+      path: '/edit-profile',
+      builder: (context, state) => const EditProfileScreen()),
+  GoRoute(
+      path: '/change-password',
+      builder: (context, state) => const ChangePasswordScreen()),
+  GoRoute(
+      path: '/help-center',
+      builder: (context, state) => const HelpCenterScreen()),
+  GoRoute(
+      path: '/activity-history',
+      builder: (context, state) => const ActivityHistoryScreen()),
+  GoRoute(
+      path: '/notification-preferences',
+      builder: (context, state) => const NotificationPreferencesScreen()),
+  GoRoute(
+      path: '/privacy-settings',
+      builder: (context, state) => const PrivacySettingsScreen()),
+  GoRoute(
+      path: '/application-preferences',
+      builder: (context, state) => const ApplicationPreferencesScreen()),
+  GoRoute(
+      path: '/security-activity',
+      builder: (context, state) => const SecurityNotificationsScreen()),
 
-    // Provider shell (bottom-nav: Dashboard / Bookings / Portfolio / Messages / Profile)
-    GoRoute(path: '/provider', builder: (context, state) => const ProviderShell()),
-    GoRoute(path: '/statistics', builder: (context, state) => const StatisticsScreen()),
-    GoRoute(path: '/my-services', builder: (context, state) => const MyServicesScreen()),
-    GoRoute(path: '/portfolio', builder: (context, state) => const ProviderPortfolioScreen()),
-    GoRoute(path: '/add-service', builder: (context, state) => const AddServiceScreen()),
-    GoRoute(
-      path: '/edit-service/:id',
-      builder: (context, state) => EditServiceScreen(serviceId: state.pathParameters['id']!),
+  // Provider shell (bottom-nav: Dashboard / Bookings / Portfolio / Messages / Profile)
+  GoRoute(
+      path: '/provider', builder: (context, state) => const ProviderShell()),
+  GoRoute(
+      path: '/statistics',
+      builder: (context, state) => const StatisticsScreen()),
+  GoRoute(
+      path: '/my-services',
+      builder: (context, state) => const MyServicesScreen()),
+  GoRoute(
+      path: '/portfolio',
+      builder: (context, state) => const ProviderPortfolioScreen()),
+  GoRoute(
+      path: '/add-service',
+      builder: (context, state) => const AddServiceScreen()),
+  GoRoute(
+    path: '/edit-service/:id',
+    builder: (context, state) =>
+        EditServiceScreen(serviceId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+      path: '/upload-portfolio',
+      builder: (context, state) => const UploadPortfolioScreen()),
+  GoRoute(
+      path: '/calendar', builder: (context, state) => const CalendarScreen()),
+  GoRoute(
+      path: '/booking-requests',
+      builder: (context, state) => const BookingRequestsScreen()),
+  GoRoute(
+      path: '/active-jobs',
+      builder: (context, state) => const ActiveJobsScreen()),
+  GoRoute(
+      path: '/completed-jobs',
+      builder: (context, state) => const CompletedJobsScreen()),
+  GoRoute(
+      path: '/earnings', builder: (context, state) => const EarningsScreen()),
+  GoRoute(
+      path: '/withdrawal-history',
+      builder: (context, state) => const WithdrawalHistoryScreen()),
+  GoRoute(
+      path: '/verification-status',
+      builder: (context, state) => const VerificationStatusScreen()),
+  GoRoute(
+      path: '/provider-onboarding',
+      builder: (context, state) => const ProviderOnboardingScreen()),
+  GoRoute(
+      path: '/provider-badges',
+      builder: (context, state) => const BadgesScreen()),
+  GoRoute(
+    path: '/provider-profile-preview',
+    builder: (context, state) => ProviderProfileScreen(
+      providerId: MockData.providers
+          .firstWhere(
+            (p) => p.user.id == MockData.currentProvider.id,
+            orElse: () => MockData.providers.first,
+          )
+          .id,
     ),
-    GoRoute(path: '/upload-portfolio', builder: (context, state) => const UploadPortfolioScreen()),
-    GoRoute(path: '/calendar', builder: (context, state) => const CalendarScreen()),
-    GoRoute(path: '/booking-requests', builder: (context, state) => const BookingRequestsScreen()),
-    GoRoute(path: '/active-jobs', builder: (context, state) => const ActiveJobsScreen()),
-    GoRoute(path: '/completed-jobs', builder: (context, state) => const CompletedJobsScreen()),
-    GoRoute(path: '/earnings', builder: (context, state) => const EarningsScreen()),
-    GoRoute(path: '/withdrawal-history', builder: (context, state) => const WithdrawalHistoryScreen()),
-    GoRoute(path: '/verification-status', builder: (context, state) => const VerificationStatusScreen()),
-    GoRoute(path: '/provider-onboarding', builder: (context, state) => const ProviderOnboardingScreen()),
-    GoRoute(path: '/provider-badges', builder: (context, state) => const BadgesScreen()),
-    GoRoute(
-      path: '/provider-profile-preview',
-      builder: (context, state) => ProviderProfileScreen(
-        providerId: MockData.providers
-            .firstWhere(
-              (p) => p.user.id == MockData.currentProvider.id,
-              orElse: () => MockData.providers.first,
-            )
-            .id,
-      ),
-    ),
+  ),
 
-    // Shared across personas
-    GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
-    GoRoute(
-      path: '/reviews/:providerId',
-      builder: (context, state) => ReviewsScreen(providerId: state.pathParameters['providerId']!),
-    ),
+  // Shared across personas
+  GoRoute(
+      path: '/notifications',
+      builder: (context, state) => const NotificationsScreen()),
+  GoRoute(
+    path: '/reviews/:providerId',
+    builder: (context, state) =>
+        ReviewsScreen(providerId: state.pathParameters['providerId']!),
+  ),
 ];
 
 /// The app's canonical [GoRouter], built from [appRoutes].
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/splash',
-  routes: appRoutes,
-);
+final GoRouter appRouter =
+    GoRouter(initialLocation: '/splash', routes: appRoutes);
 
+final _protectedPrefixes = <String>[
+  '/client',
+  '/provider',
+  '/booking',
+  '/favorites',
+  '/chat',
+  '/payments',
+  '/file-report',
+  '/my-reports',
+  '/write-review',
+  '/edit-profile',
+  '/change-password',
+  '/activity-history',
+  '/notification-preferences',
+  '/privacy-settings',
+  '/application-preferences',
+  '/security-activity',
+];
+
+GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(
+      initialLocation: '/splash',
+      refreshListenable: auth,
+      redirect: (context, state) {
+        final path = state.uri.path;
+        final protected =
+            _protectedPrefixes.any((prefix) => path.startsWith(prefix));
+        if (protected && auth.status != AuthStatus.authenticated) {
+          return '/login';
+        }
+        if (path == '/login' && auth.isClient) return '/client';
+        if (path == '/login' && auth.isProvider) return '/provider';
+        return null;
+      },
+      routes: appRoutes,
+    );

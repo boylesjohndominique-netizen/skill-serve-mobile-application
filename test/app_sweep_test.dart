@@ -12,6 +12,7 @@ import 'package:skilllink_mobile/controllers/notification_controller.dart';
 import 'package:skilllink_mobile/controllers/payment_controller.dart';
 import 'package:skilllink_mobile/controllers/portfolio_controller.dart';
 import 'package:skilllink_mobile/controllers/provider_booking_controller.dart';
+import 'package:skilllink_mobile/controllers/preferences_controller.dart';
 import 'package:skilllink_mobile/controllers/report_controller.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,6 +43,11 @@ final _routes = <String>[
   '/reviews/PV-100',
   '/booking-details/BK-5000',
   '/help-center',
+  '/activity-history',
+  '/notification-preferences',
+  '/privacy-settings',
+  '/application-preferences',
+  '/security-activity',
   '/file-report',
   // Provider
   '/provider',
@@ -63,6 +69,7 @@ Widget _app(String route) {
     providers: [
       ChangeNotifierProvider(create: (_) => AuthController()),
       ChangeNotifierProvider(create: (_) => ThemeController()),
+      ChangeNotifierProvider(create: (_) => PreferencesController()),
       ChangeNotifierProvider(create: (_) => MarketplaceController()),
       ChangeNotifierProvider(create: (_) => FavoritesController()),
       ChangeNotifierProvider(create: (_) => BookingController()),
@@ -96,7 +103,9 @@ void main() {
           final msg = details.exception.toString();
           if (msg.contains('overflowed')) {
             final buf = StringBuffer('=== OVERFLOW @ $route $size ===\n$msg\n');
-            details.informationCollector?.call().forEach((n) => buf.writeln(n.toString()));
+            details.informationCollector
+                ?.call()
+                .forEach((n) => buf.writeln(n.toString()));
             // ignore: avoid_print
             print(buf.toString());
           }

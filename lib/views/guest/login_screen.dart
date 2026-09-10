@@ -49,17 +49,35 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton(
-                  onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
+                  onPressed: () =>
+                      context.canPop() ? context.pop() : context.go('/welcome'),
                   icon: const AppIcon(AppIcons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
                 ).animate().fadeIn(duration: 250.ms),
                 const SizedBox(height: AppSizes.md),
                 Text('Welcome back', style: AppTextStyles.displayMedium)
-                    .animate().fadeIn(delay: 80.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
+                    .animate()
+                    .fadeIn(delay: 80.ms, duration: 350.ms)
+                    .slideY(begin: 0.1, end: 0),
                 const SizedBox(height: 6),
-                Text('Log in to continue booking or managing your services.', style: AppTextStyles.bodyLarge)
-                    .animate().fadeIn(delay: 150.ms, duration: 350.ms),
+                Text('Log in to continue booking or managing your services.',
+                        style: AppTextStyles.bodyLarge)
+                    .animate()
+                    .fadeIn(delay: 150.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xxl),
+                if (auth.sessionExpired) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSizes.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.warningBg,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                    ),
+                    child: const Text(
+                        'Your session expired. Please sign in again.'),
+                  ),
+                  const SizedBox(height: AppSizes.lg),
+                ],
                 AppTextField(
                   label: 'Email address',
                   hint: 'you@email.com',
@@ -67,7 +85,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: AppIcons.mail_outline_rounded,
                   validator: Validators.email,
-                ).animate().fadeIn(delay: 220.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
+                )
+                    .animate()
+                    .fadeIn(delay: 220.ms, duration: 350.ms)
+                    .slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Password',
@@ -76,7 +97,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   prefixIcon: AppIcons.lock_outline_rounded,
                   validator: Validators.password,
-                ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
+                )
+                    .animate()
+                    .fadeIn(delay: 300.ms, duration: 350.ms)
+                    .slideY(begin: 0.08, end: 0),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -89,7 +113,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: 'Log in',
                   isLoading: auth.status == AuthStatus.authenticating,
                   onPressed: () => _submit(auth),
-                ).animate().fadeIn(delay: 440.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
+                )
+                    .animate()
+                    .fadeIn(delay: 440.ms, duration: 350.ms)
+                    .slideY(begin: 0.1, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 Center(
                   child: Text.rich(
@@ -101,7 +128,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           alignment: PlaceholderAlignment.middle,
                           child: GestureDetector(
                             onTap: () => context.go('/register'),
-                            child: Text('Sign up', style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700)),
+                            child: Text('Sign up',
+                                style: AppTextStyles.label.copyWith(
+                                    color: AppColors.secondary,
+                                    fontWeight: FontWeight.w700)),
                           ),
                         ),
                       ],
@@ -112,7 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () => context.go('/browse'),
-                    child: Text('Continue as guest', style: AppTextStyles.label.copyWith(color: AppColors.textMuted)),
+                    child: Text('Continue as guest',
+                        style: AppTextStyles.label
+                            .copyWith(color: AppColors.textMuted)),
                   ),
                 ).animate().fadeIn(delay: 550.ms, duration: 300.ms),
               ],

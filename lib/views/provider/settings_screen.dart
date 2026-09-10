@@ -120,6 +120,11 @@ class ProviderSettingsScreen extends StatelessWidget {
                 onTap: () => context.push('/notifications'),
                 isDark: isDark)),
             stagger(_Tile(
+                icon: AppIcons.history_rounded,
+                label: 'Activity history',
+                onTap: () => context.push('/activity-history'),
+                isDark: isDark)),
+            stagger(_Tile(
                 icon: AppIcons.flag_outlined,
                 label: 'File a report',
                 onTap: () => context.push('/file-report'),
@@ -135,7 +140,27 @@ class ProviderSettingsScreen extends StatelessWidget {
                 icon: AppIcons.dark_mode_outlined,
                 label: 'Dark mode',
                 value: theme.mode == ThemeMode.dark,
-                onChanged: (_) => theme.toggle(),
+                onChanged: (_) async => theme.toggle(),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.notifications_none_rounded,
+                label: 'Notification preferences',
+                onTap: () => context.push('/notification-preferences'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.privacy_tip_outlined,
+                label: 'Privacy settings',
+                onTap: () => context.push('/privacy-settings'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.apps_rounded,
+                label: 'Application preferences',
+                onTap: () => context.push('/application-preferences'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.verified_user_outlined,
+                label: 'Security activity',
+                onTap: () => context.push('/security-activity'),
                 isDark: isDark)),
             const SizedBox(height: AppSizes.lg),
             stagger(const _SectionLabel('Support')),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/auth_controller.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/widgets/misc/app_icon.dart';
@@ -20,7 +22,15 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 2000), () {
-      if (mounted) context.go('/onboarding');
+      if (!mounted) return;
+      final auth = context.read<AuthController>();
+      if (auth.isClient) {
+        context.go('/client');
+      } else if (auth.isProvider) {
+        context.go('/provider');
+      } else {
+        context.go('/onboarding');
+      }
     });
   }
 
@@ -41,21 +51,33 @@ class _SplashScreenState extends State<SplashScreen> {
                   height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.secondary.withValues(alpha: 0.2), width: 2),
+                    border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.2),
+                        width: 2),
                   ),
                 )
                     .animate()
-                    .scale(begin: const Offset(0.6, 0.6), end: const Offset(1.0, 1.0), duration: 800.ms, curve: Curves.easeOutCubic)
+                    .scale(
+                        begin: const Offset(0.6, 0.6),
+                        end: const Offset(1.0, 1.0),
+                        duration: 800.ms,
+                        curve: Curves.easeOutCubic)
                     .fadeIn(duration: 400.ms)
                     .then()
                     .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scaleXY(begin: 1.0, end: 1.15, duration: 1500.ms, curve: Curves.easeInOut),
+                    .scaleXY(
+                        begin: 1.0,
+                        end: 1.15,
+                        duration: 1500.ms,
+                        curve: Curves.easeInOut),
                 // Logo circle
                 Container(
                   width: 84,
                   height: 84,
-                  decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                  child: const AppIcon(AppIcons.check_rounded, color: AppColors.primary, size: 40),
+                  decoration: const BoxDecoration(
+                      color: AppColors.secondary, shape: BoxShape.circle),
+                  child: const AppIcon(AppIcons.check_rounded,
+                      color: AppColors.primary, size: 40),
                 )
                     .animate()
                     .scale(duration: 600.ms, curve: Curves.easeOutBack)
@@ -66,11 +88,15 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
               'SkillServe',
               style: AppTextStyles.onDark(AppTextStyles.displayMedium),
-            ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideY(begin: 0.2, end: 0),
+            )
+                .animate()
+                .fadeIn(delay: 300.ms, duration: 400.ms)
+                .slideY(begin: 0.2, end: 0),
             const SizedBox(height: 6),
             Text(
               'Find trusted talent, fast.',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMutedDark),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textMutedDark),
             ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
           ],
         ),

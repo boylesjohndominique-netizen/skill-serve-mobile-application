@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
@@ -48,6 +49,17 @@ class AppAvatar extends StatelessWidget {
     final label = initials ?? deriveInitials(name);
 
     if (photoUrl != null && photoUrl!.isNotEmpty) {
+      if (photoUrl!.startsWith('/') || photoUrl!.startsWith('file://')) {
+        return ClipOval(
+          child: SizedBox(
+            width: radius * 2,
+            height: radius * 2,
+            child: Image.file(File(photoUrl!.replaceFirst('file://', '')),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(bg, fg, label)),
+          ),
+        );
+      }
       return ClipOval(
         child: SizedBox(
           width: radius * 2,

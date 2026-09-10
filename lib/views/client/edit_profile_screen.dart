@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/constants/app_colors.dart';
@@ -29,6 +30,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _phone;
   late final TextEditingController _address;
   bool _saving = false;
+  String? _selectedPhoto;
+  bool _removePhoto = false;
 
   @override
   void initState() {
@@ -51,6 +54,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       lastName: _lastName.text.trim(),
       phone: _phone.text.trim(),
       address: _address.text.trim(),
+      profilePicture: _selectedPhoto,
+      clearProfilePicture: _removePhoto,
     );
     auth.updateCurrentUser(updated);
     setState(() => _saving = false);
@@ -79,28 +84,60 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     children: [
                       AppAvatar(
                         initials: user?.initials ?? '?',
+                        photoUrl: _removePhoto
+                            ? null
+                            : _selectedPhoto ?? user?.profilePicture,
                         radius: 44,
                       ),
                       Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                          child: const AppIcon(AppIcons.camera_alt_rounded, size: 16, color: AppColors.primary),
-                        ),
-                      ),
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                                color: AppColors.secondary,
+                                shape: BoxShape.circle),
+                            child: IconButton(
+                              tooltip: 'Change profile photo',
+                              onPressed: _pickPhoto,
+                              icon: const AppIcon(AppIcons.camera_alt_rounded,
+                                  size: 16, color: AppColors.primary),
+                            ),
+                          )),
                     ],
                   ),
-                ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+                ).animate().fadeIn(duration: 300.ms).scale(
+                    begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+                if ((user?.profilePicture != null || _selectedPhoto != null) &&
+                    !_removePhoto) ...[
+                  Align(
+                    alignment: Alignment.center,
+                    child: TextButton.icon(
+                      onPressed: () => setState(() => _removePhoto = true),
+                      icon: const AppIcon(AppIcons.delete_outline_rounded,
+                          size: 16),
+                      label: const Text('Remove photo'),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSizes.xl),
                 Row(
                   children: [
-                    Expanded(child: AppTextField(label: 'First name', controller: _firstName, validator: Validators.required)),
+                    Expanded(
+                        child: AppTextField(
+                            label: 'First name',
+                            controller: _firstName,
+                            validator: Validators.required)),
                     const SizedBox(width: AppSizes.md),
-                    Expanded(child: AppTextField(label: 'Last name', controller: _lastName, validator: Validators.required)),
+                    Expanded(
+                        child: AppTextField(
+                            label: 'Last name',
+                            controller: _lastName,
+                            validator: Validators.required)),
                   ],
-                ).animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
+                )
+                    .animate()
+                    .fadeIn(delay: 100.ms, duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Phone number',
@@ -108,22 +145,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   keyboardType: TextInputType.phone,
                   prefixIcon: AppIcons.call_outlined,
                   validator: Validators.phone,
-                ).animate().fadeIn(delay: 180.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
+                )
+                    .animate()
+                    .fadeIn(delay: 180.ms, duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Address',
                   controller: _address,
                   prefixIcon: AppIcons.location_on_outlined,
                   validator: Validators.required,
-                ).animate().fadeIn(delay: 260.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
+                )
+                    .animate()
+                    .fadeIn(delay: 260.ms, duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.xxl),
-                PrimaryButton(label: 'Save changes', isLoading: _saving, onPressed: _save)
-                    .animate().fadeIn(delay: 340.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
+                PrimaryButton(
+                        label: 'Save changes',
+                        isLoading: _saving,
+                        onPressed: _save)
+                    .animate()
+                    .fadeIn(delay: 340.ms, duration: 350.ms)
+                    .slideY(begin: 0.08, end: 0),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _pickPhoto() async {
+    final photo = await ImagePicker().pickImage(
+        source: ImageSource.gallery, imageQuality: 85, maxWidth: 1200);
+    if (photo == null || !mounted) return;
+    setState(() {
+      _selectedPhoto = photo.path;
+      _removePhoto = false;
+    });
   }
 }

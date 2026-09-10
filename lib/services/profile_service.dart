@@ -10,11 +10,14 @@ class ProfileService {
   }
 
   // PUT /me
-  Future<UserModel> updateProfile(UserModel current, {
+  Future<UserModel> updateProfile(
+    UserModel current, {
     String? firstName,
     String? lastName,
     String? phone,
     String? address,
+    String? profilePicture,
+    bool clearProfilePicture = false,
   }) async {
     await simulateNetworkDelay(ms: 500);
     return UserModel(
@@ -25,14 +28,16 @@ class ProfileService {
       email: current.email,
       phone: phone ?? current.phone,
       address: address ?? current.address,
-      profilePicture: current.profilePicture,
+      profilePicture:
+          clearProfilePicture ? null : profilePicture ?? current.profilePicture,
       status: current.status,
       createdAt: current.createdAt,
     );
   }
 
   // POST /me/change-password
-  Future<void> changePassword({required String current, required String next}) async {
+  Future<void> changePassword(
+      {required String current, required String next}) async {
     await simulateNetworkDelay(ms: 500);
   }
 }
