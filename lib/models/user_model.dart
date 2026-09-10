@@ -56,19 +56,26 @@ class UserModel {
       );
 
   /// Placeholder — maps a future `GET /me` / `GET /users/:id` JSON payload.
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] as String,
-        role: UserRole.values.byName(json['role'] as String? ?? 'client'),
-        firstName: json['firstname'] as String? ?? '',
-        lastName: json['lastname'] as String? ?? '',
-        email: json['email'] as String? ?? '',
-        phone: json['phone'] as String? ?? '',
-        address: json['address'] as String? ?? '',
-        profilePicture: json['profile_picture'] as String?,
-        status: json['status'] as String? ?? 'active',
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
-            DateTime.now(),
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    final roleName = (json['role'] as String?) ??
+        ((json['user_type'] as String?) == 'provider' ? 'provider' : 'client');
+    final role =
+        UserRole.values.where((value) => value.name == roleName).firstOrNull ??
+            UserRole.client;
+    return UserModel(
+      id: json['id'].toString(),
+      role: role,
+      firstName: (json['first_name'] ?? json['firstname']) as String? ?? '',
+      lastName: (json['last_name'] ?? json['lastname']) as String? ?? '',
+      email: json['email'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      profilePicture: json['profile_picture'] as String?,
+      status: json['status'] as String? ?? 'active',
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

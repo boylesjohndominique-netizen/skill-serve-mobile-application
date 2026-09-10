@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/config/app_config.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/token_storage.dart';
 
 enum AuthStatus { unauthenticated, authenticating, authenticated }
 
@@ -28,6 +30,19 @@ class AuthController extends ChangeNotifier {
   bool get isProvider => currentUser?.role == UserRole.provider;
 
   Future<void> initialize() async {
+    if (!AppConfig.useMockData) {
+      final accessToken = await TokenStorage.readAccessToken();
+      if (accessToken == null) return;
+      try {
+        currentUser = await _authService.getCurrentUser();
+        status = AuthStatus.authenticated;
+        _scheduleExpiry(DateTime.now().add(sessionDuration));
+        notifyListeners();
+      } catch (_) {
+        await TokenStorage.clear();
+      }
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     final encodedUser = prefs.getString(_sessionUserKey);
     final expiresAt = prefs.getInt(_sessionExpiryKey);
@@ -56,6 +71,7 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
     try {
       currentUser = await _authService.login(email: email, password: password);
+      await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
       await _persistSession();
@@ -86,6 +102,7 @@ class AuthController extends ChangeNotifier {
         password: password,
         role: role,
       );
+      await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
       await _persistSession();
@@ -109,6 +126,7 @@ class AuthController extends ChangeNotifier {
     await _authService.logout();
     final prefs = await SharedPreferences.getInstance();
     await _clearSession(prefs);
+    await TokenStorage.clear();
     _sessionTimer?.cancel();
     currentUser = null;
     status = AuthStatus.unauthenticated;
@@ -133,6 +151,12 @@ class AuthController extends ChangeNotifier {
     _scheduleExpiry(expiry);
   }
 
+  Future<void> _saveApiTokens() => TokenStorage.save(
+        accessToken: _authService.lastAccessToken,
+        refreshToken: _authService.lastRefreshToken,
+        expiresAt: _authService.lastExpiresAt,
+      );
+
   void _scheduleExpiry(DateTime expiry) {
     _sessionTimer?.cancel();
     final delay = expiry.difference(DateTime.now());
@@ -143,6 +167,7 @@ class AuthController extends ChangeNotifier {
   Future<void> _expireSession() async {
     final prefs = await SharedPreferences.getInstance();
     await _clearSession(prefs);
+    await TokenStorage.clear();
     currentUser = null;
     status = AuthStatus.unauthenticated;
     sessionExpired = true;

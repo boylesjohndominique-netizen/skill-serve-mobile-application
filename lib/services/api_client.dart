@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../core/config/app_config.dart';
+import 'token_storage.dart';
 
 /// Thin Dio wrapper prepared for the future Laravel REST API.
 ///
@@ -18,14 +19,23 @@ class ApiClient {
       ),
     );
 
-    // Placeholder for a future auth interceptor:
-    // _dio.interceptors.add(InterceptorsWrapper(
-    //   onRequest: (options, handler) {
-    //     final token = TokenStorage.readToken();
-    //     if (token != null) options.headers['Authorization'] = 'Bearer $token';
-    //     handler.next(options);
-    //   },
-    // ));
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        if (!AppConfig.useMockData) {
+          final token = await TokenStorage.readAccessToken();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+        }
+        handler.next(options);
+      },
+      onError: (error, handler) async {
+        if (!AppConfig.useMockData && error.response?.statusCode == 401) {
+          await TokenStorage.clear();
+        }
+        handler.next(error);
+      },
+    ));
   }
 
   static final ApiClient instance = ApiClient._internal();
