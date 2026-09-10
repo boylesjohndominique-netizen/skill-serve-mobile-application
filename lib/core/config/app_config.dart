@@ -1,19 +1,25 @@
-/// Environment configuration placeholder.
+/// Compile-time environment configuration for the mobile API.
 ///
-/// Swap [baseUrl] for the real Laravel API root once the backend is
-/// available, and flip [useMockData] to false to route through
-/// [ApiClient] instead of the in-memory mock services.
+/// Examples:
+/// flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000/api
+/// flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
+/// flutter run --dart-define=USE_MOCK_DATA=true
 class AppConfig {
   AppConfig._();
 
   static const String appName = 'SkillServe';
 
-  /// Laravel REST API base URL. Update when the backend is deployed.
-  static const String baseUrl = 'http://localhost:8000/api';
+  /// Laravel REST API root. Override for an Android emulator or physical phone.
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8000/api',
+  );
 
-  /// While true, every service in lib/services returns mock data instead
-  /// of calling the network — lets the UI be built and demoed standalone.
-  static const bool useMockData = true;
+  /// Live API is enabled by default. Set USE_MOCK_DATA=true for standalone demo mode.
+  static const bool useMockData = bool.fromEnvironment(
+    'USE_MOCK_DATA',
+    defaultValue: false,
+  );
 
   static const Duration apiTimeout = Duration(seconds: 15);
 }

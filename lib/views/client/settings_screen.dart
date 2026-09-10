@@ -104,9 +104,38 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 380.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             const SizedBox(height: AppSizes.lg),
+            const _SectionLabel('Data & Account Control')
+                .animate()
+                .fadeIn(delay: 400.ms, duration: 300.ms),
+            _Tile(
+                    icon: AppIcons.description_outlined,
+                    label: 'View account data',
+                    onTap: () => context.push('/account-data'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 420.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            _Tile(
+                    icon: AppIcons.block_rounded,
+                    label: 'Deactivate account',
+                    onTap: () => context.push('/account-deactivation'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 440.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            _Tile(
+                    icon: AppIcons.delete_outline_rounded,
+                    label: 'Delete account',
+                    danger: true,
+                    onTap: () => context.push('/account-deletion'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 460.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            const SizedBox(height: AppSizes.lg),
             const _SectionLabel('Preferences')
                 .animate()
-                .fadeIn(delay: 380.ms, duration: 300.ms),
+                .fadeIn(delay: 480.ms, duration: 300.ms),
             _SwitchTile(
               icon: AppIcons.dark_mode_outlined,
               label: 'Dark mode',

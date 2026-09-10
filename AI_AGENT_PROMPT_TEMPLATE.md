@@ -23,7 +23,7 @@ Scope rules:
 - Do not add deferred or not-yet-implemented PDF modules.
 - Do not add admin-web functionality.
 - Keep the frontend mock-data architecture; do not invent backend behavior.
-- Keep `AppConfig.useMockData = true` unless the user explicitly asks to enable live mode.
+- Respect the current `AppConfig.useMockData`/`USE_MOCK_DATA` configuration; do not silently switch live and mock modes.
 - Use only endpoints documented in `api-docs`; use `/api/client/v1/*` for mobile customer flows.
 - Put live Dio calls in services behind `if (!AppConfig.useMockData)` and keep mock branches working.
 - Use `ApiClient` and `TokenStorage` for bearer authentication; never store passwords.

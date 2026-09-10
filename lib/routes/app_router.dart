@@ -39,6 +39,9 @@ import '../views/client/payment_details_screen.dart';
 import '../views/client/file_report_screen.dart';
 import '../views/client/my_reports_screen.dart';
 import '../views/client/write_review_screen.dart';
+import '../views/client/account_data_screen.dart';
+import '../views/client/account_deactivation_screen.dart';
+import '../views/client/account_deletion_screen.dart';
 
 // Provider
 import '../views/provider/provider_shell.dart';
@@ -187,6 +190,15 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/security-activity',
       builder: (context, state) => const SecurityNotificationsScreen()),
+  GoRoute(
+      path: '/account-data',
+      builder: (context, state) => const AccountDataScreen()),
+  GoRoute(
+      path: '/account-deactivation',
+      builder: (context, state) => const AccountDeactivationScreen()),
+  GoRoute(
+      path: '/account-deletion',
+      builder: (context, state) => const AccountDeletionScreen()),
 
   // Provider shell (bottom-nav: Dashboard / Bookings / Portfolio / Messages / Profile)
   GoRoute(
@@ -280,6 +292,9 @@ final _protectedPrefixes = <String>[
   '/privacy-settings',
   '/application-preferences',
   '/security-activity',
+  '/account-data',
+  '/account-deactivation',
+  '/account-deletion',
 ];
 
 GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(

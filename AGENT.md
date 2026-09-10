@@ -6,9 +6,9 @@ This repository is the Flutter user-side application for SkillServe. It serves g
 client, and service-provider experiences. Administrative approval, moderation,
 verification decisions, platform management, and system control remain outside this app.
 
-The current implementation is a frontend prototype. Mock data remains active while
-documented Laravel API calls are wired behind the service layer. Do not describe mock
-behavior as production authentication or persistence.
+The app is configured for the documented Laravel API by default, with mock mode available
+through `--dart-define=USE_MOCK_DATA=true`. Do not describe mock behavior as production
+authentication or persistence.
 
 ## Source Of Truth
 
@@ -60,7 +60,7 @@ explicitly requests them as a new feature:
 - Keep documented live API calls in services behind `if (!AppConfig.useMockData)`; mock branches remain the default.
 - Send Sanctum bearer tokens through `ApiClient`/`TokenStorage`, handle documented `401` responses by clearing the session, and never store passwords.
 - If the API docs do not define a client endpoint, do not invent one. Leave an explicit service-layer `UnsupportedError` or comment and keep the mock path active.
-- Do not remove mock data until live API mode has been explicitly enabled and verified.
+- Keep mock data available for offline UI tests and fallback development.
 - Reuse existing theme tokens, widgets, status badges, and route conventions.
 - Do not add admin-only functionality to the mobile app.
 - Before editing, inspect existing routes, controllers, services, and mock data for the module.

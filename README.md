@@ -5,9 +5,8 @@ Integrated Skills Marketplace and Service Management Platform**.
 
 This is the **Users Side mobile app** — Guest browsing, Client booking, and Service
 Provider management — matching the design language of the Admin Web Application.
-**Frontend only.** No backend logic, authentication implementation, or database queries
-are included; every data-dependent screen runs on realistic mock data behind a service
-layer that's pre-shaped for a future Laravel REST API.
+The app connects to the Laravel API through the service layer and never connects directly
+to the backend database. Mock mode remains available for standalone UI development.
 
 ## Tech stack
 
@@ -108,16 +107,13 @@ Client and Provider each have a bottom-navigation **shell** (`client_shell.dart`
 
 ## Connecting to the Laravel backend
 
-1. Update `lib/core/config/app_config.dart`:
-   - Set `baseUrl` to your Laravel API root (e.g. `http://localhost:8000/api`).
-   - Set `useMockData = false`.
-2. Every method in `lib/services/*.dart` already contains a commented-out `Dio` call
-   showing the exact endpoint and verb it expects (e.g. `POST /auth/login`,
-   `PATCH /bookings/:id/cancel`) — uncomment and adapt once the matching Laravel route exists.
-3. `lib/services/api_client.dart` has a placeholder spot for an auth interceptor — wire it
-   to read a persisted token (e.g. via `shared_preferences`) once login issues real tokens.
-4. Screens and controllers don't need to change: they call the service layer, which is the
-   only place mock data vs. live API is decided.
+1. The default API root is `http://localhost:8000/api`.
+2. Override it for another target with `--dart-define=API_BASE_URL=...`.
+3. Live API mode is the default. Use `--dart-define=USE_MOCK_DATA=true` for mock mode.
+4. Client API authentication uses Sanctum bearer tokens through `ApiClient` and
+   `TokenStorage`; never put backend database or admin credentials in the mobile app.
+5. Screens and controllers call the service layer, which is the only place live API versus
+   mock data is selected.
 
 ## Reusable components (`lib/core/widgets/`)
 
