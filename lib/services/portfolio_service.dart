@@ -1,23 +1,30 @@
-import '../data/mock/mock_data.dart';
 import '../models/portfolio_model.dart';
-import 'api_client.dart';
 
-/// Placeholder service for provider portfolio management.
+/// Service for provider portfolio management.
+///
+/// No documented client endpoints for portfolio. These methods will
+/// throw [UnsupportedError] until the backend documents client portfolio routes.
 class PortfolioService {
-  // GET /providers/:id/portfolio
+  // No documented client endpoint.
   Future<List<PortfolioModel>> getPortfolio(String providerId) async {
-    await simulateNetworkDelay(ms: 350);
-    return MockData.portfolio;
+    throw UnsupportedError('Client portfolio endpoints are not documented.');
   }
 
-  // POST /portfolio  (multipart upload — UI only, no implementation here)
-  Future<void> uploadPortfolioItem({required String title, required String description, required String imagePath}) async {
-    await simulateNetworkDelay(ms: 700);
+  // No documented client endpoint.
+  Future<void> uploadPortfolioItem(
+      {required String title,
+      required String description,
+      required String imagePath}) async {
+    throw UnsupportedError('Client portfolio endpoints are not documented.');
   }
 
-  // DELETE /portfolio/:id
-  Future<void> removePortfolioItem(String id) async => simulateNetworkDelay(ms: 250);
+  // No documented client endpoint.
+  Future<void> removePortfolioItem(String id) async {
+    throw UnsupportedError('Client portfolio endpoints are not documented.');
+  }
 
-  // PATCH /portfolio/:id (resubmit a rejected item)
-  Future<void> resubmitPortfolioItem(String id) async => simulateNetworkDelay(ms: 350);
+  // No documented client endpoint.
+  Future<void> resubmitPortfolioItem(String id) async {
+    throw UnsupportedError('Client portfolio endpoints are not documented.');
+  }
 }

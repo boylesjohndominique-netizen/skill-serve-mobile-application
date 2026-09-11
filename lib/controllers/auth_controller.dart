@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/config/app_config.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/token_storage.dart';
@@ -30,38 +29,15 @@ class AuthController extends ChangeNotifier {
   bool get isProvider => currentUser?.role == UserRole.provider;
 
   Future<void> initialize() async {
-    if (!AppConfig.useMockData) {
-      final accessToken = await TokenStorage.readAccessToken();
-      if (accessToken == null) return;
-      try {
-        currentUser = await _authService.getCurrentUser();
-        status = AuthStatus.authenticated;
-        _scheduleExpiry(DateTime.now().add(sessionDuration));
-        notifyListeners();
-      } catch (_) {
-        await TokenStorage.clear();
-      }
-      return;
-    }
-    final prefs = await SharedPreferences.getInstance();
-    final encodedUser = prefs.getString(_sessionUserKey);
-    final expiresAt = prefs.getInt(_sessionExpiryKey);
-    if (encodedUser == null || expiresAt == null) return;
-    final expiry = DateTime.fromMillisecondsSinceEpoch(expiresAt);
-    if (!expiry.isAfter(DateTime.now())) {
-      await _clearSession(prefs);
-      sessionExpired = true;
-      notifyListeners();
-      return;
-    }
+    final accessToken = await TokenStorage.readAccessToken();
+    if (accessToken == null) return;
     try {
-      currentUser =
-          UserModel.fromJson(jsonDecode(encodedUser) as Map<String, dynamic>);
+      currentUser = await _authService.getCurrentUser();
       status = AuthStatus.authenticated;
-      _scheduleExpiry(expiry);
+      _scheduleExpiry(DateTime.now().add(sessionDuration));
       notifyListeners();
     } catch (_) {
-      await _clearSession(prefs);
+      await TokenStorage.clear();
     }
   }
 

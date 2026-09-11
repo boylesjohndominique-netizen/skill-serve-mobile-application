@@ -12,7 +12,11 @@ class ChatController extends ChangeNotifier {
   Future<void> loadConversations() async {
     isLoading = true;
     notifyListeners();
-    conversations = await _service.getConversations();
+    try {
+      conversations = await _service.getConversations();
+    } catch (_) {
+      conversations = [];
+    }
     isLoading = false;
     notifyListeners();
   }
@@ -20,7 +24,11 @@ class ChatController extends ChangeNotifier {
   Future<void> openConversation(String conversationId) async {
     isLoading = true;
     notifyListeners();
-    activeMessages = await _service.getMessages(conversationId);
+    try {
+      activeMessages = await _service.getMessages(conversationId);
+    } catch (_) {
+      activeMessages = [];
+    }
     isLoading = false;
     notifyListeners();
   }
@@ -39,6 +47,8 @@ class ChatController extends ChangeNotifier {
       ),
     ];
     notifyListeners();
-    await _service.sendMessage(conversationId, content);
+    try {
+      await _service.sendMessage(conversationId, content);
+    } catch (_) {}
   }
 }

@@ -13,7 +13,11 @@ class ReportController extends ChangeNotifier {
   Future<void> loadMyReports() async {
     isLoading = true;
     notifyListeners();
-    reports = await _reportService.getMyReports();
+    try {
+      reports = await _reportService.getMyReports();
+    } catch (_) {
+      reports = [];
+    }
     isLoading = false;
     notifyListeners();
   }
@@ -25,14 +29,20 @@ class ReportController extends ChangeNotifier {
   }) async {
     isSubmitting = true;
     notifyListeners();
-    final report = await _reportService.fileReport(
-      reportedName: reportedName,
-      reason: reason,
-      details: details,
-    );
-    reports.insert(0, report);
-    isSubmitting = false;
-    notifyListeners();
-    return report;
+    try {
+      final report = await _reportService.fileReport(
+        reportedName: reportedName,
+        reason: reason,
+        details: details,
+      );
+      reports.insert(0, report);
+      isSubmitting = false;
+      notifyListeners();
+      return report;
+    } catch (_) {
+      isSubmitting = false;
+      notifyListeners();
+      return null;
+    }
   }
 }

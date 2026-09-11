@@ -12,13 +12,19 @@ class BookingController extends ChangeNotifier {
   Future<void> loadClientBookings() async {
     isLoading = true;
     notifyListeners();
-    bookings = await _bookingService.getClientBookings();
+    try {
+      bookings = await _bookingService.getClientBookings();
+    } catch (_) {
+      bookings = [];
+    }
     isLoading = false;
     notifyListeners();
   }
 
   Future<void> cancel(String bookingId) async {
-    await _bookingService.cancelBooking(bookingId);
-    await loadClientBookings();
+    try {
+      await _bookingService.cancelBooking(bookingId);
+      await loadClientBookings();
+    } catch (_) {}
   }
 }

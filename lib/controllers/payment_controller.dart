@@ -12,7 +12,11 @@ class PaymentController extends ChangeNotifier {
   Future<void> loadPayments() async {
     isLoading = true;
     notifyListeners();
-    payments = await _paymentService.getPayments();
+    try {
+      payments = await _paymentService.getPayments();
+    } catch (_) {
+      payments = [];
+    }
     isLoading = false;
     notifyListeners();
   }

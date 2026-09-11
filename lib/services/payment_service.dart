@@ -1,18 +1,17 @@
-import '../data/mock/mock_data.dart';
 import '../models/payment_model.dart';
-import 'api_client.dart';
 
-/// Placeholder service for payments & receipts.
+/// Service for payments & receipts.
+///
+/// No documented client endpoints for payments. These methods will
+/// throw [UnsupportedError] until the backend documents client payment routes.
 class PaymentService {
-  // GET /payments (own)
+  // No documented client endpoint.
   Future<List<PaymentModel>> getPayments() async {
-    await simulateNetworkDelay();
-    return MockData.payments;
+    throw UnsupportedError('Client payment endpoints are not documented.');
   }
 
-  // GET /payments/:id
+  // No documented client endpoint.
   Future<PaymentModel> getPaymentById(String id) async {
-    await simulateNetworkDelay(ms: 300);
-    return MockData.payments.firstWhere((p) => p.id == id, orElse: () => MockData.payments.first);
+    throw UnsupportedError('Client payment endpoints are not documented.');
   }
 }

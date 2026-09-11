@@ -12,7 +12,11 @@ class ProviderBookingController extends ChangeNotifier {
   Future<void> loadProviderBookings() async {
     isLoading = true;
     notifyListeners();
-    bookings = await _bookingService.getProviderBookings();
+    try {
+      bookings = await _bookingService.getProviderBookings();
+    } catch (_) {
+      bookings = [];
+    }
     isLoading = false;
     notifyListeners();
   }
@@ -23,22 +27,30 @@ class ProviderBookingController extends ChangeNotifier {
   List<BookingModel> get completed => bookings.where((b) => b.status == BookingStatus.completed).toList();
 
   Future<void> accept(String id) async {
-    await _bookingService.acceptBooking(id);
-    await loadProviderBookings();
+    try {
+      await _bookingService.acceptBooking(id);
+      await loadProviderBookings();
+    } catch (_) {}
   }
 
   Future<void> decline(String id) async {
-    await _bookingService.declineBooking(id);
-    await loadProviderBookings();
+    try {
+      await _bookingService.declineBooking(id);
+      await loadProviderBookings();
+    } catch (_) {}
   }
 
   Future<void> start(String id) async {
-    await _bookingService.startBooking(id);
-    await loadProviderBookings();
+    try {
+      await _bookingService.startBooking(id);
+      await loadProviderBookings();
+    } catch (_) {}
   }
 
   Future<void> complete(String id) async {
-    await _bookingService.completeBooking(id);
-    await loadProviderBookings();
+    try {
+      await _bookingService.completeBooking(id);
+      await loadProviderBookings();
+    } catch (_) {}
   }
 }

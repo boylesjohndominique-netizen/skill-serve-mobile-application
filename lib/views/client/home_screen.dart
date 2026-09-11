@@ -15,9 +15,9 @@ import '../../core/widgets/feedback/empty_state.dart';
 import '../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../core/widgets/misc/section_header.dart';
 import '../../core/widgets/misc/verification_seal.dart';
-import '../../data/mock/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../models/provider_model.dart';
+import '../../services/booking_service.dart';
 import '../../services/service_service.dart';
 import '../../core/widgets/misc/app_icon.dart';
 import '../../core/widgets/misc/app_avatar.dart';
@@ -36,6 +36,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   String _selectedCategory = 'All';
   List<ProviderModel> _featured = [];
   bool _featuredLoading = true;
+  List<BookingModel> _upcoming = [];
 
   @override
   void initState() {
@@ -43,22 +44,38 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final marketplace = context.read<MarketplaceController>();
       if (marketplace.providers.isEmpty) marketplace.loadInitial();
-      ServiceService().getFeaturedProviders().then((f) {
-        if (mounted) {
-          setState(() {
-            _featured = f;
-            _featuredLoading = false;
-          });
-        }
-      });
+      _loadFeatured();
+      _loadUpcoming();
     });
+  }
+
+  Future<void> _loadFeatured() async {
+    try {
+      final f = await ServiceService().getFeaturedProviders();
+      if (mounted) setState(() { _featured = f; _featuredLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() { _featuredLoading = false; });
+    }
+  }
+
+  Future<void> _loadUpcoming() async {
+    try {
+      final bookings = await BookingService().getClientBookings();
+      if (mounted) {
+        setState(() {
+          _upcoming = bookings
+              .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
+              .toList();
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _refresh() async {
     final marketplace = context.read<MarketplaceController>();
     await marketplace.loadInitial();
-    final featured = await ServiceService().getFeaturedProviders();
-    if (mounted) setState(() => _featured = featured);
+    await _loadFeatured();
+    await _loadUpcoming();
   }
 
   @override
@@ -67,9 +84,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     final favorites = context.watch<FavoritesController>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final upcoming = MockData.bookingsForClient
-        .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
-        .toList();
+    final upcoming = _upcoming;
 
     return Scaffold(
       body: SafeArea(

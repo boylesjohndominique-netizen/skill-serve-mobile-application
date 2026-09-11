@@ -1,23 +1,25 @@
-import '../data/mock/mock_data.dart';
 import '../models/message_model.dart';
-import 'api_client.dart';
 
-/// Placeholder service for chat conversations and messages.
+/// Service for chat conversations and messages.
+///
+/// No documented client endpoints for messaging. These methods will
+/// throw [UnsupportedError] until the backend documents client chat routes.
 class MessageService {
-  // GET /conversations
+  // No documented client endpoint.
   Future<List<ConversationModel>> getConversations() async {
-    await simulateNetworkDelay(ms: 350);
-    return MockData.conversations;
+    throw UnsupportedError(
+        'Client messaging endpoints are not documented.');
   }
 
-  // GET /conversations/:id/messages
+  // No documented client endpoint.
   Future<List<MessageModel>> getMessages(String conversationId) async {
-    await simulateNetworkDelay(ms: 300);
-    return MockData.messagesFor(conversationId);
+    throw UnsupportedError(
+        'Client messaging endpoints are not documented.');
   }
 
-  // POST /conversations/:id/messages
+  // No documented client endpoint.
   Future<void> sendMessage(String conversationId, String content) async {
-    await simulateNetworkDelay(ms: 250);
+    throw UnsupportedError(
+        'Client messaging endpoints are not documented.');
   }
 }

@@ -11,27 +11,33 @@ class PortfolioController extends ChangeNotifier {
   Future<void> load(String providerId) async {
     isLoading = true;
     notifyListeners();
-    items = await _service.getPortfolio(providerId);
+    try {
+      items = await _service.getPortfolio(providerId);
+    } catch (_) {
+      items = [];
+    }
     isLoading = false;
     notifyListeners();
   }
 
   /// Marks a rejected item back to pending for admin re-review.
   Future<void> resubmit(String itemId) async {
-    await _service.resubmitPortfolioItem(itemId);
-    items = [
-      for (final item in items)
-        item.id == itemId
-            ? PortfolioModel(
-                id: item.id,
-                providerId: item.providerId,
-                image: item.image,
-                title: item.title,
-                description: item.description,
-                status: 'pending',
-              )
-            : item,
-    ];
-    notifyListeners();
+    try {
+      await _service.resubmitPortfolioItem(itemId);
+      items = [
+        for (final item in items)
+          item.id == itemId
+              ? PortfolioModel(
+                  id: item.id,
+                  providerId: item.providerId,
+                  image: item.image,
+                  title: item.title,
+                  description: item.description,
+                  status: 'pending',
+                )
+              : item,
+      ];
+      notifyListeners();
+    } catch (_) {}
   }
 }

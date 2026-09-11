@@ -1,17 +1,37 @@
-import '../data/mock/mock_data.dart';
 import '../models/review_model.dart';
 import 'api_client.dart';
 
-/// Placeholder service for provider reviews.
+/// Service for provider reviews — live API only.
+///
+/// Endpoints:
+/// - GET /api/client/v1/reviews
+/// - POST /api/client/v1/reviews
+/// - PATCH /api/client/v1/reviews/{review}
 class ReviewService {
-  // GET /providers/:id/reviews
+  // GET /api/client/v1/reviews
   Future<List<ReviewModel>> getReviewsForProvider(String providerId) async {
-    await simulateNetworkDelay();
-    return MockData.reviews;
+    final response =
+        await ApiClient.instance.dio.get('/client/v1/reviews');
+    final data = response.data['data'];
+    final items = data is List
+        ? data
+        : data is Map<String, dynamic>
+            ? data['data'] as List? ?? []
+            : [];
+    return items
+        .map((json) => ReviewModel.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
-  // POST /bookings/:id/review
-  Future<void> submitReview({required String bookingId, required double rating, required String comment}) async {
-    await simulateNetworkDelay(ms: 500);
+  // POST /api/client/v1/reviews
+  Future<void> submitReview(
+      {required String bookingId,
+      required double rating,
+      required String comment}) async {
+    await ApiClient.instance.dio.post('/client/v1/reviews', data: {
+      'booking_id': int.parse(bookingId),
+      'rating': rating.round(),
+      'comment': comment,
+    });
   }
 }
