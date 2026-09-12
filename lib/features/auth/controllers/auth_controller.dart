@@ -182,15 +182,29 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Called when the user backs out of the OTP screen. Drops the half-
-  /// created registration so no authenticated state remains anywhere.
+  /// Called when the user backs out of the OTP screen. Deletes the
+  /// unverified account server-side (so the email becomes reusable) and
+  /// drops the half-created registration locally. The password is kept
+  /// only for this call and cleared afterwards.
   Future<void> cancelPendingVerification() async {
+    final email = _pendingEmail;
+    final password = _pendingPassword;
+
     _clearPendingRegistration();
     await TokenStorage.clear();
     currentUser = null;
     status = AuthStatus.unauthenticated;
     errorMessage = null;
     notifyListeners();
+
+    if (email != null && password != null) {
+      try {
+        await _authService.cancelRegistration(email: email, password: password);
+      } catch (_) {
+        // Server unreachable: the unverified account stays and the next
+        // register attempt will say the email is taken — acceptable.
+      }
+    }
   }
 
   void _clearPendingRegistration() {

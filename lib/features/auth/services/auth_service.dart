@@ -98,6 +98,15 @@ class AuthService {
         .post('/client/v1/auth/resend-otp', data: {'email': email});
   }
 
+  // POST /api/client/v1/auth/cancel-registration — deletes the unverified
+  // account created by register/register-provider. No-ops (200) for
+  // verified or unknown accounts; the app ignores the outcome either way.
+  Future<void> cancelRegistration(
+      {required String email, required String password}) async {
+    await ApiClient.instance.dio.post('/client/v1/auth/cancel-registration',
+        data: {'email': email, 'password': password});
+  }
+
   // POST /api/client/v1/auth/google
   Future<UserModel> loginWithGoogle({required String idToken}) async {
     final response = await ApiClient.instance.dio
