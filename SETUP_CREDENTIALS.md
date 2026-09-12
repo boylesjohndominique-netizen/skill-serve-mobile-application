@@ -59,7 +59,38 @@ php artisan config:clear
 
 The Flutter side uses `GoogleSignIn(serverClientId: AppConfig.googleWebClientId)`. If sign-out works but you get "PLUGINS_NOT_INSTALLED", `ApiException: 10`, or a bad-audience / 401 "invalid Google token" error: the Web client ID in `app_config.dart` is missing/wrong, or `GOOGLE_CLIENT_ID` on the backend isn't the **Web** client.
 
-## 3. Local development
+## 3. OTP emails must be configured on RENDER, not just locally
+
+The mobile app talks to the Render deployment. Even if `backend/.env` has correct `MAIL_*` values (local testing only), **no OTP emails are sent until the same variables exist in Render → your backend service → Environment**:
+
+```
+MAIL_MAILER=smtp
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USERNAME=<brevo smtp login>
+MAIL_PASSWORD=<brevo smtp key>
+MAIL_FROM_ADDRESS=<verified sender address>
+MAIL_FROM_NAME=SkillServe
+```
+
+Then **redeploy**. Verify: register an account in the app → the 6-digit code should arrive within ~1 minute. If it still doesn't, check Render → Logs for `Failed to send verification OTP`.
+
+### If SMTP is blocked on Render (mail hangs ~60 s then 500s)
+
+Some Render network configurations silently drop **outbound SMTP ports (25/465/587)** — the send hangs for the socket timeout and then fails, with nothing suspicious in the logs. The backend ships a fallback mailer that uses **Brevo's REST API over HTTPS (port 443)**, which such hosts can always reach:
+
+1. Get an API key: **Brevo → Profile → SMTP & API → API Keys → Generate new key** (`xkeysib-...`).
+2. In Render → Environment, **change/add**:
+   ```
+   MAIL_MAILER=brevo-api
+   BREVO_API_KEY=<xkeysib-... key>
+   ```
+   (The `MAIL_HOST/PORT/USERNAME/PASSWORD` values can stay — they're just unused by this mailer.)
+3. Redeploy. The OTP send now goes out over HTTPS like every other API call the backend makes.
+
+The transport is implemented in `backend/app/Shared/Services/BrevoApiTransport.php` and registered in `AppServiceProvider`.
+
+## 4. Local development
 
 Copy the same variables into `backend/.env` on WSL. For quick local testing without Brevo, `MAIL_MAILER=log` writes OTP codes to `backend/storage/logs/laravel.log` — grab the code from there.
 

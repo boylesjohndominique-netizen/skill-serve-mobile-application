@@ -35,6 +35,16 @@ class AuthController extends ChangeNotifier {
   bool get isClient => currentUser?.role == UserRole.client;
   bool get isProvider => currentUser?.role == UserRole.provider;
 
+  /// Set between registration and successful OTP verification. While true,
+  /// the registration has NOT produced a session: no tokens are kept,
+  /// [status] stays [AuthStatus.unauthenticated], and the router pins the
+  /// user to /verify-email so the app cannot be reached unverified.
+  bool _pendingEmailVerification = false;
+  String? _pendingEmail;
+  String? _pendingPassword;
+
+  bool get requiresEmailVerification => _pendingEmailVerification;
+
   Future<void> initialize() async {
     final accessToken = await TokenStorage.readAccessToken();
     if (accessToken == null) return;
@@ -57,6 +67,7 @@ class AuthController extends ChangeNotifier {
       await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
+      _clearPendingRegistration();
       await _persistSession();
       notifyListeners();
       return true;
@@ -99,10 +110,16 @@ class AuthController extends ChangeNotifier {
               email: email,
               password: password,
             );
-      await _saveApiTokens();
-      status = AuthStatus.authenticated;
+      // Registration does NOT create a usable session: the backend issued
+      // tokens, but the email is still unverified, so they are discarded.
+      // The user stays [AuthStatus.unauthenticated] and pinned to the OTP
+      // screen; a real session is created only after the code is verified.
+      _pendingEmailVerification = true;
+      _pendingEmail = currentUser!.email;
+      _pendingPassword = password;
+      status = AuthStatus.unauthenticated;
       sessionExpired = false;
-      await _persistSession();
+      await TokenStorage.clear();
       notifyListeners();
       return true;
     } catch (e) {
@@ -114,7 +131,9 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Verifies the account email with the 6-digit OTP emailed at
-  /// registration. Returns true and refreshes [currentUser] on success.
+  /// registration. For a pending registration this activates the session
+  /// (a fresh login is performed so real tokens are stored); returns true
+  /// and refreshes [currentUser] on success.
   Future<bool> verifyOtp(String email, String code) async {
     status = AuthStatus.authenticating;
     errorMessage = null;
@@ -123,7 +142,32 @@ class AuthController extends ChangeNotifier {
       final user = await _authService.verifyOtp(email: email, code: code);
       if (currentUser?.email.toLowerCase() == user.email.toLowerCase()) {
         currentUser = user;
-        await _persistSession();
+      }
+      if (_pendingEmailVerification) {
+        final pendingEmail = _pendingEmail ?? email;
+        final pendingPassword = _pendingPassword;
+        _clearPendingRegistration();
+        if (pendingPassword != null) {
+          try {
+            // The verify-otp response carries no tokens, so perform a real
+            // login now that the email is verified. Password lived only in
+            // memory for this hand-off and is cleared above.
+            currentUser =
+                await _authService.login(email: pendingEmail, password: pendingPassword);
+            await _saveApiTokens();
+            status = AuthStatus.authenticated;
+            sessionExpired = false;
+            await _persistSession();
+            notifyListeners();
+            return true;
+          } catch (_) {
+            currentUser = null;
+            status = AuthStatus.unauthenticated;
+            errorMessage = 'Email verified! Please sign in with your new account.';
+            notifyListeners();
+            return true;
+          }
+        }
       }
       status =
           currentUser == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
@@ -136,6 +180,23 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Called when the user backs out of the OTP screen. Drops the half-
+  /// created registration so no authenticated state remains anywhere.
+  Future<void> cancelPendingVerification() async {
+    _clearPendingRegistration();
+    await TokenStorage.clear();
+    currentUser = null;
+    status = AuthStatus.unauthenticated;
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  void _clearPendingRegistration() {
+    _pendingEmailVerification = false;
+    _pendingEmail = null;
+    _pendingPassword = null;
   }
 
   /// Asks the backend to email a fresh OTP (60s cooldown applies).
@@ -179,6 +240,7 @@ class AuthController extends ChangeNotifier {
       await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
+      _clearPendingRegistration();
       await _persistSession();
       notifyListeners();
       return true;
@@ -254,6 +316,7 @@ class AuthController extends ChangeNotifier {
     await _clearSession(prefs);
     await TokenStorage.clear();
     _sessionTimer?.cancel();
+    _clearPendingRegistration();
     currentUser = null;
     status = AuthStatus.unauthenticated;
     notifyListeners();
@@ -294,6 +357,7 @@ class AuthController extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await _clearSession(prefs);
     await TokenStorage.clear();
+    _clearPendingRegistration();
     currentUser = null;
     status = AuthStatus.unauthenticated;
     sessionExpired = true;

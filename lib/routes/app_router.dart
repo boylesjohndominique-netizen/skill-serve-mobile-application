@@ -315,6 +315,14 @@ GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(
       refreshListenable: auth,
       redirect: (context, state) {
         final path = state.uri.path;
+
+        // A registration that hasn't been verified by OTP yet must never
+        // reach any other screen: keep the user on /verify-email until the
+        // code is confirmed. (Also guards against system back navigation.)
+        if (auth.requiresEmailVerification) {
+          return path == '/verify-email' ? null : '/verify-email';
+        }
+
         final protected =
             _protectedPrefixes.any((prefix) => path.startsWith(prefix));
         if (protected && auth.status != AuthStatus.authenticated) {

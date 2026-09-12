@@ -70,12 +70,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     if (!mounted) return;
     setState(() => _submitting = false);
     if (ok) {
-      AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
-      final role = auth.currentUser?.role;
-      if (role == UserRole.provider) {
-        context.go('/provider-onboarding');
+      // Successful verification either completed the pending registration
+      // (controller now holds a real session) or verified an already-signed-
+      // in account. Route by the resulting role; the router's
+      // requiresEmailVerification pin is released at this point.
+      if (auth.status == AuthStatus.authenticated) {
+        AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
+        final role = auth.currentUser?.role;
+        if (role == UserRole.provider) {
+          context.go('/provider-onboarding');
+        } else {
+          context.go('/client');
+        }
       } else {
-        context.go('/client');
+        // Verified but no session (e.g. token hand-off failed): sign in
+        // manually. Keep the requiresEmailVerification pin released — the
+        // controller already cleared it.
+        AppSnackbar.success(context, auth.errorMessage ?? 'Email verified! Please sign in.');
+        context.go('/login');
       }
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Verification failed.');
@@ -111,7 +123,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
-                  onPressed: () => context.go('/login'),
+                  // Backing out cancels the pending registration: the half-
+                  // created session is dropped so the user can never reach
+                  // the app without verifying. (Also covers the system
+                  // back gesture — the router pins this screen while a
+                  // verification is pending.)
+                  onPressed: () async {
+                    final auth = context.read<AuthController>();
+                    await auth.cancelPendingVerification();
+                    if (!context.mounted) return;
+                    context.go('/login');
+                  },
                   icon: const AppIcon(AppIcons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
                 ),
