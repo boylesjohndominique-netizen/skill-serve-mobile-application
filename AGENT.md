@@ -1,14 +1,16 @@
-# SkillServe Mobile Agent Guide
+# SkillServe Agent Guide
 
 ## Product Scope
 
-This repository is the Flutter user-side application for SkillServe. It serves guest,
-client, and service-provider experiences. Administrative approval, moderation,
-verification decisions, platform management, and system control remain outside this app.
+SkillServe is a monolith application with a Laravel backend and Flutter mobile frontend.
+The backend serves the REST API; the Flutter app is the client-facing mobile interface
+for guest, client, and service-provider experiences. Administrative approval, moderation,
+verification decisions, platform management, and system control remain on the admin web side.
 
-The app is configured for the documented Laravel API by default, with mock mode available
-through `--dart-define=USE_MOCK_DATA=true`. Do not describe mock behavior as production
-authentication or persistence.
+**No mock data.** All development uses the live Laravel REST API directly. Every service
+calls the backend through `ApiClient` with Sanctum bearer tokens. If an endpoint is not
+yet implemented on the backend, the service throws `UnsupportedError` — never return
+placeholder or fake data.
 
 ## Source Of Truth
 
@@ -17,6 +19,14 @@ source. The app must only be changed for functionality that is already implement
 repository. Do not build deferred PDF items simply to make the requirements matrix look
 complete.
 
+## Architecture
+
+- **Backend**: Laravel (PHP) — REST API with Sanctum bearer token authentication.
+- **Frontend**: Flutter (Dart) — mobile client consuming `/api/client/v1/*` endpoints.
+- **Monolith repo**: Both backend and frontend live in the same repository.
+- **API docs**: `api-docs/` contains OpenAPI spec and per-module endpoint documentation.
+- **No mock data layer**: Services call the API directly. `AppConfig.useMockData` is removed.
+
 ## Implemented PDF Scope
 
 - Authentication: registration, login, logout, forgot-password request, role-based landing, persistent local sessions with expiry, and account status data display.
@@ -24,7 +34,7 @@ complete.
 - Service discovery: browse, search, categories, service details, featured services, and provider discovery/profile details.
 - Booking: create, confirm, view history/details, status display, cancellation, and report/dispute entry.
 - Reviews: submit rating/review and view published provider reviews.
-- Messaging: conversation list, conversation history, send message, and receive mock messages.
+- Messaging: conversation list, conversation history, send message, and receive messages.
 - Notifications: notification feed, booking/service/system notification types, read state, and history.
 - Provider account: provider onboarding, provider profile, verification status, portfolio, and recognition badges.
 - Provider services: create, list, edit, approval/status display, and availability/calendar UI.
@@ -39,7 +49,7 @@ The following PDF items are not currently implemented and must not be added unle
 explicitly requests them as a new feature:
 
 - Production-grade secure token storage and server-side authorization hardening.
-- Account suspension/ban workflows beyond displaying the existing mock status.
+- Account suspension/ban workflows beyond displaying the existing status.
 - Review reporting and user-submitted review history.
 - Message reporting.
 - Admin announcements and true targeted/push notifications.
@@ -53,32 +63,34 @@ explicitly requests them as a new feature:
 ## Engineering Rules
 
 - Preserve the existing MVC-style structure: models, services, `ChangeNotifier` controllers, and views.
-- Keep mock data behind services; do not put API calls directly in screens.
-- Keep `AppConfig.useMockData` as the mock/live switch.
+- **No mock data.** All services call the Laravel API directly through `ApiClient`.
 - Read `api-docs/README.md`, `api-docs/MODULES.md`, and the relevant `api-docs/modules/*.md` files before adding an endpoint.
 - Use only the documented client surface (`/api/client/v1/*`) for mobile customer flows; never use admin endpoints for mobile users.
-- Keep documented live API calls in services behind `if (!AppConfig.useMockData)`; mock branches remain the default.
 - Send Sanctum bearer tokens through `ApiClient`/`TokenStorage`, handle documented `401` responses by clearing the session, and never store passwords.
-- If the API docs do not define a client endpoint, do not invent one. Leave an explicit service-layer `UnsupportedError` or comment and keep the mock path active.
-- Keep mock data available for offline UI tests and fallback development.
+- If the API docs do not define a client endpoint, throw `UnsupportedError` in the service layer — do not invent endpoints or return fake data.
+- Controllers must catch service errors gracefully and return empty states instead of crashing.
 - Reuse existing theme tokens, widgets, status badges, and route conventions.
 - Do not add admin-only functionality to the mobile app.
-- Before editing, inspect existing routes, controllers, services, and mock data for the module.
-- Add or update tests for behavior that can be verified without a backend.
+- Before editing, inspect existing routes, controllers, services, and models for the module.
+- Add or update tests for behavior that can be verified.
 - Run `flutter analyze` and the relevant Flutter tests before reporting completion.
 
 ## Module Completion Checklist
 
 - Requirement mapped to an implemented screen, controller, service, model, or route.
-- Existing mock behavior remains navigable.
-- Loading, empty, success, and error states are handled where the module already supports them.
-- Protected-looking actions do not claim real authorization while the app is mock-backed.
+- Service calls the live API — no mock data or placeholder returns.
+- Loading, empty, success, and error states are handled where the module supports them.
+- Protected actions require real authentication via Sanctum bearer tokens.
 - No deferred module was introduced as a side effect.
 - `flutter analyze` passes.
 - Relevant widget tests pass at phone-sized layouts.
 
 ## API Integration Status
 
-- Client authentication API scaffolding is mapped to `/api/client/v1/auth/login`, `register`, `logout`, `me`, `refresh`, `forgot-password`, and `change-password`.
-- Client notifications API scaffolding is mapped to the documented inbox, read, read-all, and unread-count endpoints.
-- Profile reads use the documented client `auth/me` endpoint when live mode is enabled; profile update and preference persistence have no documented client endpoints and remain mock/local until the backend documents them.
+- Client authentication: `/api/client/v1/auth/login`, `register`, `logout`, `me`, `refresh`, `forgot-password`, `change-password`.
+- Client notifications: inbox, read, read-all, unread-count.
+- Client marketplace: categories, providers, services.
+- Client bookings: list, create, get, cancel.
+- Client reviews: list, create, update.
+- Profile reads use `GET /api/client/v1/auth/me`. Profile update has no documented client endpoint — throws `UnsupportedError`.
+- Endpoints without client documentation throw `UnsupportedError` — never return mock data.

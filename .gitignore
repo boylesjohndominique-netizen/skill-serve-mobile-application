@@ -9,12 +9,6 @@ build/
 *.lock
 .vscode/
 .idea/
-android/
-ios/
-macos/
-windows/
-linux/
-web/
 
 # Local JDK installations (accidentally committed in history once)
 oracleJdk-26/

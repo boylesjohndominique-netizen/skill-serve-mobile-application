@@ -3,7 +3,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
-import '../../../models/review_model.dart';
+import '../../../features/reviews/models/review_model.dart';
 import '../misc/rating_widget.dart';
 import '../misc/app_avatar.dart';
 

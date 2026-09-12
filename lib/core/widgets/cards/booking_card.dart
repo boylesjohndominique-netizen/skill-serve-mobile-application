@@ -4,7 +4,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
-import '../../../models/booking_model.dart';
+import '../../../features/booking/models/booking_model.dart';
 import '../misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';

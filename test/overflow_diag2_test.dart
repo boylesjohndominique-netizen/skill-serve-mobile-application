@@ -3,29 +3,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:skilllink_mobile/controllers/auth_controller.dart';
-import 'package:skilllink_mobile/controllers/booking_controller.dart';
-import 'package:skilllink_mobile/controllers/chat_controller.dart';
-import 'package:skilllink_mobile/controllers/favorites_controller.dart';
-import 'package:skilllink_mobile/controllers/marketplace_controller.dart';
-import 'package:skilllink_mobile/controllers/notification_controller.dart';
-import 'package:skilllink_mobile/controllers/payment_controller.dart';
-import 'package:skilllink_mobile/controllers/portfolio_controller.dart';
-import 'package:skilllink_mobile/controllers/provider_booking_controller.dart';
-import 'package:skilllink_mobile/controllers/report_controller.dart';
-import 'package:skilllink_mobile/controllers/theme_controller.dart';
+import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
+import 'package:skilllink_mobile/features/booking/controllers/booking_controller.dart';
+import 'package:skilllink_mobile/features/messaging/controllers/chat_controller.dart';
+import 'package:skilllink_mobile/features/marketplace/controllers/favorites_controller.dart';
+import 'package:skilllink_mobile/features/marketplace/controllers/marketplace_controller.dart';
+import 'package:skilllink_mobile/features/notifications/controllers/notification_controller.dart';
+import 'package:skilllink_mobile/features/payments/controllers/payment_controller.dart';
+import 'package:skilllink_mobile/features/provider/controllers/portfolio_controller.dart';
+import 'package:skilllink_mobile/features/booking/controllers/provider_booking_controller.dart';
+import 'package:skilllink_mobile/features/reports/controllers/report_controller.dart';
+import 'package:skilllink_mobile/features/settings/controllers/theme_controller.dart';
 import 'package:skilllink_mobile/core/theme/app_theme.dart';
-import 'package:skilllink_mobile/views/client/client_shell.dart';
-import 'package:skilllink_mobile/views/client/favorites_screen.dart';
-import 'package:skilllink_mobile/views/client/service_details_screen.dart';
-import 'package:skilllink_mobile/views/guest/search_screen.dart';
-import 'package:skilllink_mobile/views/guest/terms_screen.dart';
-import 'package:skilllink_mobile/views/provider/calendar_screen.dart';
-import 'package:skilllink_mobile/views/provider/dashboard_screen.dart';
-import 'package:skilllink_mobile/views/provider/earnings_screen.dart';
-import 'package:skilllink_mobile/views/provider/statistics_screen.dart';
-import 'package:skilllink_mobile/views/provider/booking_requests_screen.dart';
-import 'package:skilllink_mobile/views/provider/withdrawal_history_screen.dart';
+import 'package:skilllink_mobile/features/marketplace/views/client_shell.dart';
+import 'package:skilllink_mobile/features/marketplace/views/favorites_screen.dart';
+import 'package:skilllink_mobile/features/marketplace/views/service_details_screen.dart';
+import 'package:skilllink_mobile/features/marketplace/views/search_screen.dart';
+import 'package:skilllink_mobile/features/settings/views/terms_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/calendar_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/dashboard_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/earnings_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/statistics_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/booking_requests_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/withdrawal_history_screen.dart';
 
 Widget _app(Widget home) {
   return MultiProvider(
@@ -90,7 +90,7 @@ void main() {
     await _pump(tester, const ClientShell(), const Size(390, 844));
   });
   testWidgets('search 320', (tester) async {
-    await _pump(tester, const SearchScreen(), const Size(320, 568));
+    await _pump(tester, const ClientSearchScreen(), const Size(320, 568));
   });
   testWidgets('terms 320', (tester) async {
     await _pump(tester, const TermsScreen(), const Size(320, 568));
@@ -114,7 +114,7 @@ void main() {
     await _pump(tester, const TermsScreen(), const Size(320, 568));
   });
   testWidgets('search 320', (tester) async {
-    await _pump(tester, const SearchScreen(), const Size(320, 568));
+    await _pump(tester, const ClientSearchScreen(), const Size(320, 568));
   });
   testWidgets('service details 390', (tester) async {
     await _pump(tester, const ServiceDetailsScreen(serviceId: 'SV-1'), const Size(390, 844));

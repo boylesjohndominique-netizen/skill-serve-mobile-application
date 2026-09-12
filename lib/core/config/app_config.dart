@@ -1,24 +1,19 @@
 /// Compile-time environment configuration for the mobile API.
 ///
 /// Examples:
-/// flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000/api
-/// flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api
-/// flutter run --dart-define=USE_MOCK_DATA=true
+/// flutter run -d chrome --dart-define=API_BASE_URL=https://skillserve-web-backend.onrender.com/api
+/// flutter run --dart-define=API_BASE_URL=http://localhost:8000/api
 class AppConfig {
   AppConfig._();
 
   static const String appName = 'SkillServe';
 
-  /// Laravel REST API root. Override for an Android emulator or physical phone.
+  /// REST API root (Render-hosted Laravel + Neon Postgres).
+  /// Override locally with:
+  ///   --dart-define=API_BASE_URL=http://localhost:8000/api
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api',
-  );
-
-  /// Live API is enabled by default. Set USE_MOCK_DATA=true for standalone demo mode.
-  static const bool useMockData = bool.fromEnvironment(
-    'USE_MOCK_DATA',
-    defaultValue: false,
+    defaultValue: 'https://skillserve-web-backend.onrender.com/api',
   );
 
   static const Duration apiTimeout = Duration(seconds: 15);

@@ -3,23 +3,23 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:skilllink_mobile/controllers/auth_controller.dart';
-import 'package:skilllink_mobile/controllers/booking_controller.dart';
-import 'package:skilllink_mobile/controllers/chat_controller.dart';
-import 'package:skilllink_mobile/controllers/favorites_controller.dart';
-import 'package:skilllink_mobile/controllers/marketplace_controller.dart';
-import 'package:skilllink_mobile/controllers/notification_controller.dart';
-import 'package:skilllink_mobile/controllers/payment_controller.dart';
-import 'package:skilllink_mobile/controllers/portfolio_controller.dart';
-import 'package:skilllink_mobile/controllers/provider_booking_controller.dart';
-import 'package:skilllink_mobile/controllers/report_controller.dart';
-import 'package:skilllink_mobile/controllers/theme_controller.dart';
+import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
+import 'package:skilllink_mobile/features/booking/controllers/booking_controller.dart';
+import 'package:skilllink_mobile/features/messaging/controllers/chat_controller.dart';
+import 'package:skilllink_mobile/features/marketplace/controllers/favorites_controller.dart';
+import 'package:skilllink_mobile/features/marketplace/controllers/marketplace_controller.dart';
+import 'package:skilllink_mobile/features/notifications/controllers/notification_controller.dart';
+import 'package:skilllink_mobile/features/payments/controllers/payment_controller.dart';
+import 'package:skilllink_mobile/features/provider/controllers/portfolio_controller.dart';
+import 'package:skilllink_mobile/features/booking/controllers/provider_booking_controller.dart';
+import 'package:skilllink_mobile/features/reports/controllers/report_controller.dart';
+import 'package:skilllink_mobile/features/settings/controllers/theme_controller.dart';
 import 'package:skilllink_mobile/core/theme/app_theme.dart';
-import 'package:skilllink_mobile/views/guest/forgot_password_screen.dart';
-import 'package:skilllink_mobile/views/guest/onboarding_screen.dart';
-import 'package:skilllink_mobile/views/guest/register_screen.dart';
-import 'package:skilllink_mobile/views/guest/welcome_screen.dart';
-import 'package:skilllink_mobile/views/provider/provider_onboarding_screen.dart';
+import 'package:skilllink_mobile/features/auth/views/forgot_password_screen.dart';
+import 'package:skilllink_mobile/features/auth/views/onboarding_screen.dart';
+import 'package:skilllink_mobile/features/auth/views/register_screen.dart';
+import 'package:skilllink_mobile/features/auth/views/welcome_screen.dart';
+import 'package:skilllink_mobile/features/provider/views/provider_onboarding_screen.dart';
 
 Widget _app(Widget home, double textScale) {
   return MultiProvider(

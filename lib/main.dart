@@ -3,20 +3,21 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
-import 'controllers/auth_controller.dart';
-import 'controllers/booking_controller.dart';
-import 'controllers/chat_controller.dart';
-import 'controllers/favorites_controller.dart';
-import 'controllers/marketplace_controller.dart';
-import 'controllers/notification_controller.dart';
-import 'controllers/payment_controller.dart';
-import 'controllers/portfolio_controller.dart';
-import 'controllers/preferences_controller.dart';
-import 'controllers/report_controller.dart';
-import 'controllers/provider_booking_controller.dart';
-import 'controllers/theme_controller.dart';
+import 'features/auth/controllers/auth_controller.dart';
+import 'features/booking/controllers/booking_controller.dart';
+import 'features/booking/controllers/provider_booking_controller.dart';
+import 'features/marketplace/controllers/favorites_controller.dart';
+import 'features/marketplace/controllers/marketplace_controller.dart';
+import 'features/notifications/controllers/notification_controller.dart';
+import 'features/messaging/controllers/chat_controller.dart';
+import 'features/payments/controllers/payment_controller.dart';
+import 'features/provider/controllers/portfolio_controller.dart';
+import 'features/reports/controllers/report_controller.dart';
+import 'features/settings/controllers/preferences_controller.dart';
+import 'features/settings/controllers/theme_controller.dart';
 import 'core/config/app_config.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/feedback/connectivity_gate.dart';
 import 'routes/app_router.dart';
 
 final _runtimeAuthController = AuthController()..initialize();
@@ -24,6 +25,14 @@ final _runtimeRouter = createAuthenticatedRouter(_runtimeAuthController);
 
 void main() {
   runApp(const SkillLinkApp());
+}
+
+/// Starts global connectivity monitoring once the first frame renders and a
+/// Navigator exists to host the no-internet modal.
+void _startConnectivityMonitoring(BuildContext context) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ConnectivityGate.initialize(context);
+  });
 }
 
 class SkillLinkApp extends StatelessWidget {
@@ -60,14 +69,17 @@ class SkillLinkApp extends StatelessWidget {
               darkTheme: AppTheme.dark,
               themeMode: themeController.mode,
               routerConfig: _runtimeRouter,
-              builder: (context, widget) => ResponsiveBreakpoints.builder(
-                child: widget ?? const SizedBox.shrink(),
-                breakpoints: const [
-                  Breakpoint(start: 0, end: 450, name: MOBILE),
-                  Breakpoint(start: 451, end: 800, name: TABLET),
-                  Breakpoint(start: 801, end: 1920, name: DESKTOP),
-                ],
-              ),
+              builder: (context, widget) {
+                _startConnectivityMonitoring(context);
+                return ResponsiveBreakpoints.builder(
+                  child: widget ?? const SizedBox.shrink(),
+                  breakpoints: const [
+                    Breakpoint(start: 0, end: 450, name: MOBILE),
+                    Breakpoint(start: 451, end: 800, name: TABLET),
+                    Breakpoint(start: 801, end: 1920, name: DESKTOP),
+                  ],
+                );
+              },
             ),
           );
         },

@@ -5,7 +5,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
-import '../../../models/provider_model.dart';
+import '../../../features/marketplace/models/provider_model.dart';
 import '../misc/rating_widget.dart';
 import '../feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';

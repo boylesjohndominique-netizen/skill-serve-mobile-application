@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:skilllink_mobile/models/user_model.dart';
-import 'package:skilllink_mobile/services/profile_service.dart';
+import 'package:skilllink_mobile/features/auth/models/user_model.dart';
+import 'package:skilllink_mobile/features/profile/services/profile_service.dart';
 
 void main() {
   final user = UserModel(

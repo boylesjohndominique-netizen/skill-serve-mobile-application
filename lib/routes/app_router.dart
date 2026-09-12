@@ -1,72 +1,90 @@
 import 'package:go_router/go_router.dart';
-import '../controllers/auth_controller.dart';
+import '../features/auth/controllers/auth_controller.dart';
+import '../features/booking/models/booking_model.dart';
 
-import '../data/mock/mock_data.dart';
-import '../models/booking_model.dart';
+// Auth
+import '../features/auth/views/splash_screen.dart';
+import '../features/auth/views/onboarding_screen.dart';
+import '../features/auth/views/welcome_screen.dart';
+import '../features/auth/views/login_screen.dart';
+import '../features/auth/views/register_screen.dart';
+import '../features/auth/views/forgot_password_screen.dart';
 
-// Guest
-import '../views/guest/splash_screen.dart';
-import '../views/guest/onboarding_screen.dart';
-import '../views/guest/welcome_screen.dart';
-import '../views/guest/login_screen.dart';
-import '../views/guest/register_screen.dart';
-import '../views/guest/forgot_password_screen.dart';
-import '../views/guest/browse_services_screen.dart';
-import '../views/guest/categories_screen.dart';
-import '../views/guest/search_screen.dart';
-import '../views/guest/provider_preview_screen.dart';
-import '../views/guest/about_screen.dart';
-import '../views/guest/contact_screen.dart';
-import '../views/guest/terms_screen.dart';
-import '../views/guest/privacy_screen.dart';
+// Marketplace
+import '../features/marketplace/views/browse_services_screen.dart';
+import '../features/marketplace/views/categories_screen.dart';
+import '../features/marketplace/views/search_screen.dart';
+import '../features/marketplace/views/client_shell.dart';
+import '../features/marketplace/views/provider_preview_screen.dart';
+import '../features/marketplace/views/provider_profile_screen.dart';
+import '../features/marketplace/views/service_details_screen.dart';
+import '../features/marketplace/views/portfolio_gallery_screen.dart';
+import '../features/marketplace/views/favorites_screen.dart';
 
-// Client
-import '../views/client/client_shell.dart';
-import '../views/client/provider_profile_screen.dart';
-import '../views/client/service_details_screen.dart';
-import '../views/client/portfolio_gallery_screen.dart';
-import '../views/client/booking_form_screen.dart';
-import '../views/client/booking_confirmation_screen.dart';
-import '../views/client/booking_history_screen.dart';
-import '../views/client/booking_details_screen.dart';
-import '../views/client/favorites_screen.dart';
-import '../views/client/chat_conversation_screen.dart';
-import '../views/client/edit_profile_screen.dart';
-import '../views/client/change_password_screen.dart';
-import '../views/client/help_center_screen.dart';
-import '../views/client/payments_screen.dart';
-import '../views/client/payment_details_screen.dart';
-import '../views/client/file_report_screen.dart';
-import '../views/client/my_reports_screen.dart';
-import '../views/client/write_review_screen.dart';
-import '../views/client/account_data_screen.dart';
-import '../views/client/account_deactivation_screen.dart';
-import '../views/client/account_deletion_screen.dart';
+// Booking
+import '../features/booking/views/booking_form_screen.dart';
+import '../features/booking/views/booking_confirmation_screen.dart';
+import '../features/booking/views/booking_history_screen.dart';
+import '../features/booking/views/booking_details_screen.dart';
+
+// Profile
+import '../features/profile/views/edit_profile_screen.dart';
+import '../features/profile/views/change_password_screen.dart';
+import '../features/profile/views/account_data_screen.dart';
+import '../features/profile/views/account_deactivation_screen.dart';
+import '../features/profile/views/account_deletion_screen.dart';
+
+// Messaging
+import '../features/messaging/views/chat_conversation_screen.dart';
+
+// Payments
+import '../features/payments/views/payments_screen.dart';
+import '../features/payments/views/payment_details_screen.dart';
+
+// Reports
+import '../features/reports/views/file_report_screen.dart';
+import '../features/reports/views/my_reports_screen.dart';
+
+// Reviews
+import '../features/reviews/views/write_review_screen.dart';
+import '../features/reviews/views/reviews_screen.dart';
 
 // Provider
-import '../views/provider/provider_shell.dart';
-import '../views/provider/statistics_screen.dart';
-import '../views/provider/my_services_screen.dart';
-import '../views/provider/add_service_screen.dart';
-import '../views/provider/edit_service_screen.dart';
-import '../views/provider/upload_portfolio_screen.dart';
-import '../views/provider/calendar_screen.dart';
-import '../views/provider/booking_requests_screen.dart';
-import '../views/provider/active_jobs_screen.dart';
-import '../views/provider/completed_jobs_screen.dart';
-import '../views/provider/earnings_screen.dart';
-import '../views/provider/withdrawal_history_screen.dart';
-import '../views/provider/verification_status_screen.dart';
-import '../views/provider/portfolio_screen.dart';
-import '../views/provider/provider_onboarding_screen.dart';
-import '../views/provider/badges_screen.dart';
+import '../features/provider/views/provider_shell.dart';
+import '../features/provider/views/statistics_screen.dart';
+import '../features/provider/views/my_services_screen.dart';
+import '../features/provider/views/add_service_screen.dart';
+import '../features/provider/views/edit_service_screen.dart';
+import '../features/provider/views/upload_portfolio_screen.dart';
+import '../features/provider/views/portfolio_screen.dart';
+import '../features/provider/views/provider_onboarding_screen.dart';
+import '../features/provider/views/badges_screen.dart';
 
-// Shared
-import '../views/shared/notifications_screen.dart';
-import '../views/shared/reviews_screen.dart';
-import '../views/shared/activity_history_screen.dart';
-import '../views/shared/preferences_screens.dart';
-import '../views/shared/security_notifications_screen.dart';
+// Booking (provider views)
+import '../features/provider/views/calendar_screen.dart';
+import '../features/provider/views/booking_requests_screen.dart';
+import '../features/provider/views/active_jobs_screen.dart';
+import '../features/provider/views/completed_jobs_screen.dart';
+
+// Provider earnings
+import '../features/provider/views/earnings_screen.dart';
+import '../features/provider/views/withdrawal_history_screen.dart';
+import '../features/provider/views/verification_status_screen.dart';
+
+// Settings
+import '../features/settings/views/about_screen.dart';
+import '../features/settings/views/contact_screen.dart';
+import '../features/settings/views/terms_screen.dart';
+import '../features/settings/views/privacy_screen.dart';
+import '../features/settings/views/help_center_screen.dart';
+import '../features/settings/views/activity_history_screen.dart';
+import '../features/notifications/views/preferences_screens.dart';
+
+// Notifications
+import '../features/notifications/views/notifications_screen.dart';
+import '../features/notifications/views/security_notifications_screen.dart';
+
+// Client shell
 
 /// Central route table. Grouped by persona to mirror lib/views/ — Guest,
 /// Client, and Provider each own their sub-tree, with a few screens
@@ -93,7 +111,7 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/categories',
       builder: (context, state) => const CategoriesScreen()),
-  GoRoute(path: '/search', builder: (context, state) => const SearchScreen()),
+  GoRoute(path: '/search', builder: (context, state) => const ClientSearchScreen()),
   GoRoute(
     path: '/provider-preview/:id',
     builder: (context, state) =>
@@ -248,17 +266,6 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/provider-badges',
       builder: (context, state) => const BadgesScreen()),
-  GoRoute(
-    path: '/provider-profile-preview',
-    builder: (context, state) => ProviderProfileScreen(
-      providerId: MockData.providers
-          .firstWhere(
-            (p) => p.user.id == MockData.currentProvider.id,
-            orElse: () => MockData.providers.first,
-          )
-          .id,
-    ),
-  ),
 
   // Shared across personas
   GoRoute(

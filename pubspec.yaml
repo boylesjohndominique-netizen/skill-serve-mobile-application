@@ -47,6 +47,7 @@ dependencies:
 
   # Icons
   hugeicons: ^1.1.7
+  connectivity_plus: ^7.3.1
 
 dev_dependencies:
   flutter_test:

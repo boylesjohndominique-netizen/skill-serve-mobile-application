@@ -4,7 +4,7 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
-import '../../../models/user_model.dart';
+import '../../../features/auth/models/user_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';

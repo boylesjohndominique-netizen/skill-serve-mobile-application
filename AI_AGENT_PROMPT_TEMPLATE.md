@@ -3,7 +3,7 @@
 Copy this prompt for one module at a time. Replace the bracketed values before use.
 
 ```text
-You are working in the SkillServe Flutter user mobile application.
+You are working in the SkillServe monolith application (Laravel backend + Flutter mobile frontend).
 
 Module: [PDF module number and name]
 Functionality: [PDF functionality number and exact title]
@@ -22,28 +22,27 @@ Scope rules:
 - Confirm it is already implemented or explicitly requested as a change to an existing module.
 - Do not add deferred or not-yet-implemented PDF modules.
 - Do not add admin-web functionality.
-- Keep the frontend mock-data architecture; do not invent backend behavior.
-- Respect the current `AppConfig.useMockData`/`USE_MOCK_DATA` configuration; do not silently switch live and mock modes.
+- No mock data. All services call the Laravel REST API directly through `ApiClient`.
 - Use only endpoints documented in `api-docs`; use `/api/client/v1/*` for mobile customer flows.
-- Put live Dio calls in services behind `if (!AppConfig.useMockData)` and keep mock branches working.
 - Use `ApiClient` and `TokenStorage` for bearer authentication; never store passwords.
 - Handle documented 401/403/422 responses without putting API calls in widgets.
-- If no client endpoint is documented for a requested behavior, do not invent one; leave an explicit service-layer limitation.
+- If no client endpoint is documented for a requested behavior, throw `UnsupportedError` in the service — do not invent endpoints or return fake data.
+- Controllers must catch service errors gracefully and return empty states instead of crashing.
 - Reuse existing models, services, controllers, theme tokens, widgets, and route patterns.
 - Keep API calls in services and UI state in ChangeNotifier controllers.
 
 Before editing:
-1. Identify the current screen, route, controller, service, model, and mock data used by this functionality.
+1. Identify the current screen, route, controller, service, and model used by this functionality.
 2. State the current gap and the smallest safe implementation approach.
 3. Check for existing tests covering the module.
-4. Map every live endpoint to its exact documented method, path, request fields, response envelope, and auth requirement.
+4. Map every endpoint to its exact documented method, path, request fields, response envelope, and auth requirement.
 
 Implementation requirements:
 - Make the smallest correct change.
-- Preserve existing navigation and mock flows.
+- Preserve existing navigation and flows.
 - Handle loading, empty, validation, and failure states when applicable to the existing module.
 - Avoid placeholder controls that imply a feature is implemented when it is not.
-- Add an endpoint comment containing the exact documented route and explain any mock-only limitation.
+- Add an endpoint comment containing the exact documented route and explain any limitation.
 - Add or update focused widget/unit tests for the changed behavior.
 
 Verification:

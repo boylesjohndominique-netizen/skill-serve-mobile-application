@@ -3,7 +3,7 @@ import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
-import '../../../models/category_model.dart';
+import '../../../features/marketplace/models/category_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
