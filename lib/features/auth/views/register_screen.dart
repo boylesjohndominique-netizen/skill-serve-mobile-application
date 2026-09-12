@@ -42,10 +42,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
     if (!mounted) return;
     if (success) {
-      // Providers land on the verification gate first (spec P1/P2).
-      context.go(_role == UserRole.provider ? '/provider-onboarding' : '/client');
+      // Both roles verify their email with a 6-digit OTP before continuing.
+      context.go('/verify-email?email=${Uri.encodeComponent(_email.text.trim())}');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Registration failed');
+    }
+  }
+
+  Future<void> _signInWithGoogle(AuthController auth) async {
+    final ok = await auth.loginWithGoogle();
+    if (!mounted) return;
+    if (ok) {
+      context.go(auth.isProvider ? '/provider' : '/client');
+    } else if (auth.errorMessage != null) {
+      AppSnackbar.error(context, auth.errorMessage!);
     }
   }
 
@@ -122,7 +132,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   isLoading: auth.status == AuthStatus.authenticating,
                   onPressed: () => _submit(auth),
                 ).animate().fadeIn(delay: 580.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
-                const SizedBox(height: AppSizes.lg),
+                const SizedBox(height: AppSizes.md),
+                _GoogleButton(
+                  isLoading: auth.status == AuthStatus.authenticating,
+                  onPressed: () => _signInWithGoogle(auth),
+                ).animate().fadeIn(delay: 620.ms, duration: 350.ms),
+                const SizedBox(height: AppSizes.md),
+                Center(
+                  child: Text(
+                    'By continuing, you agree to our Terms & Privacy Policy.',
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                ).animate().fadeIn(delay: 640.ms, duration: 300.ms),
+                const SizedBox(height: AppSizes.md),
                 Center(
                   child: Text.rich(
                     TextSpan(
@@ -147,6 +170,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+}
+
+class _GoogleButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _GoogleButton({required this.isLoading, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return OutlinedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+        side: BorderSide(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.8)),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (isLoading)
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2.2),
+            )
+          else
+            const _GoogleLogo(),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              'Continue with Google',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.button.copyWith(color: isDark ? AppColors.textOnDark : AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 18,
+      height: 18,
+      child: CustomPaint(painter: _GoogleLogoPainter()),
+    );
+  }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    // Simplified four-color Google "G".
+    final blue = Paint()..color = const Color(0xFF4285F4);
+    final green = Paint()..color = const Color(0xFF34A853);
+    final yellow = Paint()..color = const Color(0xFFFBBC05);
+    final red = Paint()..color = const Color(0xFFEA4335);
+
+    canvas.drawArc(Rect.fromLTWH(0, 0, s, s), 3.14159, 1.5708, true, red);
+    canvas.drawArc(Rect.fromLTWH(0, 0, s, s), 4.71239, 1.5708, true, yellow);
+    canvas.drawArc(Rect.fromLTWH(0, 0, s, s), 0, 1.5708, true, green);
+    canvas.drawRect(Rect.fromLTWH(s * 0.45, s * 0.42, s * 0.55, s * 0.16), blue);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _RoleToggle extends StatelessWidget {

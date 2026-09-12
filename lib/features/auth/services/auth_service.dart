@@ -6,7 +6,11 @@ import '../../../core/services/token_storage.dart';
 ///
 /// Endpoints:
 /// - POST /api/client/v1/auth/login
-/// - POST /api/client/v1/auth/register
+/// - POST /api/client/v1/auth/register (client accounts)
+/// - POST /api/client/v1/auth/register-provider (provider accounts)
+/// - POST /api/client/v1/auth/verify-otp (6-digit email code)
+/// - POST /api/client/v1/auth/resend-otp
+/// - POST /api/client/v1/auth/google (Google Sign-In ID token)
 /// - POST /api/client/v1/auth/forgot-password
 /// - POST /api/client/v1/auth/logout
 /// - GET /api/client/v1/auth/me
@@ -35,12 +39,7 @@ class AuthService {
     required String lastName,
     required String email,
     required String password,
-    required UserRole role,
   }) async {
-    if (role != UserRole.client) {
-      throw UnsupportedError(
-          'The documented client API only registers customer accounts.');
-    }
     final response =
         await ApiClient.instance.dio.post('/client/v1/auth/register', data: {
       'first_name': firstName,
@@ -49,6 +48,60 @@ class AuthService {
       'password': password,
       'password_confirmation': password,
     });
+    final data = response.data['data'] as Map<String, dynamic>;
+    _readSession(data);
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+  }
+
+  // POST /api/client/v1/auth/register-provider
+  Future<UserModel> registerProvider({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? businessName,
+    required String specialization,
+    int experienceYears = 0,
+    String? bio,
+  }) async {
+    final response = await ApiClient.instance.dio
+        .post('/client/v1/auth/register-provider', data: {
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'password': password,
+      'password_confirmation': password,
+      if (businessName != null && businessName.isNotEmpty)
+        'business_name': businessName,
+      'specialization': specialization,
+      'experience_years': experienceYears,
+      if (bio != null && bio.isNotEmpty) 'bio': bio,
+    });
+    final data = response.data['data'] as Map<String, dynamic>;
+    _readSession(data);
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+  }
+
+  // POST /api/client/v1/auth/verify-otp
+  Future<UserModel> verifyOtp({required String email, required String code}) async {
+    final response = await ApiClient.instance.dio
+        .post('/client/v1/auth/verify-otp', data: {
+      'email': email,
+      'code': code,
+    });
+    return UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  // POST /api/client/v1/auth/resend-otp
+  Future<void> resendOtp({required String email}) async {
+    await ApiClient.instance.dio
+        .post('/client/v1/auth/resend-otp', data: {'email': email});
+  }
+
+  // POST /api/client/v1/auth/google
+  Future<UserModel> loginWithGoogle({required String idToken}) async {
+    final response = await ApiClient.instance.dio
+        .post('/client/v1/auth/google', data: {'id_token': idToken});
     final data = response.data['data'] as Map<String, dynamic>;
     _readSession(data);
     return UserModel.fromJson(data['user'] as Map<String, dynamic>);

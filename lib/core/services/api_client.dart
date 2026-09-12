@@ -12,7 +12,7 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConfig.baseUrl,
-        connectTimeout: AppConfig.apiTimeout,
+        connectTimeout: AppConfig.connectTimeout,
         receiveTimeout: AppConfig.apiTimeout,
         headers: {
           'Accept': 'application/json',
@@ -51,4 +51,25 @@ class ApiClient {
   late final Dio _dio;
 
   Dio get dio => _dio;
+
+  /// Fire-and-forget request made at app startup to wake the free-tier
+  /// Render backend from its idle sleep (~60-75 s cold start). Without it,
+  /// the user's first real action bears the cold start and can time out.
+  /// Any HTTP status means the server is awake; network errors are ignored
+  /// on purpose (offline is handled by the ConnectivityGate).
+  Future<void> warmUp() async {
+    try {
+      await _dio.get<void>(
+        '',
+        options: Options(
+          validateStatus: (_) => true,
+          receiveTimeout: const Duration(seconds: 120),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+      debugPrint('[API] Backend warm-up complete');
+    } catch (_) {
+      // Still sleeping or offline — real requests will surface errors.
+    }
+  }
 }

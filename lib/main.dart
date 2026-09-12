@@ -16,6 +16,7 @@ import 'features/reports/controllers/report_controller.dart';
 import 'features/settings/controllers/preferences_controller.dart';
 import 'features/settings/controllers/theme_controller.dart';
 import 'core/config/app_config.dart';
+import 'core/services/api_client.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/feedback/connectivity_gate.dart';
 import 'routes/app_router.dart';
@@ -24,6 +25,9 @@ final _runtimeAuthController = AuthController()..initialize();
 final _runtimeRouter = createAuthenticatedRouter(_runtimeAuthController);
 
 void main() {
+  // Wake the sleeping free-tier Render backend as early as possible so the
+  // user's first request doesn't bear the ~60-75 s cold start.
+  ApiClient.instance.warmUp();
   runApp(const SkillLinkApp());
 }
 

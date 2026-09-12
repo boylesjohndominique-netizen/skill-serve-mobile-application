@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/services/token_storage.dart';
 
 enum AuthStatus { unauthenticated, authenticating, authenticated }
@@ -24,6 +26,10 @@ class AuthController extends ChangeNotifier {
   static const _sessionUserKey = 'skillserve.session.user';
   static const _sessionExpiryKey = 'skillserve.session.expiresAt';
   static const sessionDuration = Duration(hours: 8);
+
+  /// Google OAuth **Web** client ID (see [AppConfig.googleWebClientId]).
+  /// Required so google_sign_in returns an ID token on Android.
+  static const _googleServerClientId = AppConfig.googleWebClientId;
 
   bool get isGuest => currentUser == null;
   bool get isClient => currentUser?.role == UserRole.client;
@@ -56,20 +62,7 @@ class AuthController extends ChangeNotifier {
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
-      if (e is DioException && e.response?.data != null) {
-        final data = e.response!.data;
-        if (data is Map<String, dynamic> && data['message'] != null) {
-          errorMessage = data['message'] as String;
-        } else if (data is Map<String, dynamic> && data['errors'] != null) {
-          final errors = data['errors'] as Map<String, dynamic>;
-          final firstError = errors.values.first;
-          errorMessage = firstError is List ? firstError.first.toString() : firstError.toString();
-        } else {
-          errorMessage = 'Unable to sign in. Please try again.';
-        }
-      } else {
-        errorMessage = 'Unable to sign in. Please try again.';
-      }
+      errorMessage = _extractApiError(e, 'Unable to sign in. Please try again.');
       notifyListeners();
       return false;
     }
@@ -81,17 +74,31 @@ class AuthController extends ChangeNotifier {
     required String email,
     required String password,
     required UserRole role,
+    String? businessName,
+    String specialization = '',
+    int experienceYears = 0,
+    String? bio,
   }) async {
     status = AuthStatus.authenticating;
     notifyListeners();
     try {
-      currentUser = await _authService.register(
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        password: password,
-        role: role,
-      );
+      currentUser = role == UserRole.provider
+          ? await _authService.registerProvider(
+              firstName: firstName,
+              lastName: lastName,
+              email: email,
+              password: password,
+              businessName: businessName,
+              specialization: specialization.isEmpty ? 'General Services' : specialization,
+              experienceYears: experienceYears,
+              bio: bio,
+            )
+          : await _authService.register(
+              firstName: firstName,
+              lastName: lastName,
+              email: email,
+              password: password,
+            );
       await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
@@ -100,23 +107,139 @@ class AuthController extends ChangeNotifier {
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
-      if (e is DioException && e.response?.data != null) {
-        final data = e.response!.data;
-        if (data is Map<String, dynamic> && data['message'] != null) {
-          errorMessage = data['message'] as String;
-        } else if (data is Map<String, dynamic> && data['errors'] != null) {
-          final errors = data['errors'] as Map<String, dynamic>;
-          final firstError = errors.values.first;
-          errorMessage = firstError is List ? firstError.first.toString() : firstError.toString();
-        } else {
-          errorMessage = 'Registration failed. Please try again.';
-        }
-      } else {
-        errorMessage = 'Registration failed. Please try again.';
-      }
+      errorMessage = _extractApiError(e, 'Registration failed. Please try again.');
       notifyListeners();
       return false;
     }
+  }
+
+  /// Verifies the account email with the 6-digit OTP emailed at
+  /// registration. Returns true and refreshes [currentUser] on success.
+  Future<bool> verifyOtp(String email, String code) async {
+    status = AuthStatus.authenticating;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final user = await _authService.verifyOtp(email: email, code: code);
+      if (currentUser?.email.toLowerCase() == user.email.toLowerCase()) {
+        currentUser = user;
+        await _persistSession();
+      }
+      status =
+          currentUser == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      status =
+          currentUser == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
+      errorMessage = _extractApiError(e, 'Verification failed. Please try again.');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Asks the backend to email a fresh OTP (60s cooldown applies).
+  Future<bool> resendOtp(String email) async {
+    errorMessage = null;
+    notifyListeners();
+    try {
+      await _authService.resendOtp(email: email);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      errorMessage = _extractApiError(e, 'Could not resend the code. Try again shortly.');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Google Sign-In: obtains an ID token on device and exchanges it for a
+  /// SkillServe session. Creates the account on first sign-in.
+  Future<bool> loginWithGoogle() async {
+    status = AuthStatus.authenticating;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final google = GoogleSignIn(serverClientId: _googleServerClientId);
+      final account = await google.signIn();
+      if (account == null) {
+        status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) {
+        status = AuthStatus.unauthenticated;
+        errorMessage = 'Google sign-in did not return a token. Ensure Google Play services are up to date.';
+        notifyListeners();
+        return false;
+      }
+      currentUser = await _authService.loginWithGoogle(idToken: idToken);
+      await _saveApiTokens();
+      status = AuthStatus.authenticated;
+      sessionExpired = false;
+      await _persistSession();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      status = AuthStatus.unauthenticated;
+      errorMessage = _describeGoogleError(e);
+      notifyListeners();
+      return false;
+    } finally {
+      // End the Google session so account switching stays possible.
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+    }
+  }
+
+  /// Google plugin errors are developer-facing, so surface the raw code
+  /// (e.g. `ApiException: 10: DEVELOPER_ERROR`) to make GCP misconfig
+  /// diagnosable. Backend/network errors keep the friendly API messages.
+  String _describeGoogleError(Object e) {
+    if (e is DioException) {
+      return _extractApiError(e, 'Google sign-in failed. Please try again.');
+    }
+    return 'Google sign-in failed: $e';
+  }
+
+  /// Pulls the most specific message out of a Laravel API error envelope:
+  /// per-field `errors` first (e.g. "The email has already been taken."),
+  /// then the generic envelope `message`, falling back to [fallback].
+  /// Network-level failures (timeout / no connection) get a dedicated
+  /// message instead of the generic fallback.
+  String _extractApiError(Object e, String fallback) {
+    if (e is DioException) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return 'The server is waking up (free hosting can take ~1 min). If a retry says the email is already taken, your first attempt did register — just sign in.';
+        case DioExceptionType.connectionError:
+          return 'Could not reach the server. Check your internet connection and try again.';
+        default:
+          break;
+      }
+    }
+    if (e is! DioException || e.response?.data == null) return fallback;
+    final data = e.response!.data;
+    if (data is Map<String, dynamic> && data['errors'] is Map<String, dynamic>) {
+      final errors = data['errors'] as Map<String, dynamic>;
+      if (errors.isNotEmpty) {
+        final firstError = errors.values.first;
+        if (firstError is List && firstError.isNotEmpty) {
+          return firstError.first.toString();
+        }
+        return firstError.toString();
+      }
+    }
+    if (data is Map<String, dynamic> && data['message'] is String) {
+      final message = data['message'] as String;
+      if (message.isNotEmpty) return message;
+    }
+    return fallback;
   }
 
   Future<void> continueAsGuest() async {

@@ -8,6 +8,7 @@ import '../features/auth/views/onboarding_screen.dart';
 import '../features/auth/views/welcome_screen.dart';
 import '../features/auth/views/login_screen.dart';
 import '../features/auth/views/register_screen.dart';
+import '../features/auth/views/otp_verification_screen.dart';
 import '../features/auth/views/forgot_password_screen.dart';
 
 // Marketplace
@@ -263,6 +264,11 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/provider-onboarding',
       builder: (context, state) => const ProviderOnboardingScreen()),
+  GoRoute(
+      path: '/verify-email',
+      builder: (context, state) => OtpVerificationScreen(
+        email: state.uri.queryParameters['email'] ?? '',
+      )),
   GoRoute(
       path: '/provider-badges',
       builder: (context, state) => const BadgesScreen()),

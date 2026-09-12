@@ -87,7 +87,8 @@ explicitly requests them as a new feature:
 
 ## API Integration Status
 
-- Client authentication: `/api/client/v1/auth/login`, `register`, `logout`, `me`, `refresh`, `forgot-password`, `change-password`.
+- Client authentication: `/api/client/v1/auth/login`, `register`, `register-provider`, `verify-otp`, `resend-otp`, `google`, `logout`, `me`, `refresh`, `forgot-password`, `change-password`.
+- Registration (client and provider) issues a 6-digit email OTP; `verify-otp` must be called before login works. Google Sign-In exchanges a mobile ID token for a session and skips OTP.
 - Client notifications: inbox, read, read-all, unread-count.
 - Client marketplace: categories, providers, services.
 - Client bookings: list, create, get, cancel.

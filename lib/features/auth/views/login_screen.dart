@@ -138,6 +138,52 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ).animate().fadeIn(delay: 500.ms, duration: 300.ms),
+                const SizedBox(height: AppSizes.md),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                      child: Text('or', style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ).animate().fadeIn(delay: 520.ms, duration: 300.ms),
+                const SizedBox(height: AppSizes.md),
+                OutlinedButton.icon(
+                  onPressed: auth.status == AuthStatus.authenticating
+                      ? null
+                      : () async {
+                          final ok = await auth.loginWithGoogle();
+                          if (!context.mounted) return;
+                          if (ok) {
+                            context.go(auth.isProvider ? '/provider' : '/client');
+                          } else if (auth.errorMessage != null) {
+                            AppSnackbar.error(context, auth.errorMessage!);
+                          }
+                        },
+                  icon: auth.status == AuthStatus.authenticating
+                      ? const SizedBox(
+                          width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
+                      : SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CustomPaint(painter: _GoogleLogoPainter()),
+                        ),
+                  label: Text(
+                    'Sign in with Google',
+                    style: AppTextStyles.button.copyWith(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.textOnDark
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 52),
+                    side: BorderSide(color: AppColors.line.withValues(alpha: 0.8)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+                  ),
+                ).animate().fadeIn(delay: 540.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.sm),
                 Center(
                   child: TextButton(
@@ -154,4 +200,23 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    final blue = Paint()..color = const Color(0xFF4285F4);
+    final green = Paint()..color = const Color(0xFF34A853);
+    final yellow = Paint()..color = const Color(0xFFFBBC05);
+    final red = Paint()..color = const Color(0xFFEA4335);
+
+    canvas.drawArc(Rect.fromLTWH(0, 0, s, s), 3.14159, 1.5708, true, red);
+    canvas.drawArc(Rect.fromLTWH(0, 0, s, s), 4.71239, 1.5708, true, yellow);
+    canvas.drawArc(Rect.fromLTWH(0, 0, s, s), 0, 1.5708, true, green);
+    canvas.drawRect(Rect.fromLTWH(s * 0.45, s * 0.42, s * 0.55, s * 0.16), blue);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
