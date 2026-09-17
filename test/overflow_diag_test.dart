@@ -11,6 +11,7 @@ import 'package:skilllink_mobile/features/marketplace/controllers/marketplace_co
 import 'package:skilllink_mobile/features/notifications/controllers/notification_controller.dart';
 import 'package:skilllink_mobile/features/payments/controllers/payment_controller.dart';
 import 'package:skilllink_mobile/features/provider/controllers/portfolio_controller.dart';
+import 'package:skilllink_mobile/features/provider/controllers/provider_services_controller.dart';
 import 'package:skilllink_mobile/features/booking/controllers/provider_booking_controller.dart';
 import 'package:skilllink_mobile/features/reports/controllers/report_controller.dart';
 import 'package:skilllink_mobile/features/settings/controllers/theme_controller.dart';
@@ -33,6 +34,7 @@ Widget _app(Widget home, double textScale) {
       ChangeNotifierProvider(create: (_) => NotificationController()),
       ChangeNotifierProvider(create: (_) => ChatController()),
       ChangeNotifierProvider(create: (_) => PortfolioController()),
+      ChangeNotifierProvider(create: (_) => ProviderServicesController()),
       ChangeNotifierProvider(create: (_) => PaymentController()),
       ChangeNotifierProvider(create: (_) => ReportController()),
     ],

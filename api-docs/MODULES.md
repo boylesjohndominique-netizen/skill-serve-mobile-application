@@ -16,6 +16,7 @@
 - [Notifications](modules/notifications.md)
 - [Permissions](modules/permissions.md)
 - [Provider Recognition](modules/provider-recognition.md)
+- [Provider Services](modules/provider-services.md)
 - [Providers](modules/providers.md)
 - [Reports](modules/reports.md)
 - [Reports and Analytics](modules/reports-and-analytics.md)

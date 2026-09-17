@@ -18,6 +18,7 @@ const Map<NotificationType, AppIconData> _typeIcons = {
   NotificationType.system: AppIcons.info_rounded,
   NotificationType.promo: AppIcons.local_offer_rounded,
   NotificationType.verification: AppIcons.verified_user_rounded,
+  NotificationType.service: AppIcons.design_services_rounded,
 };
 
 /// Shared notifications feed for both Client and Service Provider.

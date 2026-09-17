@@ -62,8 +62,8 @@ abstract final class AppIcons {
   static const AppIconData account_balance_wallet_outlined = HugeIcons.strokeRoundedWallet01;
   static const AppIconData account_balance_wallet_rounded = HugeIcons.strokeRoundedWallet01;
   static const AppIconData credit_card_rounded = HugeIcons.strokeRoundedCreditCard;
-  static const AppIconData payments_outlined = HugeIcons.strokeRoundedMoney01;
-  static const AppIconData payments_rounded = HugeIcons.strokeRoundedMoney01;
+  static const AppIconData payments_outlined = HugeIcons.strokeRoundedPhilippinePeso;
+  static const AppIconData payments_rounded = HugeIcons.strokeRoundedPhilippinePeso;
   static const AppIconData currency_exchange_rounded = HugeIcons.strokeRoundedMoneyExchange01;
   static const AppIconData receipt_long_outlined = HugeIcons.strokeRoundedInvoice01;
 

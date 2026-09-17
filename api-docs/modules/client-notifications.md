@@ -29,7 +29,7 @@ Response schema: `#/components/schemas/ClientNotificationListEnvelope`
 
 Response schema: `see openapi.json`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 
@@ -57,7 +57,7 @@ No JSON request body.
 
 Response schema: `#/components/schemas/ClientReadAllEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 
@@ -81,7 +81,7 @@ No JSON request body.
 
 Response schema: `#/components/schemas/ClientUnreadCountEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 
@@ -107,7 +107,7 @@ No JSON request body.
 
 Response schema: `#/components/schemas/ClientNotificationEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 

@@ -1,38 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../controllers/provider_services_controller.dart';
 import 'service_form.dart';
 
-class AddServiceScreen extends StatefulWidget {
+class AddServiceScreen extends StatelessWidget {
   const AddServiceScreen({super.key});
 
-  @override
-  State<AddServiceScreen> createState() => _AddServiceScreenState();
-}
+  Future<void> _submit(BuildContext context, Map<String, dynamic> values) async {
+    final controller = context.read<ProviderServicesController>();
+    final created = await controller.create(values);
+    if (!context.mounted) return;
 
-class _AddServiceScreenState extends State<AddServiceScreen> {
-  bool _submitting = false;
-
-  Future<void> _submit(Map<String, dynamic> values) async {
-    setState(() => _submitting = true);
-    // Placeholder — POST /services once the backend exists.
-    await Future.delayed(const Duration(milliseconds: 600));
-    setState(() => _submitting = false);
-    if (mounted) {
-      AppSnackbar.success(context, 'Service added to your listings.');
+    if (created) {
+      AppSnackbar.success(context, 'Service submitted. You will be notified once an administrator reviews it.');
       context.pop();
+    } else {
+      AppSnackbar.error(context, controller.errorMessage ?? 'Unable to submit the service.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final submitting = context.select<ProviderServicesController, bool>((c) => c.isSaving);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Add Service')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.pageHPad),
-          child: ServiceForm(onSubmit: _submit, submitting: _submitting),
+          child: ServiceForm(onSubmit: (values) => _submit(context, values), submitting: submitting),
         ),
       ),
     );

@@ -2,6 +2,33 @@
 
 All examples and validation details in this file come from the Laravel backend OpenAPI attributes and request validation.
 
+## `POST /api/client/v1/auth/cancel-registration`
+
+Delete an unverified account after the user backs out of email verification
+
+**Authentication:** Public
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `email` | yes | string, format=email |
+| `password` | yes | string, format=password |
+
+### Responses
+
+#### HTTP 200: Unverified registration cancelled (always returned, even for unknown accounts, to prevent enumeration)
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 422: Validation error
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
 ## `POST /api/client/v1/auth/change-password`
 
 Change the current customer's password

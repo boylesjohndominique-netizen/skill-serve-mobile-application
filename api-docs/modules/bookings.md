@@ -46,7 +46,7 @@ No JSON request body.
             "total_price": 150,
             "service_price": 150,
             "platform_fee": 15,
-            "currency": "USD",
+            "currency": "PHP",
             "scheduled_date": "2026-09-01T10:00:00+00:00",
             "service": {
                 "id": 1,

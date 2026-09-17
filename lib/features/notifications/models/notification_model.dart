@@ -1,4 +1,4 @@
-enum NotificationType { booking, message, system, promo, verification }
+enum NotificationType { booking, message, system, promo, verification, service }
 
 /// Mirrors the `notifications` table.
 class NotificationModel {
@@ -19,11 +19,26 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) => NotificationModel(
-        id: json['notification_id'].toString(),
+        id: (json['id'] ?? json['notification_id']).toString(),
         title: json['title'] as String? ?? '',
         message: json['message'] as String? ?? '',
-        type: NotificationType.values.byName(json['type'] as String? ?? 'system'),
+        type: typeFromApi(json['type'] as String?),
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-        isRead: json['status'] == 'read',
+        isRead: json['read_at'] != null || json['status'] == 'read',
       );
+
+  /// Maps backend notification types (e.g. `service_moderation`,
+  /// `support_ticket_response`) onto the feed's icon categories. Unknown
+  /// types fall back to [NotificationType.system] instead of failing the feed.
+  static NotificationType typeFromApi(String? type) {
+    final value = type ?? '';
+    for (final known in NotificationType.values) {
+      if (known.name == value) return known;
+    }
+    if (value.startsWith('service')) return NotificationType.service;
+    if (value.contains('booking')) return NotificationType.booking;
+    if (value.contains('message')) return NotificationType.message;
+    if (value.contains('verification')) return NotificationType.verification;
+    return NotificationType.system;
+  }
 }

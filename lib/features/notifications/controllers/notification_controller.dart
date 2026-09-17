@@ -13,7 +13,11 @@ class NotificationController extends ChangeNotifier {
   Future<void> load() async {
     isLoading = true;
     notifyListeners();
-    notifications = await _service.getNotifications();
+    try {
+      notifications = await _service.getNotifications();
+    } catch (_) {
+      notifications = [];
+    }
     isLoading = false;
     notifyListeners();
   }
