@@ -28,15 +28,13 @@ void main() {
     expect(updated.status, 'suspended');
   });
 
-  test('profile service persists a selected photo in the mock profile result',
+  test('profile update is unsupported until the API documents an endpoint',
       () async {
-    final updated = await ProfileService().updateProfile(
-      user,
-      profilePicture: '/tmp/avatar.jpg',
+    // No mock data: without a documented client endpoint the service must
+    // refuse instead of pretending the update succeeded.
+    expect(
+      () => ProfileService().updateProfile(user, profilePicture: '/tmp/avatar.jpg'),
+      throwsA(isA<UnsupportedError>()),
     );
-
-    expect(updated.profilePicture, '/tmp/avatar.jpg');
-    expect(updated.id, user.id);
-    expect(updated.role, user.role);
   });
 }

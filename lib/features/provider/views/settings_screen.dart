@@ -10,9 +10,10 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/cards/profile_card.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/misc/status_badge.dart';
-import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../marketplace/models/provider_model.dart';
+import '../services/provider_service_service.dart';
 
 /// Provider's Profile tab — account, business tools, and preferences.
 class ProviderSettingsScreen extends StatefulWidget {
@@ -23,7 +24,7 @@ class ProviderSettingsScreen extends StatefulWidget {
 }
 
 class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
-  dynamic _provider;
+  ProviderModel? _provider;
 
   @override
   void initState() {
@@ -32,10 +33,13 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
   }
 
   Future<void> _loadProvider() async {
-    final auth = context.read<AuthController>();
-    final userId = auth.currentUser?.id;
-    if (userId == null) return;
-    final provider = await ServiceService().getProviderById(userId);
+    if (context.read<AuthController>().currentUser == null) return;
+    final ProviderModel provider;
+    try {
+      provider = await ProviderServiceService().getMyProfile();
+    } catch (_) {
+      return; // Keep the screen usable without profile details.
+    }
     if (mounted) setState(() => _provider = provider);
   }
 

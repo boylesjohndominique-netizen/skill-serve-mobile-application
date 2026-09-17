@@ -26,6 +26,36 @@ class AppConfig {
     defaultValue: 'https://skillserve-web-backend.onrender.com/api',
   );
 
+  /// Laravel Reverb (WebSocket) app key — public, same as the web admin's
+  /// VITE_REVERB_APP_KEY. Must match REVERB_APP_KEY on the backend.
+  /// Override with: --dart-define=REVERB_APP_KEY=...
+  static const String reverbAppKey = String.fromEnvironment(
+    'REVERB_APP_KEY',
+    defaultValue: 'skillserve',
+  );
+
+  /// WebSocket endpoint. Defaults to the API host: wss on 443 for https
+  /// (Render routes /app/* to Reverb), ws on 8080 for local http.
+  /// Override with --dart-define=REVERB_HOST / REVERB_PORT / REVERB_SCHEME.
+  static Uri get reverbUri {
+    final api = Uri.parse(baseUrl);
+    const host = String.fromEnvironment('REVERB_HOST');
+    const port = int.fromEnvironment('REVERB_PORT');
+    const scheme = String.fromEnvironment('REVERB_SCHEME');
+    final secure = scheme.isNotEmpty ? scheme == 'https' : api.scheme == 'https';
+
+    return Uri(
+      scheme: secure ? 'wss' : 'ws',
+      host: host.isNotEmpty ? host : api.host,
+      port: port != 0 ? port : (secure ? 443 : 8080),
+      path: '/app/$reverbAppKey',
+      queryParameters: const {'protocol': '7', 'client': 'skillserve-flutter', 'version': '1.0'},
+    );
+  }
+
+  /// Channel authorization endpoint for private channels.
+  static String get broadcastingAuthUrl => '${baseUrl.replaceFirst(RegExp(r'/api/?$'), '')}/api/broadcasting/auth';
+
   /// Per-request send/receive timeout once a connection is established.
   /// Must exceed the free-tier Render cold-start time (~60-75 s): the
   /// connection is accepted quickly but the response arrives only after

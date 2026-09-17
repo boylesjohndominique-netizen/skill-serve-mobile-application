@@ -5,9 +5,10 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../marketplace/models/provider_model.dart';
+import '../services/provider_service_service.dart';
 
 /// Deeper performance view — completed jobs trend, rating breakdown.
 class StatisticsScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
-  dynamic _provider;
+  ProviderModel? _provider;
 
   @override
   void initState() {
@@ -27,10 +28,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _loadProvider() async {
-    final auth = context.read<AuthController>();
-    final userId = auth.currentUser?.id;
-    if (userId == null) return;
-    final provider = await ServiceService().getProviderById(userId);
+    if (context.read<AuthController>().currentUser == null) return;
+    final ProviderModel provider;
+    try {
+      provider = await ProviderServiceService().getMyProfile();
+    } catch (_) {
+      return; // Keep the screen usable without profile details.
+    }
     if (mounted) setState(() => _provider = provider);
   }
 

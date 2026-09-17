@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../../../core/services/realtime_client.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../provider/controllers/provider_services_controller.dart';
+import '../../settings/controllers/preferences_controller.dart';
+import '../controllers/notification_controller.dart';
+import '../models/notification_model.dart';
+
+/// Keeps notifications arriving while the app is open and signed in: listens
+/// on the user's private realtime channel (instant), falls back to polling
+/// while the WebSocket is down, pauses in the background, and shows a banner
+/// for each new notification the user has not muted in Settings.
+class NotificationPoller extends StatefulWidget {
+  final Widget child;
+  const NotificationPoller({super.key, required this.child});
+
+  @override
+  State<NotificationPoller> createState() => _NotificationPollerState();
+}
+
+class _NotificationPollerState extends State<NotificationPoller> with WidgetsBindingObserver {
+  late final AuthController _auth;
+  late final NotificationController _notifications;
+  final RealtimeClient _realtime = RealtimeClient.instance;
+  String? _listeningUserId;
+  bool _foreground = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _auth = context.read<AuthController>();
+    _notifications = context.read<NotificationController>();
+    _auth.addListener(_sync);
+    _notifications.addListener(_showIncoming);
+    _realtime.isConnected.addListener(_onRealtimeStatus);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _auth.removeListener(_sync);
+    _notifications.removeListener(_showIncoming);
+    _realtime.isConnected.removeListener(_onRealtimeStatus);
+    _realtime.disconnect();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    _sync();
+  }
+
+  bool get _signedIn => _auth.status == AuthStatus.authenticated && _auth.currentUser != null;
+
+  void _sync() {
+    final userId = _signedIn ? _auth.currentUser!.id : null;
+
+    if (userId == null || !_foreground) {
+      if (_listeningUserId != null) {
+        _realtime.disconnect();
+        _listeningUserId = null;
+      }
+      if (userId == null) {
+        if (_notifications.isPolling || _notifications.unreadCount > 0) _notifications.reset();
+      } else {
+        _notifications.stopPolling();
+      }
+      return;
+    }
+
+    if (_listeningUserId != userId) {
+      _realtime.disconnect();
+      _realtime.listen('App.Models.User.$userId', 'client.notification.created', (_) {
+        _notifications.onRealtimeNotification();
+      });
+      _listeningUserId = userId;
+    }
+    _notifications.startPolling();
+  }
+
+  void _onRealtimeStatus() {
+    final connected = _realtime.isConnected.value;
+    _notifications.realtimeConnected = connected;
+    // Catch up on anything sent while the socket was down.
+    if (connected) _notifications.checkForNew();
+  }
+
+  void _showIncoming() {
+    final notification = _notifications.incoming;
+    if (notification == null || !mounted) return;
+    _notifications.clearIncoming();
+
+    // Service moderation (approved, rejected, …) changes the provider's list.
+    if (notification.type == NotificationType.service) {
+      context.read<ProviderServicesController>().load();
+    }
+
+    if (!_enabledInPreferences(notification.type)) return;
+
+    final text = notification.message.isEmpty
+        ? notification.title
+        : '${notification.title}: ${notification.message}';
+    AppSnackbar.success(context, text);
+  }
+
+  bool _enabledInPreferences(NotificationType type) {
+    final preferences = context.read<PreferencesController>();
+    return switch (type) {
+      NotificationType.booking => preferences.bookingNotifications,
+      NotificationType.message => preferences.messageNotifications,
+      NotificationType.service || NotificationType.verification => preferences.serviceNotifications,
+      NotificationType.system || NotificationType.promo => preferences.announcementNotifications,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Bell button with the live unread-notification count.
+class NotificationBellIcon extends StatelessWidget {
+  final Widget icon;
+  const NotificationBellIcon({super.key, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final count = context.select<NotificationController, int>((c) => c.unreadCount);
+    return Badge(
+      isLabelVisible: count > 0,
+      label: Text(count > 99 ? '99+' : '$count'),
+      child: icon,
+    );
+  }
+}

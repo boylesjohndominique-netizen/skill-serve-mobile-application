@@ -12,6 +12,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/buttons/outlined_app_button.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -70,28 +71,20 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   }
 
   Future<void> _load() async {
-    final provider = await ServiceService().getProviderById(widget.providerId);
-    var services = await ServiceService().getServicesForProvider(widget.providerId);
-    // Fall back to a derived single service when the provider has none on file.
-    if (services.isEmpty) {
-      services = [
-        ServiceModel(
-          id: 'SV-${widget.providerId}',
-          providerId: widget.providerId,
-          categoryId: '1',
-          title: '${provider.categoryName} Service',
-          description: provider.bio,
-          price: provider.startingPrice ?? 500,
-          duration: '2 hours',
-          coverImage: '',
-        ),
-      ];
+    final ProviderModel provider;
+    try {
+      // The provider detail includes its bookable (approved, public) services.
+      provider = await ServiceService().getProviderById(widget.providerId);
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+      return;
     }
+    final services = provider.services;
     if (mounted) {
       setState(() {
         _provider = provider;
         _services = services;
-        _selectedService = services.first;
+        _selectedService = services.isEmpty ? null : services.first;
         _loading = false;
       });
     }
@@ -156,7 +149,21 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading || _provider == null) return const Scaffold(body: LoadingState());
+    if (_loading) return const Scaffold(body: LoadingState());
+    if (_provider == null || _services.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Book a Service')),
+        body: EmptyState(
+          icon: AppIcons.design_services_outlined,
+          title: _provider == null ? 'Provider unavailable' : 'No bookable services',
+          message: _provider == null
+              ? 'This provider could not be loaded. Please try again later.'
+              : 'This provider has no approved services to book right now.',
+          actionLabel: 'Go back',
+          onAction: () => context.pop(),
+        ),
+      );
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

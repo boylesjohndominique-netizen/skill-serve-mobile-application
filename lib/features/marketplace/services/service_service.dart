@@ -15,8 +15,8 @@ import '../../../core/services/api_client.dart';
 class ServiceService {
   // GET /api/client/v1/categories
   Future<List<CategoryModel>> getCategories() async {
-    final response =
-        await ApiClient.instance.dio.get('/client/v1/categories');
+    final response = await ApiClient.instance.dio
+        .get('/client/v1/categories', queryParameters: {'per_page': 100});
     final data = response.data['data'] as List;
     return data
         .map((json) => CategoryModel.fromJson(json as Map<String, dynamic>))

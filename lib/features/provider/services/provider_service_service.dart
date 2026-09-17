@@ -1,4 +1,5 @@
 import '../../../core/services/api_client.dart';
+import '../../marketplace/models/provider_model.dart';
 import '../models/provider_service_model.dart';
 
 /// Provider-owned services — live API only.
@@ -10,6 +11,7 @@ import '../models/provider_service_model.dart';
 /// - PUT    /api/client/v1/provider/services/{service}
 /// - DELETE /api/client/v1/provider/services/{service}
 /// - GET    /api/client/v1/categories (category + subcategory choices)
+/// - GET    /api/client/v1/provider/profile (own profile, any verification state)
 ///
 /// New services and every change wait for administrator approval.
 class ProviderServiceService {
@@ -40,6 +42,13 @@ class ProviderServiceService {
 
   Future<void> delete(String id) async {
     await ApiClient.instance.dio.delete('$_base/$id');
+  }
+
+  /// The signed-in provider's own profile. Unlike the public catalog, this
+  /// works before verification and includes the verification status.
+  Future<ProviderModel> getMyProfile() async {
+    final response = await ApiClient.instance.dio.get('/client/v1/provider/profile');
+    return ProviderModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   Future<List<ServiceCategoryOption>> getCategories() async {

@@ -39,6 +39,8 @@ class NotificationService {
   Future<int> unreadCount() async {
     final response = await ApiClient.instance.dio
         .get('/client/v1/notifications/unread-count');
-    return (response.data['data']?['count'] as num?)?.toInt() ?? 0;
+    final data = response.data['data'];
+    // The API returns {"unread_count": n}; older builds expected "count".
+    return ((data?['unread_count'] ?? data?['count']) as num?)?.toInt() ?? 0;
   }
 }

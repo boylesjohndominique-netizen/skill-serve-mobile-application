@@ -2,6 +2,34 @@
 
 All examples and validation details in this file come from the Laravel backend OpenAPI attributes and request validation.
 
+## `GET /api/client/v1/provider/profile`
+
+Get the authenticated provider's own profile (any verification state)
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Provider profile
+
+Response schema: `#/components/schemas/ProviderProfileEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
 ## `GET /api/client/v1/provider/services`
 
 List the authenticated provider's services (all approval states)

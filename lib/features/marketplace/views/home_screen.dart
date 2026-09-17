@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../marketplace/controllers/favorites_controller.dart';
+import '../../notifications/views/notification_poller.dart';
 import '../controllers/marketplace_controller.dart';
 import '../../../core/constants/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
@@ -118,7 +119,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const AppIcon(AppIcons.notifications_outlined, size: 20),
+                      child: const NotificationBellIcon(icon: AppIcon(AppIcons.notifications_outlined, size: 20)),
                     ),
                   ).animate().fadeIn(delay: 100.ms, duration: 300.ms).scale(begin: const Offset(0.7, 0.7), curve: Curves.easeOutBack),
                 ],

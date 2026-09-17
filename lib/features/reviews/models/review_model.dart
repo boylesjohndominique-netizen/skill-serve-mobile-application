@@ -18,13 +18,18 @@ class ReviewModel {
     required this.createdAt,
   });
 
-  factory ReviewModel.fromJson(Map<String, dynamic> json) => ReviewModel(
-        id: json['review_id'].toString(),
-        bookingId: json['booking_id'].toString(),
-        clientName: json['client_name'] as String? ?? '',
-        clientAvatar: json['client_avatar'] as String?,
-        rating: (json['rating'] as num).toDouble(),
-        comment: json['review'] as String? ?? '',
-        createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-      );
+  factory ReviewModel.fromJson(Map<String, dynamic> json) {
+    final booking = json['booking'] as Map<String, dynamic>?;
+    final reviewer = json['reviewer'] as Map<String, dynamic>?;
+
+    return ReviewModel(
+      id: (json['id'] ?? json['review_id']).toString(),
+      bookingId: (booking?['id'] ?? json['booking_id'] ?? '').toString(),
+      clientName: (reviewer?['name'] ?? json['client_name']) as String? ?? 'Customer',
+      clientAvatar: json['client_avatar'] as String?,
+      rating: double.tryParse('${json['rating'] ?? 0}') ?? 0,
+      comment: (json['comment'] ?? json['review']) as String? ?? '',
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
 }

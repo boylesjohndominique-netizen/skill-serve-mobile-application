@@ -7,6 +7,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../marketplace/models/service_model.dart';
@@ -24,17 +25,32 @@ class ServiceDetailsScreen extends StatefulWidget {
 
 class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   ServiceModel? _service;
+  bool _failed = false;
 
   @override
   void initState() {
     super.initState();
-    ServiceService().getServiceById(widget.serviceId).then((s) {
-      if (mounted) setState(() => _service = s);
-    });
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _failed = false);
+    try {
+      final service = await ServiceService().getServiceById(widget.serviceId);
+      if (mounted) setState(() => _service = service);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_failed) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Service Details')),
+        body: ErrorState(message: 'This service is no longer available.', onRetry: _load),
+      );
+    }
     if (_service == null) return const Scaffold(body: LoadingState());
     final s = _service!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -49,13 +65,21 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                child: CachedNetworkImage(
-                  imageUrl: s.coverImage,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (c, u) => const ShimmerPlaceholder(height: 200),
-                ),
+                child: s.coverImage.isEmpty
+                    ? Container(
+                        height: 200,
+                        width: double.infinity,
+                        color: AppColors.secondarySoft,
+                        alignment: Alignment.center,
+                        child: const AppIcon(AppIcons.design_services_rounded, color: AppColors.secondaryDeep, size: 48),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: s.coverImage,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (c, u) => const ShimmerPlaceholder(height: 200),
+                      ),
               ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.04, end: 0),
               const SizedBox(height: AppSizes.lg),
               Text(s.title, style: AppTextStyles.headlineLarge)

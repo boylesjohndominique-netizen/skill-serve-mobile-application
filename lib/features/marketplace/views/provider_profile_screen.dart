@@ -19,7 +19,7 @@ import '../../provider/models/badge_model.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../../reviews/models/review_model.dart';
 import '../../marketplace/models/service_model.dart';
-import '../../reviews/services/review_service.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
@@ -40,6 +40,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   List<ReviewModel> _reviews = [];
   List<BadgeModel> _badges = [];
   bool _loaded = false;
+  bool _failed = false;
 
   @override
   void initState() {
@@ -49,24 +50,38 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
   Future<void> _load() async {
     final service = ServiceService();
-    final provider = await service.getProviderById(widget.providerId);
-    final results = await Future.wait([
-      service.getServicesForProvider(provider.id),
-      ReviewService().getReviewsForProvider(provider.id),
-      service.getProviderBadges(provider.id),
-    ]);
+    if (_failed) setState(() => _failed = false);
+    // The provider detail already includes its public services and reviews.
+    final ProviderModel provider;
+    try {
+      provider = await service.getProviderById(widget.providerId);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+      return;
+    }
+    // Badges have no client endpoint yet; their absence must not block the profile.
+    List<BadgeModel> badges = const [];
+    try {
+      badges = await service.getProviderBadges(provider.id);
+    } catch (_) {}
     if (!mounted) return;
     setState(() {
       _provider = provider;
-      _services = results[0] as List<ServiceModel>;
-      _reviews = results[1] as List<ReviewModel>;
-      _badges = (results[2] as List<BadgeModel>).where((b) => b.earned).toList();
+      _services = provider.services;
+      _reviews = provider.reviews;
+      _badges = badges.where((b) => b.earned).toList();
       _loaded = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_failed) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: ErrorState(message: 'Unable to load this provider.', onRetry: _load),
+      );
+    }
     if (!_loaded || _provider == null) return const Scaffold(body: LoadingState());
     final p = _provider!;
     final favorites = context.watch<FavoritesController>();

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../notifications/views/notification_poller.dart';
 import '../../booking/controllers/provider_booking_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -13,10 +14,11 @@ import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/stat_card.dart';
-import '../../marketplace/services/service_service.dart';
 import '../../booking/models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../marketplace/models/provider_model.dart';
+import '../services/provider_service_service.dart';
 
 /// Provider's home tab — quick stats, verification status, and today's
 /// pending requests.
@@ -28,7 +30,7 @@ class ProviderDashboardScreen extends StatefulWidget {
 }
 
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
-  dynamic _providerProfile;
+  ProviderModel? _providerProfile;
 
   @override
   void initState() {
@@ -40,10 +42,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
   }
 
   Future<void> _loadProvider() async {
-    final auth = context.read<AuthController>();
-    final userId = auth.currentUser?.id;
-    if (userId == null) return;
-    final profile = await ServiceService().getProviderById(userId);
+    if (context.read<AuthController>().currentUser == null) return;
+    final ProviderModel profile;
+    try {
+      profile = await ProviderServiceService().getMyProfile();
+    } catch (_) {
+      return; // Keep the screen usable without profile details.
+    }
     if (mounted) setState(() => _providerProfile = profile);
   }
 
@@ -88,7 +93,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                         color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const AppIcon(AppIcons.notifications_outlined, size: 20),
+                      child: const NotificationBellIcon(icon: AppIcon(AppIcons.notifications_outlined, size: 20)),
                     ),
                   ).animate().fadeIn(delay: 100.ms, duration: 300.ms).scale(begin: const Offset(0.7, 0.7), curve: Curves.easeOutBack),
                 ],
@@ -121,7 +126,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                             style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
-                        StatusBadge.fromStatus(providerProfile.verificationStatus ?? 'pending'),
+                        StatusBadge.fromStatus(providerProfile.verificationStatus),
                       ],
                     ),
                   ),

@@ -57,11 +57,7 @@ class UserModel {
 
   /// Placeholder — maps a future `GET /me` / `GET /users/:id` JSON payload.
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final roleName = (json['role'] as String?) ??
-        ((json['user_type'] as String?) == 'provider' ? 'provider' : 'client');
-    final role =
-        UserRole.values.where((value) => value.name == roleName).firstOrNull ??
-            UserRole.client;
+    final role = roleFromJson(json);
     return UserModel(
       id: json['id'].toString(),
       role: role,
@@ -77,9 +73,37 @@ class UserModel {
     );
   }
 
+  /// Account role from the API (`role_id`: 1 super-admin, 2 admin,
+  /// 3 provider, 4 customer; or `role_name`/`user_type`), or from a session
+  /// saved by [toJson] (`role`: guest/client/provider/admin).
+  static UserRole roleFromJson(Map<String, dynamic> json) {
+    final roleId = int.tryParse('${json['role_id'] ?? ''}');
+    if (roleId != null) {
+      return switch (roleId) {
+        3 => UserRole.provider,
+        4 => UserRole.client,
+        _ => UserRole.admin,
+      };
+    }
+
+    final name = (json['role_name'] ?? json['role'] ?? json['user_type'])?.toString();
+    return switch (name) {
+      'provider' => UserRole.provider,
+      'super-admin' || 'admin' => UserRole.admin,
+      'guest' => UserRole.guest,
+      _ => UserRole.client,
+    };
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'role': role.name,
+        'role_id': switch (role) {
+          UserRole.provider => 3,
+          UserRole.client => 4,
+          UserRole.admin => 2,
+          UserRole.guest => null,
+        },
         'firstname': firstName,
         'lastname': lastName,
         'email': email,

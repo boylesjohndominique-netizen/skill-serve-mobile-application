@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 import 'features/auth/controllers/auth_controller.dart';
+import 'features/notifications/views/notification_poller.dart';
 import 'features/booking/controllers/booking_controller.dart';
 import 'features/booking/controllers/provider_booking_controller.dart';
 import 'features/marketplace/controllers/favorites_controller.dart';
@@ -78,7 +79,7 @@ class SkillLinkApp extends StatelessWidget {
               builder: (context, widget) {
                 _startConnectivityMonitoring(context);
                 return ResponsiveBreakpoints.builder(
-                  child: widget ?? const SizedBox.shrink(),
+                  child: NotificationPoller(child: widget ?? const SizedBox.shrink()),
                   breakpoints: const [
                     Breakpoint(start: 0, end: 450, name: MOBILE),
                     Breakpoint(start: 451, end: 800, name: TABLET),
