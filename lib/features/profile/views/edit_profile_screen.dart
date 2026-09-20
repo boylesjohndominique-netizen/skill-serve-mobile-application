@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -44,25 +45,62 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthController>();
     if (auth.currentUser == null) return;
     setState(() => _saving = true);
-    final updated = await _profileService.updateProfile(
-      auth.currentUser!,
-      firstName: _firstName.text.trim(),
-      lastName: _lastName.text.trim(),
-      phone: _phone.text.trim(),
-      address: _address.text.trim(),
-      profilePicture: _selectedPhoto,
-      clearProfilePicture: _removePhoto,
-    );
-    auth.updateCurrentUser(updated);
-    setState(() => _saving = false);
-    if (mounted) {
+    try {
+      final updated = await _profileService.updateProfile(
+        auth.currentUser!,
+        firstName: _firstName.text.trim(),
+        lastName: _lastName.text.trim(),
+        phone: _phone.text.trim(),
+        address: _address.text.trim(),
+        profilePicture: _selectedPhoto,
+        clearProfilePicture: _removePhoto,
+      );
+      auth.updateCurrentUser(updated);
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _selectedPhoto = null;
+        _removePhoto = false;
+      });
       AppSnackbar.success(context, 'Profile updated.');
       context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      AppSnackbar.error(context, _describeError(e));
     }
+  }
+
+  /// Surfaces the server's own field message (e.g. an oversized photo) and
+  /// falls back to neutral copy for anything unexpected.
+  String _describeError(Object e) {
+    if (e is DioException) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.connectionError:
+          return 'Could not reach the server. Check your connection and try again.';
+        default:
+          break;
+      }
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final errors = data['errors'];
+        if (errors is Map && errors.isNotEmpty) {
+          final first = errors.values.first;
+          if (first is List && first.isNotEmpty) return first.first.toString();
+        }
+        final message = data['message'];
+        if (message is String && message.isNotEmpty) return message;
+      }
+    }
+    return 'Could not save your profile. Please try again.';
   }
 
   @override
@@ -98,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 shape: BoxShape.circle),
                             child: IconButton(
                               tooltip: 'Change profile photo',
-                              onPressed: _pickPhoto,
+                              onPressed: _saving ? null : _pickPhoto,
                               icon: const AppIcon(AppIcons.camera_alt_rounded,
                                   size: 16, color: AppColors.primary),
                             ),
@@ -112,7 +150,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Align(
                     alignment: Alignment.center,
                     child: TextButton.icon(
-                      onPressed: () => setState(() => _removePhoto = true),
+                      onPressed:
+                          _saving ? null : () => setState(() => _removePhoto = true),
                       icon: const AppIcon(AppIcons.delete_outline_rounded,
                           size: 16),
                       label: const Text('Remove photo'),
@@ -126,13 +165,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: AppTextField(
                             label: 'First name',
                             controller: _firstName,
-                            validator: Validators.required)),
+                            validator: Validators.required,
+                            enabled: !_saving)),
                     const SizedBox(width: AppSizes.md),
                     Expanded(
                         child: AppTextField(
                             label: 'Last name',
                             controller: _lastName,
-                            validator: Validators.required)),
+                            validator: Validators.required,
+                            enabled: !_saving)),
                   ],
                 )
                     .animate()
@@ -145,6 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   keyboardType: TextInputType.phone,
                   prefixIcon: AppIcons.call_outlined,
                   validator: Validators.phone,
+                  enabled: !_saving,
                 )
                     .animate()
                     .fadeIn(delay: 180.ms, duration: 350.ms)
@@ -155,6 +197,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: _address,
                   prefixIcon: AppIcons.location_on_outlined,
                   validator: Validators.required,
+                  enabled: !_saving,
                 )
                     .animate()
                     .fadeIn(delay: 260.ms, duration: 350.ms)

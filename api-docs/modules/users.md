@@ -13,7 +13,6 @@ GET /api/users — paginated, searchable, filterable list of platform users.
 | Name | Location | Required | Type / allowed values |
 |---|---|---:|---|
 | `search` | query | no | string |
-| `user_type` | query | no | string (`customer`) |
 | `status` | query | no | string (`active`, `suspended`, `banned`) |
 | `verification` | query | no | string (`verified`, `unverified`) |
 | `sort` | query | no | string (`name`, `created_at`, `last_login_at`) |

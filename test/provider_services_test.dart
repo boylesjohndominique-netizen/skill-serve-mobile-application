@@ -76,7 +76,12 @@ void main() {
     expect(notification.id, '9f1c2d3e-0000-4000-8000-000000000001');
     expect(notification.type, NotificationType.service);
     expect(notification.isRead, isFalse);
-    expect(NotificationModel.typeFromApi('support_ticket_response'), NotificationType.system);
+    // A support reply is staff writing to the user, and the server gates it
+    // with the same "Messages" preference, so the app must agree.
+    expect(NotificationModel.typeFromApi('support_ticket_response'),
+        NotificationType.message);
+    expect(NotificationModel.typeFromApi('support_ticket_resolved'),
+        NotificationType.message);
     expect(NotificationModel.typeFromApi('booking'), NotificationType.booking);
   });
 }

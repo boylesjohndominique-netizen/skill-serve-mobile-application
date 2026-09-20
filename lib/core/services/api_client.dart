@@ -59,8 +59,10 @@ class ApiClient {
   /// on purpose (offline is handled by the ConnectivityGate).
   Future<void> warmUp() async {
     try {
+      // A real route: the bare API root 404s without CORS headers, which
+      // browsers (flutter run -d edge/chrome) report as a CORS failure.
       await _dio.get<void>(
-        '',
+        '/health',
         options: Options(
           validateStatus: (_) => true,
           receiveTimeout: const Duration(seconds: 120),

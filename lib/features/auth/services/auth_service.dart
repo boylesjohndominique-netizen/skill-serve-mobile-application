@@ -1,3 +1,4 @@
+import '../models/auth_results.dart';
 import '../models/user_model.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/token_storage.dart';
@@ -11,6 +12,7 @@ import '../../../core/services/token_storage.dart';
 /// - POST /api/client/v1/auth/verify-otp (6-digit email code)
 /// - POST /api/client/v1/auth/resend-otp
 /// - POST /api/client/v1/auth/google (Google Sign-In ID token)
+/// - POST /api/client/v1/auth/google/register (finish a Google sign-up)
 /// - POST /api/client/v1/auth/forgot-password
 /// - POST /api/client/v1/auth/logout
 /// - GET /api/client/v1/auth/me
@@ -33,8 +35,10 @@ class AuthService {
     return UserModel.fromJson(data['user'] as Map<String, dynamic>);
   }
 
-  // POST /api/client/v1/auth/register
-  Future<UserModel> register({
+  // POST /api/client/v1/auth/register — parks the sign-up and emails a
+  // code. No account exists until verifyOtp() confirms it, so no session
+  // is returned here.
+  Future<PendingRegistration> register({
     required String firstName,
     required String lastName,
     required String email,
@@ -48,13 +52,13 @@ class AuthService {
       'password': password,
       'password_confirmation': password,
     });
-    final data = response.data['data'] as Map<String, dynamic>;
-    _readSession(data);
-    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+    return PendingRegistration.fromJson(
+        response.data['data'] as Map<String, dynamic>);
   }
 
-  // POST /api/client/v1/auth/register-provider
-  Future<UserModel> registerProvider({
+  // POST /api/client/v1/auth/register-provider — parked the same way as a
+  // customer sign-up; the provider profile is created on verification.
+  Future<PendingRegistration> registerProvider({
     required String firstName,
     required String lastName,
     required String email,
@@ -77,19 +81,21 @@ class AuthService {
       'experience_years': experienceYears,
       if (bio != null && bio.isNotEmpty) 'bio': bio,
     });
-    final data = response.data['data'] as Map<String, dynamic>;
-    _readSession(data);
-    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
+    return PendingRegistration.fromJson(
+        response.data['data'] as Map<String, dynamic>);
   }
 
-  // POST /api/client/v1/auth/verify-otp
+  // POST /api/client/v1/auth/verify-otp — creates the account and returns a
+  // real session, so no follow-up login is needed.
   Future<UserModel> verifyOtp({required String email, required String code}) async {
     final response = await ApiClient.instance.dio
         .post('/client/v1/auth/verify-otp', data: {
       'email': email,
       'code': code,
     });
-    return UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
+    final data = response.data['data'] as Map<String, dynamic>;
+    _readSession(data);
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>);
   }
 
   // POST /api/client/v1/auth/resend-otp
@@ -98,19 +104,64 @@ class AuthService {
         .post('/client/v1/auth/resend-otp', data: {'email': email});
   }
 
-  // POST /api/client/v1/auth/cancel-registration — deletes the unverified
-  // account created by register/register-provider. No-ops (200) for
-  // verified or unknown accounts; the app ignores the outcome either way.
+  // POST /api/client/v1/auth/cancel-registration — discards the parked
+  // sign-up so the email is free again. No-ops (200) for verified or
+  // unknown accounts; the app ignores the outcome either way.
   Future<void> cancelRegistration(
       {required String email, required String password}) async {
     await ApiClient.instance.dio.post('/client/v1/auth/cancel-registration',
         data: {'email': email, 'password': password});
   }
 
-  // POST /api/client/v1/auth/google
-  Future<UserModel> loginWithGoogle({required String idToken}) async {
+  // POST /api/client/v1/auth/google — signs in when the Google identity
+  // already has an account (linking it if only the email matched), and
+  // otherwise returns a draft to fill the sign-up form with.
+  Future<GoogleAuthResult> loginWithGoogle({required String idToken}) async {
     final response = await ApiClient.instance.dio
         .post('/client/v1/auth/google', data: {'id_token': idToken});
+    final data = response.data['data'] as Map<String, dynamic>;
+
+    if (data['registration_required'] == true) {
+      return GoogleAuthResult.registrationRequired(
+        GoogleProfileDraft.fromJson(
+          (data['google'] as Map?)?.cast<String, dynamic>() ?? const {},
+          idToken: idToken,
+        ),
+      );
+    }
+
+    _readSession(data);
+    return GoogleAuthResult.signedIn(
+        UserModel.fromJson(data['user'] as Map<String, dynamic>));
+  }
+
+  // POST /api/client/v1/auth/google/register — creates the account for a
+  // Google identity that has none, using the details from the form.
+  Future<UserModel> completeGoogleRegistration({
+    required String idToken,
+    required String firstName,
+    required String lastName,
+    required UserRole role,
+    String? businessName,
+    String specialization = '',
+    int experienceYears = 0,
+    String? bio,
+  }) async {
+    final isProvider = role == UserRole.provider;
+    final response = await ApiClient.instance.dio
+        .post('/client/v1/auth/google/register', data: {
+      'id_token': idToken,
+      'first_name': firstName,
+      'last_name': lastName,
+      'role': isProvider ? 'provider' : 'customer',
+      if (isProvider) ...{
+        if (businessName != null && businessName.isNotEmpty)
+          'business_name': businessName,
+        'specialization': specialization,
+        'experience_years': experienceYears,
+        if (bio != null && bio.isNotEmpty) 'bio': bio,
+      },
+    });
     final data = response.data['data'] as Map<String, dynamic>;
     _readSession(data);
     return UserModel.fromJson(data['user'] as Map<String, dynamic>);

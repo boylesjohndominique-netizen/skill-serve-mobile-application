@@ -107,8 +107,12 @@ Client and Provider each have a bottom-navigation **shell** (`client_shell.dart`
 
 ## Connecting to the Laravel backend
 
-1. The default API root is `http://localhost:8000/api`.
-2. Override it for another target with `--dart-define=API_BASE_URL=...`.
+1. The default API root is production: `https://skillserve-web-backend.onrender.com/api`.
+2. Pick an environment with a define file in `env/`:
+   - Local Docker backend (WSL, port 8000): `flutter run -d edge --dart-define-from-file=env/local.json`
+   - Production (Render): `flutter run -d edge --dart-define-from-file=env/production.json`
+   - Any other target: `--dart-define=API_BASE_URL=...`
+   Local web runs need the backend's `APP_ENV=local` so CORS accepts Flutter's random `localhost` port.
 3. Live API mode is the default. Use `--dart-define=USE_MOCK_DATA=true` for mock mode.
 4. Client API authentication uses Sanctum bearer tokens through `ApiClient` and
    `TokenStorage`; never put backend database or admin credentials in the mobile app.

@@ -14,7 +14,6 @@ import 'package:skilllink_mobile/features/provider/controllers/portfolio_control
 import 'package:skilllink_mobile/features/provider/controllers/provider_services_controller.dart';
 import 'package:skilllink_mobile/features/booking/controllers/provider_booking_controller.dart';
 import 'package:skilllink_mobile/features/reports/controllers/report_controller.dart';
-import 'package:skilllink_mobile/features/settings/controllers/theme_controller.dart';
 import 'package:skilllink_mobile/core/theme/app_theme.dart';
 import 'package:skilllink_mobile/features/marketplace/views/client_shell.dart';
 import 'package:skilllink_mobile/features/marketplace/views/favorites_screen.dart';
@@ -32,7 +31,6 @@ Widget _app(Widget home) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => AuthController()),
-      ChangeNotifierProvider(create: (_) => ThemeController()),
       ChangeNotifierProvider(create: (_) => MarketplaceController()),
       ChangeNotifierProvider(create: (_) => FavoritesController()),
       ChangeNotifierProvider(create: (_) => BookingController()),

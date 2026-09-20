@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../settings/controllers/preferences_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../settings/controllers/theme_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -46,7 +47,7 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final theme = context.watch<ThemeController>();
+    final preferences = context.watch<PreferencesController>();
     final user = auth.currentUser;
     final provider = _provider;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -164,8 +165,8 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             stagger(_SwitchTile(
                 icon: AppIcons.dark_mode_outlined,
                 label: 'Dark mode',
-                value: theme.mode == ThemeMode.dark,
-                onChanged: (_) async => theme.toggle(),
+                value: preferences.isDarkMode,
+                onChanged: (_) async => preferences.toggleDarkMode(),
                 isDark: isDark)),
             stagger(_Tile(
                 icon: AppIcons.notifications_none_rounded,

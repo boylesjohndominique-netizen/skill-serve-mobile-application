@@ -19,6 +19,10 @@ class AppTextField extends StatefulWidget {
   final int maxLines;
   final void Function(String)? onChanged;
 
+  /// Set false while a request is in flight so the value cannot change
+  /// under the submission that is already using it.
+  final bool enabled;
+
   const AppTextField({
     super.key,
     required this.label,
@@ -30,6 +34,7 @@ class AppTextField extends StatefulWidget {
     this.prefixIcon,
     this.maxLines = 1,
     this.onChanged,
+    this.enabled = true,
   });
 
   @override
@@ -44,6 +49,7 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final muted = isDark ? AppColors.textMutedDark : AppColors.textMuted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,13 +58,16 @@ class _AppTextFieldState extends State<AppTextField> {
           duration: AppAnimations.fast,
           style: AppTextStyles.label.copyWith(
             fontWeight: FontWeight.w600,
-            color: _focused ? AppColors.secondary : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
+            color: !widget.enabled
+                ? muted
+                : (_focused ? AppColors.secondary : (isDark ? AppColors.textOnDark : AppColors.textPrimary)),
           ),
           child: Text(widget.label),
         ),
         const SizedBox(height: 6),
         Focus(
-          onFocusChange: (hasFocus) => setState(() => _focused = hasFocus),
+          onFocusChange: (hasFocus) =>
+              setState(() => _focused = hasFocus && widget.enabled),
           child: AnimatedContainer(
             duration: AppAnimations.md,
             curve: AppAnimations.defaultCurve,
@@ -76,12 +85,15 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
             child: TextFormField(
               controller: widget.controller,
+              enabled: widget.enabled,
               obscureText: _obscured,
               keyboardType: widget.keyboardType,
               validator: widget.validator,
               maxLines: widget.obscureText ? 1 : widget.maxLines,
               onChanged: widget.onChanged,
-              style: AppTextStyles.bodyLarge,
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: widget.enabled ? null : muted,
+              ),
               decoration: InputDecoration(
                 hintText: widget.hint,
                 prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
@@ -108,7 +120,9 @@ class _AppTextFieldState extends State<AppTextField> {
                           strokeWidth: 1.5,
                           color: _focused ? AppColors.secondary : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
                         ),
-                        onPressed: () => setState(() => _obscured = !_obscured),
+                        onPressed: widget.enabled
+                            ? () => setState(() => _obscured = !_obscured)
+                            : null,
                       )
                     : null,
               ),

@@ -8,6 +8,7 @@
 - [Client Bookings](modules/client-bookings.md)
 - [Client Marketplace](modules/client-marketplace.md)
 - [Client Notifications](modules/client-notifications.md)
+- [Client Preferences](modules/client-preferences.md)
 - [Client Reviews](modules/client-reviews.md)
 - [Client Support](modules/client-support.md)
 - [Dashboard](modules/dashboard.md)

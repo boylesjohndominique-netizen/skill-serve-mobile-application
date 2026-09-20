@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -16,7 +17,6 @@ import 'features/provider/controllers/portfolio_controller.dart';
 import 'features/provider/controllers/provider_services_controller.dart';
 import 'features/reports/controllers/report_controller.dart';
 import 'features/settings/controllers/preferences_controller.dart';
-import 'features/settings/controllers/theme_controller.dart';
 import 'core/config/app_config.dart';
 import 'core/services/api_client.dart';
 import 'core/theme/app_theme.dart';
@@ -49,9 +49,14 @@ class SkillLinkApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _runtimeAuthController),
-        ChangeNotifierProvider(create: (_) => ThemeController()..initialize()),
-        ChangeNotifierProvider(
-            create: (_) => PreferencesController()..initialize()),
+        // Settings belong to the account, so the controller follows the
+        // session: signing in pulls the user's own settings, signing out
+        // drops them.
+        ChangeNotifierProxyProvider<AuthController, PreferencesController>(
+          create: (_) => PreferencesController()..initialize(),
+          update: (_, auth, preferences) => preferences!
+            ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
+        ),
         ChangeNotifierProvider(create: (_) => MarketplaceController()),
         ChangeNotifierProvider(create: (_) => FavoritesController()),
         ChangeNotifierProvider(create: (_) => BookingController()),
@@ -63,8 +68,15 @@ class SkillLinkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PaymentController()),
         ChangeNotifierProvider(create: (_) => ReportController()),
       ],
-      child: Consumer<ThemeController>(
-        builder: (context, themeController, _) {
+      child: Consumer<PreferencesController>(
+        builder: (context, preferences, _) {
+          // "Reduce motion" is honoured globally rather than per screen:
+          // shrinking the scheduler's time scale lets every animation —
+          // including the flutter_animate entrances used across the app —
+          // settle on its final frame almost immediately, so content still
+          // appears, just without the movement.
+          timeDilation = preferences.reduceMotion ? 0.01 : 1.0;
+
           return ScreenUtilInit(
             // Base design size — most modern mid-range phones (e.g. Pixel/Galaxy) at 1x density.
             designSize: const Size(390, 844),
@@ -74,12 +86,19 @@ class SkillLinkApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
-              themeMode: themeController.mode,
+              themeMode: preferences.themeMode,
               routerConfig: _runtimeRouter,
               builder: (context, widget) {
                 _startConnectivityMonitoring(context);
                 return ResponsiveBreakpoints.builder(
-                  child: NotificationPoller(child: widget ?? const SizedBox.shrink()),
+                  // Framework-driven motion (page transitions, implicit
+                  // animations) reads this flag directly.
+                  child: MediaQuery(
+                    data: MediaQuery.of(context)
+                        .copyWith(disableAnimations: preferences.reduceMotion),
+                    child: NotificationPoller(
+                        child: widget ?? const SizedBox.shrink()),
+                  ),
                   breakpoints: const [
                     Breakpoint(start: 0, end: 450, name: MOBILE),
                     Breakpoint(start: 451, end: 800, name: TABLET),

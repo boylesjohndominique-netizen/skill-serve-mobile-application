@@ -1,8 +1,9 @@
 /// Compile-time environment configuration for the mobile API.
 ///
-/// Examples:
-/// flutter run -d chrome --dart-define=API_BASE_URL=https://skillserve-web-backend.onrender.com/api
-/// flutter run --dart-define=API_BASE_URL=http://localhost:8000/api
+/// Defaults to production (Render). To target the local Docker backend:
+///   flutter run -d edge --dart-define-from-file=env/local.json
+/// Production explicitly:
+///   flutter run -d edge --dart-define-from-file=env/production.json
 class AppConfig {
   AppConfig._();
 
@@ -20,7 +21,7 @@ class AppConfig {
 
   /// REST API root (Render-hosted Laravel + Neon Postgres).
   /// Override locally with:
-  ///   --dart-define=API_BASE_URL=http://localhost:8000/api
+  ///   --dart-define-from-file=env/local.json
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://skillserve-web-backend.onrender.com/api',

@@ -4,12 +4,29 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/auth_results.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/token_storage.dart';
 
 enum AuthStatus { unauthenticated, authenticating, authenticated }
+
+/// What a "Continue with Google" tap produced.
+enum GoogleAuthOutcome {
+  /// Signed in; the session is live.
+  signedIn,
+
+  /// This Google account has no SkillServe account yet — send the user to
+  /// the profile form ([googleDraft] holds the prefill).
+  registrationRequired,
+
+  /// The user dismissed the Google account picker. Nothing to report.
+  cancelled,
+
+  /// Something failed; [AuthController.errorMessage] explains it.
+  failed,
+}
 
 /// Session state — who's signed in (if anyone) and as what role.
 /// Backed by [AuthService] placeholders; swap for real token persistence
@@ -45,6 +62,15 @@ class AuthController extends ChangeNotifier {
 
   bool get requiresEmailVerification => _pendingEmailVerification;
 
+  /// The address awaiting its 6-digit code, so the OTP screen can be
+  /// reached without carrying the email through the route.
+  String? get pendingEmail => _pendingEmail;
+
+  /// Google's prefill for the profile form, set when [loginWithGoogle]
+  /// returns [GoogleAuthOutcome.registrationRequired]. Nothing exists
+  /// server-side while this is set — dropping it cancels the sign-up.
+  GoogleProfileDraft? googleDraft;
+
   Future<void> initialize() async {
     final accessToken = await TokenStorage.readAccessToken();
     if (accessToken == null) return;
@@ -73,12 +99,39 @@ class AuthController extends ChangeNotifier {
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
+      // A sign-up that never confirmed its code has no account yet; the
+      // backend says so in meta so we can resume verification instead of
+      // showing a misleading "invalid credentials".
+      final pendingEmail = _pendingVerificationEmail(e);
+      if (pendingEmail != null) {
+        _pendingEmailVerification = true;
+        _pendingEmail = pendingEmail;
+        _pendingPassword = password;
+      }
       errorMessage = _extractApiError(e, 'Unable to sign in. Please try again.');
       notifyListeners();
       return false;
     }
   }
 
+  /// The email the API reports as awaiting verification, when a failure
+  /// says so in `meta` — a login for a sign-up that never confirmed its
+  /// code (403), or a repeat sign-up while that code is still valid (429).
+  String? _pendingVerificationEmail(Object e) {
+    if (e is! DioException) return null;
+    final status = e.response?.statusCode;
+    if (status != 403 && status != 429) return null;
+    final data = e.response?.data;
+    if (data is! Map<String, dynamic>) return null;
+    final meta = data['meta'];
+    if (meta is! Map || meta['verification_required'] != true) return null;
+    final email = meta['email'];
+    return email is String && email.isNotEmpty ? email : null;
+  }
+
+  /// Starts a sign-up. The backend parks it and emails a 6-digit code —
+  /// no account and no session exist until [verifyOtp] confirms it, so
+  /// backing out here leaves the email free to use again.
   Future<bool> register({
     required String firstName,
     required String lastName,
@@ -91,9 +144,10 @@ class AuthController extends ChangeNotifier {
     String? bio,
   }) async {
     status = AuthStatus.authenticating;
+    errorMessage = null;
     notifyListeners();
     try {
-      currentUser = role == UserRole.provider
+      final pending = role == UserRole.provider
           ? await _authService.registerProvider(
               firstName: firstName,
               lastName: lastName,
@@ -110,13 +164,12 @@ class AuthController extends ChangeNotifier {
               email: email,
               password: password,
             );
-      // Registration does NOT create a usable session: the backend issued
-      // tokens, but the email is still unverified, so they are discarded.
-      // The user stays [AuthStatus.unauthenticated] and pinned to the OTP
-      // screen; a real session is created only after the code is verified.
       _pendingEmailVerification = true;
-      _pendingEmail = currentUser!.email;
+      _pendingEmail = pending.email;
+      // Kept in memory only so the OTP screen can cancel the sign-up,
+      // which the backend guards with this password.
       _pendingPassword = password;
+      currentUser = null;
       status = AuthStatus.unauthenticated;
       sessionExpired = false;
       await TokenStorage.clear();
@@ -124,68 +177,50 @@ class AuthController extends ChangeNotifier {
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
+      // The address already has a sign-up waiting on a code that is still
+      // valid: resume that verification instead of starting over.
+      final pendingEmail = _pendingVerificationEmail(e);
+      if (pendingEmail != null) {
+        _pendingEmailVerification = true;
+        _pendingEmail = pendingEmail;
+        _pendingPassword = password;
+        errorMessage = _extractApiError(e, 'Registration failed. Please try again.');
+        notifyListeners();
+        return true;
+      }
       errorMessage = _extractApiError(e, 'Registration failed. Please try again.');
       notifyListeners();
       return false;
     }
   }
 
-  /// Verifies the account email with the 6-digit OTP emailed at
-  /// registration. For a pending registration this activates the session
-  /// (a fresh login is performed so real tokens are stored); returns true
-  /// and refreshes [currentUser] on success.
+  /// Confirms the 6-digit code emailed at registration. For a parked
+  /// sign-up this creates the account server-side and returns a real
+  /// session, so the user lands straight in the app.
   Future<bool> verifyOtp(String email, String code) async {
     status = AuthStatus.authenticating;
     errorMessage = null;
     notifyListeners();
     try {
-      final user = await _authService.verifyOtp(email: email, code: code);
-      if (currentUser?.email.toLowerCase() == user.email.toLowerCase()) {
-        currentUser = user;
-      }
-      if (_pendingEmailVerification) {
-        final pendingEmail = _pendingEmail ?? email;
-        final pendingPassword = _pendingPassword;
-        _clearPendingRegistration();
-        if (pendingPassword != null) {
-          try {
-            // The verify-otp response carries no tokens, so perform a real
-            // login now that the email is verified. Password lived only in
-            // memory for this hand-off and is cleared above.
-            currentUser =
-                await _authService.login(email: pendingEmail, password: pendingPassword);
-            await _saveApiTokens();
-            status = AuthStatus.authenticated;
-            sessionExpired = false;
-            await _persistSession();
-            notifyListeners();
-            return true;
-          } catch (_) {
-            currentUser = null;
-            status = AuthStatus.unauthenticated;
-            errorMessage = 'Email verified! Please sign in with your new account.';
-            notifyListeners();
-            return true;
-          }
-        }
-      }
-      status =
-          currentUser == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
+      currentUser = await _authService.verifyOtp(email: email, code: code);
+      await _saveApiTokens();
+      _clearPendingRegistration();
+      status = AuthStatus.authenticated;
+      sessionExpired = false;
+      await _persistSession();
       notifyListeners();
       return true;
     } catch (e) {
-      status =
-          currentUser == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
+      status = AuthStatus.unauthenticated;
       errorMessage = _extractApiError(e, 'Verification failed. Please try again.');
       notifyListeners();
       return false;
     }
   }
 
-  /// Called when the user backs out of the OTP screen. Deletes the
-  /// unverified account server-side (so the email becomes reusable) and
-  /// drops the half-created registration locally. The password is kept
-  /// only for this call and cleared afterwards.
+  /// Called when the user backs out of the OTP screen. Discards the parked
+  /// sign-up server-side so the email is immediately reusable, and drops it
+  /// locally. The password is kept only for this call and cleared after.
   Future<void> cancelPendingVerification() async {
     final email = _pendingEmail;
     final password = _pendingPassword;
@@ -201,8 +236,8 @@ class AuthController extends ChangeNotifier {
       try {
         await _authService.cancelRegistration(email: email, password: password);
       } catch (_) {
-        // Server unreachable: the unverified account stays and the next
-        // register attempt will say the email is taken — acceptable.
+        // Server unreachable: the parked sign-up lives on until it expires,
+        // but registering again simply replaces it, so nothing is lost.
       }
     }
   }
@@ -229,10 +264,16 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Google Sign-In: obtains an ID token on device and exchanges it for a
-  /// SkillServe session. Creates the account on first sign-in.
-  Future<bool> loginWithGoogle() async {
+  /// SkillServe session.
+  ///
+  /// An account already linked to this Google identity — or one that simply
+  /// owns the same (Google-verified) email — signs in. A Google account
+  /// with no SkillServe account creates nothing: the caller is told to show
+  /// the profile form, and only submitting it registers the account.
+  Future<GoogleAuthOutcome> loginWithGoogle() async {
     status = AuthStatus.authenticating;
     errorMessage = null;
+    googleDraft = null;
     notifyListeners();
     try {
       final google = GoogleSignIn(serverClientId: _googleServerClientId);
@@ -240,7 +281,7 @@ class AuthController extends ChangeNotifier {
       if (account == null) {
         status = AuthStatus.unauthenticated;
         notifyListeners();
-        return false;
+        return GoogleAuthOutcome.cancelled;
       }
       final auth = await account.authentication;
       final idToken = auth.idToken;
@@ -248,10 +289,73 @@ class AuthController extends ChangeNotifier {
         status = AuthStatus.unauthenticated;
         errorMessage = 'Google sign-in did not return a token. Ensure Google Play services are up to date.';
         notifyListeners();
-        return false;
+        return GoogleAuthOutcome.failed;
       }
-      currentUser = await _authService.loginWithGoogle(idToken: idToken);
+
+      final result = await _authService.loginWithGoogle(idToken: idToken);
+
+      if (result.requiresRegistration) {
+        googleDraft = result.draft;
+        status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return GoogleAuthOutcome.registrationRequired;
+      }
+
+      currentUser = result.user;
       await _saveApiTokens();
+      status = AuthStatus.authenticated;
+      sessionExpired = false;
+      _clearPendingRegistration();
+      await _persistSession();
+      notifyListeners();
+      return GoogleAuthOutcome.signedIn;
+    } catch (e) {
+      status = AuthStatus.unauthenticated;
+      errorMessage = _describeGoogleError(e);
+      notifyListeners();
+      return GoogleAuthOutcome.failed;
+    } finally {
+      // End the Google session so account switching stays possible.
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
+    }
+  }
+
+  /// Creates the account for the Google identity held in [googleDraft],
+  /// using the details the user typed on the profile form, and signs in.
+  Future<bool> completeGoogleRegistration({
+    required String firstName,
+    required String lastName,
+    required UserRole role,
+    String? businessName,
+    String specialization = '',
+    int experienceYears = 0,
+    String? bio,
+  }) async {
+    final draft = googleDraft;
+    if (draft == null) {
+      errorMessage = 'Your Google sign-in expired. Please try again.';
+      notifyListeners();
+      return false;
+    }
+
+    status = AuthStatus.authenticating;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      currentUser = await _authService.completeGoogleRegistration(
+        idToken: draft.idToken,
+        firstName: firstName,
+        lastName: lastName,
+        role: role,
+        businessName: businessName,
+        specialization: specialization,
+        experienceYears: experienceYears,
+        bio: bio,
+      );
+      await _saveApiTokens();
+      googleDraft = null;
       status = AuthStatus.authenticated;
       sessionExpired = false;
       _clearPendingRegistration();
@@ -260,15 +364,18 @@ class AuthController extends ChangeNotifier {
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
-      errorMessage = _describeGoogleError(e);
+      errorMessage = _extractApiError(e, 'We could not finish creating your account. Please try again.');
       notifyListeners();
       return false;
-    } finally {
-      // End the Google session so account switching stays possible.
-      try {
-        await GoogleSignIn().signOut();
-      } catch (_) {}
     }
+  }
+
+  /// Backing out of the Google profile form. Nothing was created
+  /// server-side, so this only clears the local draft.
+  void cancelGoogleRegistration() {
+    googleDraft = null;
+    errorMessage = null;
+    notifyListeners();
   }
 
   /// Google plugin errors are developer-facing, so surface the raw code
@@ -331,6 +438,7 @@ class AuthController extends ChangeNotifier {
     await TokenStorage.clear();
     _sessionTimer?.cancel();
     _clearPendingRegistration();
+    googleDraft = null;
     currentUser = null;
     status = AuthStatus.unauthenticated;
     notifyListeners();

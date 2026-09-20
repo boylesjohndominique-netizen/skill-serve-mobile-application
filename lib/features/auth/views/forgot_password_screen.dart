@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -27,12 +28,38 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    await _authService.requestPasswordReset(_email.text.trim());
-    setState(() {
-      _loading = false;
-      _sent = true;
-    });
-    if (mounted) AppSnackbar.success(context, 'Reset link sent — check your inbox.');
+    try {
+      await _authService.requestPasswordReset(_email.text.trim());
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _sent = true;
+      });
+      // The API answers the same way for unknown addresses, so the copy
+      // deliberately does not confirm that an account exists.
+      AppSnackbar.success(context, 'If that email has an account, a reset link is on its way.');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      AppSnackbar.error(context, _describeError(e));
+    }
+  }
+
+  /// Network problems are the realistic failure here; anything else gets a
+  /// neutral message rather than a raw backend error.
+  String _describeError(Object e) {
+    if (e is DioException) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.connectionError:
+          return 'Could not reach the server. Check your connection and try again.';
+        default:
+          break;
+      }
+    }
+    return 'We could not send the reset link. Please try again.';
   }
 
   @override
@@ -60,7 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   duration: const Duration(milliseconds: 300),
                   child: Text(
                     _sent
-                        ? 'We\'ve sent a password reset link to ${_email.text}. Follow the instructions to set a new password.'
+                        ? 'If ${_email.text} has a SkillServe account, we\'ve sent it a password reset link. Follow the instructions to set a new password.'
                         : 'Enter the email associated with your account and we\'ll send a link to reset your password.',
                     key: ValueKey('desc_$_sent'),
                     style: AppTextStyles.bodyLarge,
@@ -75,6 +102,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: AppIcons.mail_outline_rounded,
                     validator: Validators.email,
+                    // Locked while the request is in flight so the address
+                    // cannot change under it.
+                    enabled: !_loading,
                   ).animate().fadeIn(delay: 200.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                   const SizedBox(height: AppSizes.xl),
                   PrimaryButton(label: 'Send reset link', isLoading: _loading, onPressed: _submit)

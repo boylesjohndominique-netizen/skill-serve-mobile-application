@@ -17,7 +17,6 @@ import 'package:skilllink_mobile/features/settings/controllers/preferences_contr
 import 'package:skilllink_mobile/features/reports/controllers/report_controller.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:skilllink_mobile/features/settings/controllers/theme_controller.dart';
 import 'package:skilllink_mobile/core/theme/app_theme.dart';
 import 'package:skilllink_mobile/routes/app_router.dart';
 
@@ -63,13 +62,15 @@ final _routes = <String>[
   '/withdrawal-history',
   '/verification-status',
   '/provider-badges',
+  // Auth
+  '/verify-email?email=someone@example.com',
+  '/google-register',
 ];
 
 Widget _app(String route) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => AuthController()),
-      ChangeNotifierProvider(create: (_) => ThemeController()),
       ChangeNotifierProvider(create: (_) => PreferencesController()),
       ChangeNotifierProvider(create: (_) => MarketplaceController()),
       ChangeNotifierProvider(create: (_) => FavoritesController()),

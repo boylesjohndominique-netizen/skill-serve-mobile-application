@@ -37,7 +37,11 @@ class NotificationModel {
     }
     if (value.startsWith('service')) return NotificationType.service;
     if (value.contains('booking')) return NotificationType.booking;
-    if (value.contains('message')) return NotificationType.message;
+    // Support replies are staff writing to the user, and the server gates
+    // them with the same "Messages" preference.
+    if (value.contains('message') || value.startsWith('support_ticket')) {
+      return NotificationType.message;
+    }
     if (value.contains('verification')) return NotificationType.verification;
     return NotificationType.system;
   }

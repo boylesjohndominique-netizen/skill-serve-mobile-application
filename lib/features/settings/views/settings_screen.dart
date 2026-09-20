@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../controllers/preferences_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../settings/controllers/theme_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -21,7 +22,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
-    final theme = context.watch<ThemeController>();
+    final preferences = context.watch<PreferencesController>();
     final user = auth.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -116,14 +117,6 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 420.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
-                    icon: AppIcons.block_rounded,
-                    label: 'Deactivate account',
-                    onTap: () => context.push('/account-deactivation'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 440.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
                     icon: AppIcons.delete_outline_rounded,
                     label: 'Delete account',
                     danger: true,
@@ -139,8 +132,8 @@ class SettingsScreen extends StatelessWidget {
             _SwitchTile(
               icon: AppIcons.dark_mode_outlined,
               label: 'Dark mode',
-              value: theme.mode == ThemeMode.dark,
-              onChanged: (_) async => theme.toggle(),
+              value: preferences.isDarkMode,
+              onChanged: (_) async => preferences.toggleDarkMode(),
               isDark: isDark,
             )
                 .animate()

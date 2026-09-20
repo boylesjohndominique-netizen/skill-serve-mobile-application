@@ -68,6 +68,36 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `DELETE /api/notifications/announcements/{announcement}`
+
+Cancels a scheduled or pending announcement. Notifications already delivered stay in the recipients' inboxes.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `announcement` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Announcement removed
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 403: Unauthorized
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Announcement not found
+
+Response schema: `see openapi.json`
+
 ## `GET /api/notifications/recipients`
 
 List announcement recipients

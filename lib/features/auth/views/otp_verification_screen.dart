@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +18,9 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
 /// Post-registration email verification: the backend emails a 6-digit code,
-/// the user types it here. Resend is rate-limited (60s) by the backend.
+/// the user types it here. Confirming the code is what creates the account,
+/// so this screen is the last step of sign-up, not a formality afterwards.
+/// Resend is rate-limited (60s) by the backend.
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
 
@@ -29,11 +33,19 @@ class OtpVerificationScreen extends StatefulWidget {
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   static const _codeLength = 6;
 
+  /// The address being verified: the route's value, or the pending sign-up
+  /// the controller is holding when the route carries none.
+  String get _email {
+    if (widget.email.isNotEmpty) return widget.email;
+    return context.read<AuthController>().pendingEmail ?? '';
+  }
+
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   bool _submitting = false;
   bool _resending = false;
   int _resendCountdown = 0;
+  Timer? _resendTimer;
 
   @override
   void initState() {
@@ -43,22 +55,32 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   void dispose() {
+    // Cancel before disposing: a countdown left running would tick against
+    // a dead widget.
+    _resendTimer?.cancel();
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
+  /// Mirrors the backend's 60-second resend cooldown.
   void _startResendCountdown() {
+    _resendTimer?.cancel();
     setState(() => _resendCountdown = 60);
-    Future.doWhile(() async {
-      await Future<void>.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() => _resendCountdown--);
-      return _resendCountdown > 0;
+      if (_resendCountdown <= 0) timer.cancel();
     });
   }
 
   Future<void> _verify() async {
+    // The field auto-submits on the sixth digit, so guard against a second
+    // request landing while the first is still in flight.
+    if (_submitting) return;
     final code = _controller.text.trim();
     if (code.length != _codeLength) {
       AppSnackbar.error(context, 'Enter the complete 6-digit code.');
@@ -66,29 +88,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
     setState(() => _submitting = true);
     final auth = context.read<AuthController>();
-    final ok = await auth.verifyOtp(widget.email, code);
+    final email = _email;
+    final ok = await auth.verifyOtp(email, code);
     if (!mounted) return;
     setState(() => _submitting = false);
     if (ok) {
-      // Successful verification either completed the pending registration
-      // (controller now holds a real session) or verified an already-signed-
-      // in account. Route by the resulting role; the router's
-      // requiresEmailVerification pin is released at this point.
-      if (auth.status == AuthStatus.authenticated) {
-        AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
-        final role = auth.currentUser?.role;
-        if (role == UserRole.provider) {
-          context.go('/provider-onboarding');
-        } else {
-          context.go('/client');
-        }
-      } else {
-        // Verified but no session (e.g. token hand-off failed): sign in
-        // manually. Keep the requiresEmailVerification pin released — the
-        // controller already cleared it.
-        AppSnackbar.success(context, auth.errorMessage ?? 'Email verified! Please sign in.');
-        context.go('/login');
-      }
+      // The account now exists and the response carried a real session, so
+      // the router's requiresEmailVerification pin is released here.
+      AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
+      context.go(auth.currentUser?.role == UserRole.provider
+          ? '/provider-onboarding'
+          : '/client');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Verification failed.');
       _controller.clear();
@@ -98,11 +108,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Future<void> _resend() async {
     setState(() => _resending = true);
     final auth = context.read<AuthController>();
-    final ok = await auth.resendOtp(widget.email);
+    final email = _email;
+    final ok = await auth.resendOtp(email);
     if (!mounted) return;
     setState(() => _resending = false);
     if (ok) {
-      AppSnackbar.success(context, 'A new code is on its way to ${widget.email}.');
+      AppSnackbar.success(context, 'A new code is on its way to $email.');
       _controller.clear();
       _startResendCountdown();
     } else {
@@ -123,18 +134,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
-                  // Backing out cancels the pending registration: the half-
-                  // created session is dropped so the user can never reach
-                  // the app without verifying. (Also covers the system
-                  // back gesture — the router pins this screen while a
+                  // Backing out cancels the sign-up: the parked registration
+                  // is discarded server-side so the email is free to use
+                  // again straight away. (Also covers the system back
+                  // gesture — the router pins this screen while a
                   // verification is pending.)
-                  onPressed: () async {
+                  onPressed: _submitting
+                      ? null
+                      : () async {
                     final auth = context.read<AuthController>();
                     await auth.cancelPendingVerification();
                     if (!context.mounted) return;
                     context.go('/login');
                   },
                   icon: const AppIcon(AppIcons.arrow_back_rounded),
+                  tooltip: 'Cancel sign-up',
                   padding: EdgeInsets.zero,
                 ),
               ),
@@ -163,14 +177,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ).animate().fadeIn(delay: 180.ms, duration: 350.ms),
               const SizedBox(height: 4),
               Text(
-                widget.email,
+                _email,
                 style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary),
               ).animate().fadeIn(delay: 220.ms, duration: 350.ms),
               const SizedBox(height: AppSizes.xl),
 
               // Hidden real field + visual boxes (supports paste).
               GestureDetector(
-                onTap: () => _focusNode.requestFocus(),
+                onTap: _submitting ? null : () => _focusNode.requestFocus(),
                 child: Form(
                   child: Column(
                     children: [
@@ -185,6 +199,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               maxLength: _codeLength,
                               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                               autofocus: true,
+                              // Locked while verifying so the code cannot
+                              // change under the request using it.
+                              enabled: !_submitting,
                               onChanged: (v) {
                                 setState(() {});
                                 if (v.length == _codeLength) _verify();
@@ -220,7 +237,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ).animate().fadeIn(delay: 380.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
               const SizedBox(height: AppSizes.lg),
               TextButton(
-                onPressed: (_resending || _resendCountdown > 0) ? null : _resend,
+                onPressed: (_submitting || _resending || _resendCountdown > 0)
+                    ? null
+                    : _resend,
                 child: Text(
                   _resendCountdown > 0
                       ? 'Resend code in ${_resendCountdown}s'

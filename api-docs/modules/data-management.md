@@ -105,7 +105,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/data-management/deleted`
 
-Returns a database-paginated union of soft-deleted records; records are not loaded into an in-memory capped collection.
+Returns a database-paginated union of soft-deleted records; records are not loaded into an in-memory capped collection. Each row includes can_permanently_delete, blocked_by (related records preventing deletion, or null) and purge_at (when it is purged automatically; null while blocked).
 
 **Authentication:** Bearer token
 
@@ -137,7 +137,7 @@ Response schema: `see openapi.json`
 
 ## `DELETE /api/data-management/deleted/{type}/{id}`
 
-Permanently delete a record
+Deleted records are also purged automatically 30 days after deletion. Refused with 409 while related records (e.g. a user's bookings) still reference the record.
 
 **Authentication:** Bearer token
 
@@ -145,7 +145,7 @@ Permanently delete a record
 
 | Name | Location | Required | Type / allowed values |
 |---|---|---:|---|
-| `type` | path | yes | string (`messages`, `reports`) |
+| `type` | path | yes | string (`users`, `services`, `bookings`, `reviews`, `reports`, `messages`, `service_categories`, `service_subcategories`) |
 | `id` | path | yes | integer |
 
 ### Request body and validation
@@ -167,6 +167,10 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 404: Record not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 409: Related records still reference this record
 
 Response schema: `see openapi.json`
 

@@ -9,6 +9,7 @@ import '../features/auth/views/welcome_screen.dart';
 import '../features/auth/views/login_screen.dart';
 import '../features/auth/views/register_screen.dart';
 import '../features/auth/views/otp_verification_screen.dart';
+import '../features/auth/views/google_registration_screen.dart';
 import '../features/auth/views/forgot_password_screen.dart';
 
 // Marketplace
@@ -32,7 +33,6 @@ import '../features/booking/views/booking_details_screen.dart';
 import '../features/profile/views/edit_profile_screen.dart';
 import '../features/profile/views/change_password_screen.dart';
 import '../features/profile/views/account_data_screen.dart';
-import '../features/profile/views/account_deactivation_screen.dart';
 import '../features/profile/views/account_deletion_screen.dart';
 
 // Messaging
@@ -103,6 +103,9 @@ final List<RouteBase> appRoutes = [
   GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
   GoRoute(
       path: '/register', builder: (context, state) => const RegisterScreen()),
+  GoRoute(
+      path: '/google-register',
+      builder: (context, state) => const GoogleRegistrationScreen()),
   GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordScreen()),
@@ -213,9 +216,6 @@ final List<RouteBase> appRoutes = [
       path: '/account-data',
       builder: (context, state) => const AccountDataScreen()),
   GoRoute(
-      path: '/account-deactivation',
-      builder: (context, state) => const AccountDeactivationScreen()),
-  GoRoute(
       path: '/account-deletion',
       builder: (context, state) => const AccountDeletionScreen()),
 
@@ -306,7 +306,6 @@ final _protectedPrefixes = <String>[
   '/application-preferences',
   '/security-activity',
   '/account-data',
-  '/account-deactivation',
   '/account-deletion',
 ];
 
@@ -320,7 +319,13 @@ GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(
         // reach any other screen: keep the user on /verify-email until the
         // code is confirmed. (Also guards against system back navigation.)
         if (auth.requiresEmailVerification) {
-          return path == '/verify-email' ? null : '/verify-email';
+          if (path == '/verify-email') return null;
+          // Carry the address so the OTP screen can label itself and
+          // resend, even when the redirect came from an unrelated route.
+          final email = auth.pendingEmail;
+          return email == null || email.isEmpty
+              ? '/verify-email'
+              : '/verify-email?email=${Uri.encodeComponent(email)}';
         }
 
         final protected =

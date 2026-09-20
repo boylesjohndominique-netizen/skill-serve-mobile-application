@@ -25,20 +25,54 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
 
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
   Future<void> _submit(AuthController auth) async {
     if (!_formKey.currentState!.validate()) return;
     final success = await auth.login(_email.text.trim(), _password.text);
     if (!mounted) return;
     if (success) {
       context.go(auth.isProvider ? '/provider' : '/client');
-    } else {
-      AppSnackbar.error(context, auth.errorMessage ?? 'Login failed');
+      return;
+    }
+    AppSnackbar.error(context, auth.errorMessage ?? 'Login failed');
+    // The credentials belong to a sign-up that never confirmed its code:
+    // pick verification back up instead of leaving the user stuck.
+    if (auth.requiresEmailVerification) {
+      context.go(
+          '/verify-email?email=${Uri.encodeComponent(auth.pendingEmail ?? _email.text.trim())}');
+    }
+  }
+
+  Future<void> _signInWithGoogle(AuthController auth) async {
+    final outcome = await auth.loginWithGoogle();
+    if (!mounted) return;
+    switch (outcome) {
+      case GoogleAuthOutcome.signedIn:
+        context.go(auth.isProvider ? '/provider' : '/client');
+      case GoogleAuthOutcome.registrationRequired:
+        // The Google account is new to SkillServe: finish signing up
+        // rather than failing with "already registered".
+        context.go('/google-register');
+      case GoogleAuthOutcome.cancelled:
+        break;
+      case GoogleAuthOutcome.failed:
+        AppSnackbar.error(
+            context, auth.errorMessage ?? 'Google sign-in failed.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    // While a sign-in is in flight every input is locked, so the values
+    // cannot change under the request that is already using them.
+    final isBusy = auth.status == AuthStatus.authenticating;
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -85,6 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: AppIcons.mail_outline_rounded,
                   validator: Validators.email,
+                  enabled: !isBusy,
                 )
                     .animate()
                     .fadeIn(delay: 220.ms, duration: 350.ms)
@@ -97,6 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   prefixIcon: AppIcons.lock_outline_rounded,
                   validator: Validators.password,
+                  enabled: !isBusy,
                 )
                     .animate()
                     .fadeIn(delay: 300.ms, duration: 350.ms)
@@ -104,14 +140,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => context.push('/forgot-password'),
+                    onPressed:
+                        isBusy ? null : () => context.push('/forgot-password'),
                     child: const Text('Forgot password?'),
                   ),
                 ).animate().fadeIn(delay: 380.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.md),
                 PrimaryButton(
                   label: 'Log in',
-                  isLoading: auth.status == AuthStatus.authenticating,
+                  isLoading: isBusy,
                   onPressed: () => _submit(auth),
                 )
                     .animate()
@@ -127,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         WidgetSpan(
                           alignment: PlaceholderAlignment.middle,
                           child: GestureDetector(
-                            onTap: () => context.go('/register'),
+                            onTap: isBusy ? null : () => context.go('/register'),
                             child: Text('Sign up',
                                 style: AppTextStyles.label.copyWith(
                                     color: AppColors.secondary,
@@ -151,18 +188,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ).animate().fadeIn(delay: 520.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.md),
                 OutlinedButton.icon(
-                  onPressed: auth.status == AuthStatus.authenticating
-                      ? null
-                      : () async {
-                          final ok = await auth.loginWithGoogle();
-                          if (!context.mounted) return;
-                          if (ok) {
-                            context.go(auth.isProvider ? '/provider' : '/client');
-                          } else if (auth.errorMessage != null) {
-                            AppSnackbar.error(context, auth.errorMessage!);
-                          }
-                        },
-                  icon: auth.status == AuthStatus.authenticating
+                  onPressed: isBusy ? null : () => _signInWithGoogle(auth),
+                  icon: isBusy
                       ? const SizedBox(
                           width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
                       : SizedBox(
@@ -187,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: AppSizes.sm),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.go('/browse'),
+                    onPressed: isBusy ? null : () => context.go('/browse'),
                     child: Text('Continue as guest',
                         style: AppTextStyles.label
                             .copyWith(color: AppColors.textMuted)),

@@ -3,7 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
-import '../../../core/constants/app_animations.dart';
+import 'widgets/auth_role_toggle.dart';
+import 'widgets/provider_details_fields.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -29,20 +30,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _businessName = TextEditingController();
+  final _specialization = TextEditingController();
+  final _experienceYears = TextEditingController();
+  final _bio = TextEditingController();
   UserRole _role = UserRole.client;
+
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    _email.dispose();
+    _password.dispose();
+    _confirm.dispose();
+    _businessName.dispose();
+    _specialization.dispose();
+    _experienceYears.dispose();
+    _bio.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit(AuthController auth) async {
     if (!_formKey.currentState!.validate()) return;
+    final isProvider = _role == UserRole.provider;
     final success = await auth.register(
       firstName: _firstName.text.trim(),
       lastName: _lastName.text.trim(),
       email: _email.text.trim(),
       password: _password.text,
       role: _role,
+      businessName: isProvider ? _businessName.text.trim() : null,
+      specialization: isProvider ? _specialization.text.trim() : '',
+      experienceYears: isProvider
+          ? ProviderDetailsFields.parseExperience(_experienceYears.text)
+          : 0,
+      bio: isProvider ? _bio.text.trim() : null,
     );
     if (!mounted) return;
     if (success) {
-      // Both roles verify their email with a 6-digit OTP before continuing.
+      // No account exists yet: both roles confirm the emailed 6-digit code
+      // first, and that is what creates it. A code that was already sent
+      // moments ago still counts, and says so.
+      if (auth.errorMessage != null) {
+        AppSnackbar.success(context, auth.errorMessage!);
+      }
       context.go('/verify-email?email=${Uri.encodeComponent(_email.text.trim())}');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Registration failed');
@@ -50,18 +81,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _signInWithGoogle(AuthController auth) async {
-    final ok = await auth.loginWithGoogle();
+    final outcome = await auth.loginWithGoogle();
     if (!mounted) return;
-    if (ok) {
-      context.go(auth.isProvider ? '/provider' : '/client');
-    } else if (auth.errorMessage != null) {
-      AppSnackbar.error(context, auth.errorMessage!);
+    switch (outcome) {
+      case GoogleAuthOutcome.signedIn:
+        context.go(auth.isProvider ? '/provider' : '/client');
+      case GoogleAuthOutcome.registrationRequired:
+        // Brand-new Google account: collect the name and role before
+        // anything is written.
+        context.go('/google-register');
+      case GoogleAuthOutcome.cancelled:
+        break;
+      case GoogleAuthOutcome.failed:
+        AppSnackbar.error(
+            context, auth.errorMessage ?? 'Google sign-in failed.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    // Everything locks while the sign-up request is in flight.
+    final isBusy = auth.status == AuthStatus.authenticating;
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -72,7 +113,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton(
-                  onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
+                  onPressed: isBusy
+                      ? null
+                      : () => context.canPop() ? context.pop() : context.go('/welcome'),
                   icon: const AppIcon(AppIcons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
                 ).animate().fadeIn(duration: 250.ms),
@@ -84,18 +127,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     .animate().fadeIn(delay: 150.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xl),
 
-                _RoleToggle(role: _role, onChanged: (r) => setState(() => _role = r))
+                AuthRoleToggle(
+                  role: _role,
+                  enabled: !isBusy,
+                  onChanged: (r) => setState(() => _role = r),
+                )
                     .animate().fadeIn(delay: 220.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.xl),
 
                 Row(
                   children: [
                     Expanded(
-                      child: AppTextField(label: 'First name', hint: 'Juan', controller: _firstName, validator: Validators.required),
+                      child: AppTextField(label: 'First name', hint: 'Juan', controller: _firstName, validator: Validators.required, enabled: !isBusy),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Expanded(
-                      child: AppTextField(label: 'Last name', hint: 'Dela Cruz', controller: _lastName, validator: Validators.required),
+                      child: AppTextField(label: 'Last name', hint: 'Dela Cruz', controller: _lastName, validator: Validators.required, enabled: !isBusy),
                     ),
                   ],
                 ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
@@ -107,6 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: AppIcons.mail_outline_rounded,
                   validator: Validators.email,
+                  enabled: !isBusy,
                 ).animate().fadeIn(delay: 370.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
@@ -116,6 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: true,
                   prefixIcon: AppIcons.lock_outline_rounded,
                   validator: Validators.password,
+                  enabled: !isBusy,
                 ).animate().fadeIn(delay: 440.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
@@ -125,16 +174,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: true,
                   prefixIcon: AppIcons.lock_outline_rounded,
                   validator: (v) => Validators.confirmPassword(v, _password.text),
+                  enabled: !isBusy,
                 ).animate().fadeIn(delay: 510.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
+                if (_role == UserRole.provider) ...[
+                  const SizedBox(height: AppSizes.xl),
+                  ProviderDetailsFields(
+                    businessName: _businessName,
+                    specialization: _specialization,
+                    experienceYears: _experienceYears,
+                    bio: _bio,
+                    enabled: !isBusy,
+                  ).animate().fadeIn(duration: 250.ms),
+                ],
                 const SizedBox(height: AppSizes.xl),
                 PrimaryButton(
                   label: 'Create account',
-                  isLoading: auth.status == AuthStatus.authenticating,
+                  isLoading: isBusy,
                   onPressed: () => _submit(auth),
                 ).animate().fadeIn(delay: 580.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
                 const SizedBox(height: AppSizes.md),
                 _GoogleButton(
-                  isLoading: auth.status == AuthStatus.authenticating,
+                  isLoading: isBusy,
                   onPressed: () => _signInWithGoogle(auth),
                 ).animate().fadeIn(delay: 620.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.md),
@@ -155,7 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         WidgetSpan(
                           alignment: PlaceholderAlignment.middle,
                           child: GestureDetector(
-                            onTap: () => context.go('/login'),
+                            onTap: isBusy ? null : () => context.go('/login'),
                             child: Text('Log in', style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700)),
                           ),
                         ),
@@ -246,67 +306,4 @@ class _GoogleLogoPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _RoleToggle extends StatelessWidget {
-  final UserRole role;
-  final void Function(UserRole) onChanged;
-
-  const _RoleToggle({required this.role, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-      child: Row(
-        children: [
-          Expanded(child: _tab('I need a service', UserRole.client, AppIcons.person_search_rounded)),
-          Expanded(child: _tab('I offer a service', UserRole.provider, AppIcons.handyman_rounded)),
-        ],
-      ),
-    );
-  }
-
-  Widget _tab(String label, UserRole value, AppIconData icon) {
-    final selected = role == value;
-    return GestureDetector(
-      onTap: () => onChanged(value),
-      child: AnimatedContainer(
-        duration: AppAnimations.md,
-        curve: AppAnimations.defaultCurve,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.secondary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-          boxShadow: selected
-              ? [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
-              : [],
-        ),
-        child: Column(
-          children: [
-            AnimatedScale(
-              scale: selected ? 1.1 : 1.0,
-              duration: AppAnimations.md,
-              curve: AppAnimations.springCurve,
-              child: AppIcon(icon, size: 20, color: selected ? AppColors.primary : AppColors.textMuted),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption.copyWith(
-                color: selected ? AppColors.primary : AppColors.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
