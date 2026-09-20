@@ -59,17 +59,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       if (mounted) setState(() => _failed = true);
       return;
     }
-    // Badges have no client endpoint yet; their absence must not block the profile.
-    List<BadgeModel> badges = const [];
-    try {
-      badges = await service.getProviderBadges(provider.id);
-    } catch (_) {}
     if (!mounted) return;
     setState(() {
       _provider = provider;
       _services = provider.services;
       _reviews = provider.reviews;
-      _badges = badges.where((b) => b.earned).toList();
+      // Badges come back on the profile payload, so no second request.
+      _badges = provider.badges.where((b) => b.earned).toList();
       _loaded = true;
     });
   }
@@ -173,16 +169,38 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 ],
               ).animate().fadeIn(delay: 260.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
 
+              // ── Verification status ──
+              const SizedBox(height: AppSizes.lg),
+              _VerificationNotice(provider: p)
+                  .animate().fadeIn(delay: 300.ms, duration: 300.ms),
+
               // ── About ──
               const SizedBox(height: AppSizes.xl),
               const SectionHeaderLocal(title: 'About')
                   .animate().fadeIn(delay: 320.ms, duration: 300.ms),
               const SizedBox(height: 6),
-              Text(p.bio, style: AppTextStyles.bodyLarge)
-                  .animate().fadeIn(delay: 370.ms, duration: 300.ms),
+              Text(
+                p.bio.isEmpty ? 'This provider has not written an introduction yet.' : p.bio,
+                style: AppTextStyles.bodyLarge,
+              ).animate().fadeIn(delay: 370.ms, duration: 300.ms),
 
-              // ── Recognition badges ──
-              if (_badges.isNotEmpty) ...[
+              // ── Skills ──
+              if (p.skills.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.xl),
+                const SectionHeaderLocal(title: 'Skills')
+                    .animate().fadeIn(delay: 380.ms, duration: 300.ms),
+                const SizedBox(height: AppSizes.md),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final skill in p.skills) _SkillChip(label: skill),
+                  ],
+                ).animate().fadeIn(delay: 400.ms, duration: 300.ms),
+              ],
+
+              // ── Recognition: administrator badges and featured status ──
+              if (_badges.isNotEmpty || p.isFeatured) ...[
                 const SizedBox(height: AppSizes.xl),
                 const SectionHeaderLocal(title: 'Recognition')
                     .animate().fadeIn(delay: 390.ms, duration: 300.ms),
@@ -191,6 +209,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    if (p.isFeatured)
+                      const _RecognitionChip(
+                        label: 'Featured provider',
+                        icon: AppIcons.workspace_premium_rounded,
+                        color: AppColors.secondary,
+                      ),
                     for (var i = 0; i < _badges.length; i++)
                       _BadgeChip(badge: _badges[i])
                           .animate()
@@ -199,6 +223,14 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   ],
                 ),
               ],
+
+              // ── Availability ──
+              const SizedBox(height: AppSizes.xl),
+              const SectionHeaderLocal(title: 'Availability')
+                  .animate().fadeIn(delay: 430.ms, duration: 300.ms),
+              const SizedBox(height: AppSizes.md),
+              _AvailabilityPanel(provider: p)
+                  .animate().fadeIn(delay: 450.ms, duration: 300.ms),
 
               // ── Services ──
               const SizedBox(height: AppSizes.xl),
@@ -282,9 +314,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               SizedBox(
                 width: 190,
                 child: PrimaryButton(
-                  label: 'Book ${p.user.firstName}',
+                  label: p.isAcceptingBookings ? 'Book ${p.user.firstName}' : 'Not taking bookings',
                   icon: AppIcons.calendar_month_rounded,
-                  onPressed: () => context.push('/booking-form/${p.id}'),
+                  // The API refuses bookings for a paused provider, so the
+                  // button reflects that instead of failing on submit.
+                  onPressed: p.isAcceptingBookings
+                      ? () => context.push('/booking-form/${p.id}')
+                      : null,
                 ),
               ),
             ],
@@ -303,6 +339,180 @@ class SectionHeaderLocal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(title, style: AppTextStyles.titleLarge);
+  }
+}
+
+/// States whether the provider has completed SkillServe's verification, and
+/// when it was granted.
+class _VerificationNotice extends StatelessWidget {
+  final ProviderModel provider;
+  const _VerificationNotice({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final verified = provider.isVerified;
+    final color = verified ? AppColors.success : AppColors.secondary;
+    final verifiedAt = provider.verifiedAt;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          AppIcon(
+            verified ? AppIcons.verified_user_rounded : AppIcons.hourglass_top_rounded,
+            size: 20,
+            color: color,
+          ),
+          const SizedBox(width: AppSizes.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  verified ? 'Verified provider' : 'Verification in progress',
+                  style: AppTextStyles.titleMedium.copyWith(color: color),
+                ),
+                Text(
+                  verified
+                      ? (verifiedAt == null
+                          ? 'Identity and credentials checked by the SkillServe team.'
+                          : 'Checked by the SkillServe team on ${Formatters.dateShort(verifiedAt)}.')
+                      : 'This provider has not completed SkillServe\'s verification yet.',
+                  style: AppTextStyles.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The provider's published weekly hours, and whether they are taking new
+/// bookings at all.
+class _AvailabilityPanel extends StatelessWidget {
+  final ProviderModel provider;
+  const _AvailabilityPanel({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final schedule = provider.availability;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(
+          color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5),
+          width: 0.8,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AppIcon(
+                provider.isAcceptingBookings ? AppIcons.event_available_rounded : AppIcons.event_busy_rounded,
+                size: 18,
+                color: provider.isAcceptingBookings ? AppColors.success : AppColors.error,
+              ),
+              const SizedBox(width: AppSizes.sm),
+              Expanded(
+                child: Text(
+                  provider.isAcceptingBookings
+                      ? 'Accepting new bookings'
+                      : 'Not accepting new bookings right now',
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: provider.isAcceptingBookings ? AppColors.success : AppColors.error,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.sm),
+          if (schedule.isEmpty)
+            Text(
+              'No set hours — send a message to agree on a time.',
+              style: AppTextStyles.bodyMedium,
+            )
+          else
+            for (final window in schedule)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 96,
+                      child: Text(window.dayName, style: AppTextStyles.bodyMedium),
+                    ),
+                    Text(
+                      window.label,
+                      style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkillChip extends StatelessWidget {
+  final String label;
+  const _SkillChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+      ),
+      child: Text(label, style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _RecognitionChip extends StatelessWidget {
+  final String label;
+  final AppIconData icon;
+  final Color color;
+
+  const _RecognitionChip({required this.label, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppIcon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.label.copyWith(color: color, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -367,7 +577,12 @@ class _ServiceRow extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(service.duration, style: AppTextStyles.bodySmall),
                     const SizedBox(width: 12),
-                    Text(Formatters.peso(service.price), style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700)),
+                    Text(
+                      // Custom-priced work is quoted by the provider, so no
+                      // amount is shown for it.
+                      service.isQuoteOnly ? 'On quote' : Formatters.peso(service.price),
+                      style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
               ],

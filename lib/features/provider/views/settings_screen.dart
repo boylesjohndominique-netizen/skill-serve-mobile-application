@@ -104,6 +104,11 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                 onTap: () => context.push('/calendar'),
                 isDark: isDark)),
             stagger(_Tile(
+                icon: AppIcons.schedule_outlined,
+                label: 'Availability',
+                onTap: () => context.push('/availability'),
+                isDark: isDark)),
+            stagger(_Tile(
                 icon: AppIcons.reviews_outlined,
                 label: 'Reviews',
                 onTap: () => context.push('/reviews/${provider?.id ?? ''}'),

@@ -15,6 +15,8 @@ import '../../../core/widgets/misc/verification_seal.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../marketplace/services/service_service.dart';
+import '../services/provider_service_service.dart';
+import '../../../core/utils/api_error.dart';
 import '../../provider/models/verification_document_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
@@ -36,6 +38,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
   List<dynamic> _categories = [];
 
   int _step = 0;
+  bool _savingProfile = false;
   final List<VerificationDocumentModel> _docs = [];
 
   bool get _verified => _docs.every((d) => d.status == 'approved');
@@ -48,11 +51,55 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
 
   Future<void> _loadCategories() async {
     final categories = await ServiceService().getCategories();
-    if (mounted) {
+    if (!mounted) return;
+    setState(() {
+      _categories = categories;
+      if (categories.isNotEmpty) _category = categories.first.name;
+    });
+    _prefillFromProfile();
+  }
+
+  /// Seeds the form with what the provider already has, so continuing past
+  /// this step never blanks a field they filled in earlier.
+  Future<void> _prefillFromProfile() async {
+    try {
+      final profile = await ProviderServiceService().getMyProfile();
+      if (!mounted) return;
       setState(() {
-        _categories = categories;
-        if (categories.isNotEmpty) _category = categories.first.name;
+        if (profile.bio.isNotEmpty) _bioController.text = profile.bio;
+        if (profile.yearsExperience > 0) {
+          _yearsExperience = profile.yearsExperience;
+        }
+        if (profile.categoryName.isNotEmpty) _category = profile.categoryName;
       });
+    } catch (_) {
+      // A provider without a profile yet simply starts from the defaults.
+    }
+  }
+
+  /// Saves step 1 before advancing. Previously this screen collected the
+  /// professional profile and then threw it away.
+  Future<void> _saveProfile() async {
+    if (_savingProfile) return;
+    setState(() => _savingProfile = true);
+    try {
+      await ProviderServiceService().updateMyProfile({
+        'bio': _bioController.text.trim(),
+        'experience_years': _yearsExperience,
+        if (_category.isNotEmpty) 'specialization': _category,
+      });
+      if (!mounted) return;
+      setState(() {
+        _savingProfile = false;
+        _step++;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _savingProfile = false);
+      AppSnackbar.error(
+        context,
+        apiErrorMessage(e, 'We could not save your profile. Please try again.'),
+      );
     }
   }
 
@@ -91,9 +138,12 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
           padding: const EdgeInsets.fromLTRB(AppSizes.pageHPad, AppSizes.sm, AppSizes.pageHPad, AppSizes.lg),
           child: _step < 2
               ? PrimaryButton(
-                  label: _step == 0 ? 'Continue' : 'Submit for review',
+                  label: _step == 0 ? 'Save and continue' : 'Submit for review',
                   icon: AppIcons.arrow_forward_rounded,
-                  onPressed: () => setState(() => _step++),
+                  isLoading: _savingProfile,
+                  onPressed: _step == 0
+                      ? _saveProfile
+                      : () => setState(() => _step++),
                 )
               : PrimaryButton(
                   label: _verified ? 'Go to dashboard' : 'Continue to dashboard',

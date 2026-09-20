@@ -63,6 +63,10 @@ List verified active providers
 | `search` | query | no | string |
 | `category_id` | query | no | integer |
 | `subcategory_id` | query | no | integer |
+| `featured` | query | no | boolean |
+| `min_rating` | query | no | number |
+| `available` | query | no | boolean |
+| `available_day` | query | no | integer |
 | `sort` | query | no | string (`created_at`, `average_rating`, `business_name`) |
 | `direction` | query | no | string (`asc`, `desc`) |
 | `per_page` | query | no | integer |
@@ -117,6 +121,7 @@ List bookable published services
 | `category_id` | query | no | integer |
 | `subcategory_id` | query | no | integer |
 | `provider_id` | query | no | integer |
+| `min_rating` | query | no | number |
 | `sort` | query | no | string (`created_at`, `title`, `price`, `average_rating`) |
 | `direction` | query | no | string (`asc`, `desc`) |
 | `per_page` | query | no | integer |

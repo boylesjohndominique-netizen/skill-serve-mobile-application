@@ -1,5 +1,5 @@
-import '../../provider/models/badge_model.dart';
 import '../models/category_model.dart';
+import '../models/discovery_filters.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
 import '../../../core/services/api_client.dart';
@@ -10,9 +10,13 @@ import '../../../core/services/api_client.dart';
 /// - GET /api/client/v1/categories
 /// - GET /api/client/v1/providers
 /// - GET /api/client/v1/providers/{provider}
+/// - GET /api/client/v1/services
 /// - GET /api/client/v1/services/{service}
-/// - GET /api/client/v1/services?provider_id=X
 class ServiceService {
+  /// Default page size for discovery lists — large enough to fill a screen
+  /// without pulling the whole catalog.
+  static const int discoveryPageSize = 30;
+
   // GET /api/client/v1/categories
   Future<List<CategoryModel>> getCategories() async {
     final response = await ApiClient.instance.dio
@@ -23,22 +27,22 @@ class ServiceService {
         .toList();
   }
 
-  // GET /api/client/v1/providers?search=&category_id=
-  Future<List<ProviderModel>> getProviders(
-      {String? category, String? search}) async {
-    final params = <String, dynamic>{};
-    if (search != null && search.isNotEmpty) params['search'] = search;
-    if (category != null && category != 'All') {
-      final cats = await getCategories();
-      final match = cats.where((c) => c.name == category).firstOrNull;
-      if (match != null) params['category_id'] = match.id;
-    }
-    final response = await ApiClient.instance.dio
-        .get('/client/v1/providers', queryParameters: params);
-    final data = response.data['data'] as List;
-    return data
-        .map((json) => ProviderModel.fromJson(json as Map<String, dynamic>))
-        .toList();
+  /// GET /api/client/v1/providers — verified providers, narrowed by the
+  /// discovery filters the client applied.
+  Future<List<ProviderModel>> getProviders({
+    String? search,
+    DiscoveryFilters filters = const DiscoveryFilters(),
+    int perPage = discoveryPageSize,
+  }) async {
+    final response = await ApiClient.instance.dio.get(
+      '/client/v1/providers',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        ...filters.toProviderQuery(),
+        'per_page': perPage,
+      },
+    );
+    return _providers(response.data);
   }
 
   // GET /api/client/v1/providers/{provider}
@@ -47,6 +51,24 @@ class ServiceService {
         await ApiClient.instance.dio.get('/client/v1/providers/$id');
     return ProviderModel.fromJson(
         response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// GET /api/client/v1/services — published, bookable services, narrowed by
+  /// the discovery filters the client applied.
+  Future<List<ServiceModel>> getServices({
+    String? search,
+    DiscoveryFilters filters = const DiscoveryFilters(),
+    int perPage = discoveryPageSize,
+  }) async {
+    final response = await ApiClient.instance.dio.get(
+      '/client/v1/services',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        ...filters.toServiceQuery(),
+        'per_page': perPage,
+      },
+    );
+    return _services(response.data);
   }
 
   // GET /api/client/v1/services/{service}
@@ -61,21 +83,44 @@ class ServiceService {
   Future<List<ServiceModel>> getServicesForProvider(String providerId) async {
     final response = await ApiClient.instance.dio
         .get('/client/v1/services', queryParameters: {'provider_id': providerId});
-    final data = response.data['data'] as List;
-    return data
-        .map((json) => ServiceModel.fromJson(json as Map<String, dynamic>))
-        .toList();
+    return _services(response.data);
   }
 
-  // No documented client endpoint for featured providers.
-  Future<List<ProviderModel>> getFeaturedProviders() async {
-    throw UnsupportedError(
-        'Featured providers endpoint is not documented for clients.');
+  /// GET /api/client/v1/providers?featured=1 — the providers
+  /// administrators have highlighted, used by the home screen's rail.
+  Future<List<ProviderModel>> getFeaturedProviders({int limit = 10}) async {
+    final response = await ApiClient.instance.dio.get(
+      '/client/v1/providers',
+      queryParameters: {'featured': 1, 'per_page': limit},
+    );
+    return _providers(response.data);
   }
 
-  // No documented client endpoint for provider badges.
-  Future<List<BadgeModel>> getProviderBadges(String providerId) async {
-    throw UnsupportedError(
-        'Provider badges endpoint is not documented for clients.');
+  /// GET /api/client/v1/providers?sort=average_rating — providers recognized
+  /// for strong ratings, used by the discovery screen.
+  Future<List<ProviderModel>> getTopRatedProviders({
+    int limit = 10,
+    double minRating = 4,
+  }) async {
+    final response = await ApiClient.instance.dio.get(
+      '/client/v1/providers',
+      queryParameters: {
+        'min_rating': minRating,
+        'sort': 'average_rating',
+        'direction': 'desc',
+        'per_page': limit,
+      },
+    );
+    return _providers(response.data);
   }
+
+  List<ProviderModel> _providers(dynamic body) => [
+        for (final item in (body['data'] as List? ?? const []))
+          ProviderModel.fromJson(item as Map<String, dynamic>),
+      ];
+
+  List<ServiceModel> _services(dynamic body) => [
+        for (final item in (body['data'] as List? ?? const []))
+          ServiceModel.fromJson(item as Map<String, dynamic>),
+      ];
 }

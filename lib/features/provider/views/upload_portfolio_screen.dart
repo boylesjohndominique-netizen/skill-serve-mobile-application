@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../controllers/portfolio_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -10,7 +13,6 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
-import '../../provider/services/portfolio_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
@@ -26,7 +28,6 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
   final _description = TextEditingController();
-  final _portfolioService = PortfolioService();
   XFile? _pickedImage;
   bool _submitting = false;
 
@@ -37,21 +38,33 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (!_formKey.currentState!.validate()) return;
     if (_pickedImage == null) {
       AppSnackbar.error(context, 'Please select an image first.');
       return;
     }
     setState(() => _submitting = true);
-    await _portfolioService.uploadPortfolioItem(
-      title: _title.text.trim(),
-      description: _description.text.trim(),
-      imagePath: _pickedImage!.path,
-    );
+
+    // The controller owns the list the Portfolio screen shows, so adding
+    // through it keeps that grid in step without a reload.
+    final added = await context.read<PortfolioController>().add(
+          title: _title.text.trim(),
+          description: _description.text.trim(),
+          imagePath: _pickedImage!.path,
+        );
+
+    if (!mounted) return;
     setState(() => _submitting = false);
-    if (mounted) {
-      AppSnackbar.success(context, 'Submitted for admin review.');
+    if (added) {
+      AppSnackbar.success(context, 'Portfolio item published.');
       context.pop();
+    } else {
+      AppSnackbar.error(
+        context,
+        context.read<PortfolioController>().errorMessage ??
+            'We could not upload that item.',
+      );
     }
   }
 
@@ -119,7 +132,7 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
                   style: AppTextStyles.bodySmall,
                 ).animate().fadeIn(delay: 280.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.xxl),
-                PrimaryButton(label: 'Submit for review', isLoading: _submitting, onPressed: _submit)
+                PrimaryButton(label: 'Publish to my profile', isLoading: _submitting, onPressed: _submit)
                     .animate().fadeIn(delay: 350.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
               ],
             ),

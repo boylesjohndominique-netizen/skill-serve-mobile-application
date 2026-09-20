@@ -7,6 +7,7 @@ import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart'
 import 'package:skilllink_mobile/features/booking/controllers/booking_controller.dart';
 import 'package:skilllink_mobile/features/messaging/controllers/chat_controller.dart';
 import 'package:skilllink_mobile/features/marketplace/controllers/favorites_controller.dart';
+import 'package:skilllink_mobile/features/marketplace/controllers/discovery_controller.dart';
 import 'package:skilllink_mobile/features/marketplace/controllers/marketplace_controller.dart';
 import 'package:skilllink_mobile/features/notifications/controllers/notification_controller.dart';
 import 'package:skilllink_mobile/features/payments/controllers/payment_controller.dart';
@@ -27,6 +28,7 @@ Widget _app(Widget home, {double textScale = 1.0}) {
     providers: [
       ChangeNotifierProvider(create: (_) => AuthController()),
       ChangeNotifierProvider(create: (_) => MarketplaceController()),
+      ChangeNotifierProvider(create: (_) => DiscoveryController()),
       ChangeNotifierProvider(create: (_) => FavoritesController()),
       ChangeNotifierProvider(create: (_) => BookingController()),
       ChangeNotifierProvider(create: (_) => ProviderBookingController()),

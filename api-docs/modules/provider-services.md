@@ -2,6 +2,211 @@
 
 All examples and validation details in this file come from the Laravel backend OpenAPI attributes and request validation.
 
+## `GET /api/client/v1/provider/availability`
+
+Get the authenticated provider's published weekly hours
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Weekly schedule and booking availability
+
+Response schema: `#/components/schemas/ProviderAvailabilityEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+## `PUT /api/client/v1/provider/availability`
+
+Sending `availability` replaces the whole schedule; an empty array clears it, which means the provider publishes no hours rather than being unavailable. A provider with no published hours can be booked at any time.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `is_accepting_bookings` | no | boolean |
+| `availability` | no | array |
+
+### Responses
+
+#### HTTP 200: Updated schedule
+
+Response schema: `#/components/schemas/ProviderAvailabilityEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+## `GET /api/client/v1/provider/badges`
+
+Returns the badges this provider has earned and the active badges still available, so the app can show progress toward the rest.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Earned and available badges
+
+Response schema: `#/components/schemas/ClientBadgeSetEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+## `GET /api/client/v1/provider/portfolio`
+
+List the authenticated provider's own work samples
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Portfolio items, newest first
+
+Response schema: `#/components/schemas/ClientPortfolioListEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+## `POST /api/client/v1/provider/portfolio`
+
+Add a work sample to the provider's own portfolio
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 201: Item added
+
+Response schema: `#/components/schemas/ClientPortfolioEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+## `DELETE /api/client/v1/provider/portfolio/{item}`
+
+Remove one of the provider's own work samples
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `item` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Item removed
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Item not found, or it belongs to another provider
+
+Response schema: `see openapi.json`
+
 ## `GET /api/client/v1/provider/profile`
 
 Get the authenticated provider's own profile (any verification state)
@@ -29,6 +234,53 @@ Response schema: `see openapi.json`
 #### HTTP 403: Active, verified-email provider account required
 
 Response schema: `see openapi.json`
+
+## `PATCH /api/client/v1/provider/profile`
+
+Partial update. Verification status, featured flag and rating counters are not editable here — they are set by administrators or earned.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `business_name` | no | string, maxLength=255 |
+| `bio` | no | string, maxLength=5000 |
+| `specialization` | no | string, maxLength=255 |
+| `experience_years` | no | integer, minimum=0, maximum=80 |
+| `hourly_rate` | no | number, format=float |
+| `location` | no | string, maxLength=255 |
+| `website` | no | string, format=uri |
+| `skills` | no | array |
+| `certifications` | no | array |
+| `languages` | no | array |
+
+### Responses
+
+#### HTTP 200: Updated profile
+
+Response schema: `#/components/schemas/ProviderProfileEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `GET /api/client/v1/provider/services`
 

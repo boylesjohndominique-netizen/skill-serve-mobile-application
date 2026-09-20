@@ -13,6 +13,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/section_header.dart';
 import '../../../core/widgets/misc/verification_seal.dart';
@@ -23,6 +24,7 @@ import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
+import 'widgets/discovery_filter_sheet.dart';
 
 /// Client's primary landing tab — the SkillServe "Discover" experience:
 /// hero, category chips, featured strip, and a 2-column provider grid.
@@ -34,7 +36,6 @@ class ClientHomeScreen extends StatefulWidget {
 }
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
-  String _selectedCategory = 'All';
   List<ProviderModel> _featured = [];
   bool _featuredLoading = true;
   List<BookingModel> _upcoming = [];
@@ -70,6 +71,16 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _openFilters() async {
+    final marketplace = context.read<MarketplaceController>();
+    final updated = await showDiscoveryFilterSheet(
+      context,
+      filters: marketplace.filters,
+      categories: marketplace.categories,
+    );
+    if (updated != null) await marketplace.applyFilters(updated);
   }
 
   Future<void> _refresh() async {
@@ -189,11 +200,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     return _CategoryChip(
                       label: name,
                       icon: icon,
-                      selected: _selectedCategory == name,
-                      onTap: () {
-                        setState(() => _selectedCategory = name);
-                        context.read<MarketplaceController>().filterByCategory(name);
-                      },
+                      selected: marketplace.selectedCategory == name,
+                      onTap: () => context.read<MarketplaceController>().filterByCategory(name),
                     )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 350 + (i.clamp(0, 6) * 40)), duration: 300.ms)
@@ -240,16 +248,29 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               const SizedBox(height: AppSizes.xl),
               SectionHeader(
                 title: 'Available providers',
-                eyebrow: _selectedCategory == 'All' ? 'All categories' : _selectedCategory,
+                eyebrow: marketplace.selectedCategory == 'All' ? 'All categories' : marketplace.selectedCategory,
+                actionLabel: marketplace.filters.activeCount == 0
+                    ? 'Filters'
+                    : 'Filters (${marketplace.filters.activeCount})',
+                onAction: _openFilters,
               ).animate().fadeIn(delay: 520.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.md),
               if (marketplace.isLoading)
                 const ShimmerCardList(count: 4, itemHeight: 100)
+              else if (marketplace.error != null)
+                ErrorState(
+                  message: marketplace.error!,
+                  onRetry: () => context.read<MarketplaceController>().loadInitial(),
+                )
               else if (marketplace.providers.isEmpty)
-                const EmptyState(
+                EmptyState(
                   icon: AppIcons.search_off_rounded,
                   title: 'No providers found',
-                  message: 'Try a different category — or be the first to book when a pro joins.',
+                  message: 'Try a different category — or clear your filters to see everyone.',
+                  actionLabel: marketplace.hasActiveFilters ? 'Clear filters' : null,
+                  onAction: marketplace.hasActiveFilters
+                      ? () => context.read<MarketplaceController>().clearFilters()
+                      : null,
                 )
               else
                 GridView.builder(

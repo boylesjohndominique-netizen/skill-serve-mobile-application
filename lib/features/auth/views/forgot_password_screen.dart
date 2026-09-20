@@ -1,9 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/api_error.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
@@ -41,26 +41,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      AppSnackbar.error(context, _describeError(e));
+      AppSnackbar.error(context,
+          apiErrorMessage(e, 'We could not send the reset link. Please try again.'));
     }
   }
 
-  /// Network problems are the realistic failure here; anything else gets a
-  /// neutral message rather than a raw backend error.
-  String _describeError(Object e) {
-    if (e is DioException) {
-      switch (e.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.sendTimeout:
-        case DioExceptionType.receiveTimeout:
-        case DioExceptionType.connectionError:
-          return 'Could not reach the server. Check your connection and try again.';
-        default:
-          break;
-      }
-    }
-    return 'We could not send the reset link. Please try again.';
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -9,6 +9,7 @@ import 'features/notifications/views/notification_poller.dart';
 import 'features/booking/controllers/booking_controller.dart';
 import 'features/booking/controllers/provider_booking_controller.dart';
 import 'features/marketplace/controllers/favorites_controller.dart';
+import 'features/marketplace/controllers/discovery_controller.dart';
 import 'features/marketplace/controllers/marketplace_controller.dart';
 import 'features/notifications/controllers/notification_controller.dart';
 import 'features/messaging/controllers/chat_controller.dart';
@@ -58,6 +59,13 @@ class SkillLinkApp extends StatelessWidget {
             ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
         ),
         ChangeNotifierProvider(create: (_) => MarketplaceController()),
+        // Recent searches are device-local, so Explore follows the session
+        // and forgets them when the user signs out.
+        ChangeNotifierProxyProvider<AuthController, DiscoveryController>(
+          create: (_) => DiscoveryController(),
+          update: (_, auth, discovery) => discovery!
+            ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
+        ),
         ChangeNotifierProvider(create: (_) => FavoritesController()),
         ChangeNotifierProvider(create: (_) => BookingController()),
         ChangeNotifierProvider(create: (_) => ProviderBookingController()),

@@ -10,13 +10,13 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
-import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-/// Provider's own portfolio grid — shows moderation status per item and
-/// links to Upload Portfolio for new submissions.
+/// The provider's own portfolio grid: work samples they have published,
+/// with a long-press to remove one and a link to upload more.
 class ProviderPortfolioScreen extends StatefulWidget {
   final bool embedded;
   const ProviderPortfolioScreen({super.key, this.embedded = false});
@@ -30,10 +30,8 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = context.read<AuthController>();
-      final userId = auth.currentUser?.id;
-      if (userId != null) {
-        context.read<PortfolioController>().load(userId);
+      if (context.read<AuthController>().currentUser != null) {
+        context.read<PortfolioController>().loadMine();
       }
     });
   }
@@ -45,6 +43,11 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
     final body = SafeArea(
       child: controller.isLoading
           ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 160))
+          : (controller.errorMessage != null && controller.items.isEmpty)
+              ? ErrorState(
+                  message: controller.errorMessage!,
+                  onRetry: controller.loadMine,
+                )
           : controller.items.isEmpty
               ? EmptyState(
                   icon: AppIcons.photo_library_outlined,
@@ -65,58 +68,41 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                   itemBuilder: (context, i) {
                     final item = controller.items[i];
                     return GestureDetector(
-                      onTap: item.status == 'rejected'
-                          ? () async {
-                              final confirmed = await AppDialog.confirm(
-                                context,
-                                title: 'Resubmit this item?',
-                                message: 'It will go back into review. You can edit it first from your gallery.',
-                                confirmLabel: 'Resubmit',
-                              );
-                              if (confirmed && context.mounted) {
-                                await controller.resubmit(item.id);
-                                if (context.mounted) AppSnackbar.success(context, 'Item resubmitted for review.');
-                              }
-                            }
-                          : null,
+                      onLongPress: () async {
+                        final confirmed = await AppDialog.confirm(
+                          context,
+                          title: 'Remove this item?',
+                          message:
+                              'It will be deleted from your public profile. This cannot be undone.',
+                          confirmLabel: 'Remove',
+                        );
+                        if (!confirmed || !context.mounted) return;
+                        final removed = await controller.remove(item.id);
+                        if (!context.mounted) return;
+                        if (removed) {
+                          AppSnackbar.success(context, 'Item removed.');
+                        } else {
+                          AppSnackbar.error(
+                              context,
+                              controller.errorMessage ??
+                                  'We could not remove that item.');
+                        }
+                      },
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            CachedNetworkImage(imageUrl: item.image, fit: BoxFit.cover, placeholder: (c, u) => const ShimmerPlaceholder()),
-                            if (item.status == 'rejected')
-                              Container(
-                                color: AppColors.error.withValues(alpha: 0.25),
+                            CachedNetworkImage(
+                              imageUrl: item.image,
+                              fit: BoxFit.cover,
+                              placeholder: (c, u) => const ShimmerPlaceholder(),
+                              errorWidget: (c, u, e) => Container(
+                                color: AppColors.surfaceAlt,
+                                child: const AppIcon(
+                                    AppIcons.photo_library_outlined),
                               ),
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: StatusBadge.fromStatus(item.status),
                             ),
-                            if (item.status == 'rejected')
-                              Positioned(
-                                left: 0,
-                                right: 0,
-                                top: 28,
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.error,
-                                      borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        AppIcon(AppIcons.rotate_left_rounded, size: 12, color: Colors.white),
-                                        SizedBox(width: 4),
-                                        Text('Tap to resubmit', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
                             Positioned(
                               left: 0,
                               right: 0,
@@ -132,7 +118,10 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                                 ),
                                 child: Text(
                                   item.title,
-                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),

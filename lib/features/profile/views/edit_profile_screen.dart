@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/utils/api_error.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
@@ -72,36 +72,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      AppSnackbar.error(context, _describeError(e));
+      AppSnackbar.error(context,
+          apiErrorMessage(e, 'Could not save your profile. Please try again.'));
     }
   }
 
-  /// Surfaces the server's own field message (e.g. an oversized photo) and
-  /// falls back to neutral copy for anything unexpected.
-  String _describeError(Object e) {
-    if (e is DioException) {
-      switch (e.type) {
-        case DioExceptionType.connectionTimeout:
-        case DioExceptionType.sendTimeout:
-        case DioExceptionType.receiveTimeout:
-        case DioExceptionType.connectionError:
-          return 'Could not reach the server. Check your connection and try again.';
-        default:
-          break;
-      }
-      final data = e.response?.data;
-      if (data is Map<String, dynamic>) {
-        final errors = data['errors'];
-        if (errors is Map && errors.isNotEmpty) {
-          final first = errors.values.first;
-          if (first is List && first.isNotEmpty) return first.first.toString();
-        }
-        final message = data['message'];
-        if (message is String && message.isNotEmpty) return message;
-      }
-    }
-    return 'Could not save your profile. Please try again.';
-  }
 
   @override
   Widget build(BuildContext context) {

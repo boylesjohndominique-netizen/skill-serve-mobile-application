@@ -4,26 +4,108 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/api_error.dart';
+import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
+import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 
 import '../../provider/models/badge_model.dart';
+import '../services/provider_service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-/// P9 — Provider recognition: earned badges + next-badge progress hints.
-class BadgesScreen extends StatelessWidget {
+/// P9 — Provider recognition: the badges this provider has earned, and the
+/// ones still available to earn.
+///
+/// The platform records which badges a provider holds, not how close they
+/// are to the rest, so unearned badges show their criteria rather than a
+/// progress bar.
+class BadgesScreen extends StatefulWidget {
   const BadgesScreen({super.key});
 
   @override
+  State<BadgesScreen> createState() => _BadgesScreenState();
+}
+
+class _BadgesScreenState extends State<BadgesScreen> {
+  List<BadgeModel> _badges = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final badges = await ProviderServiceService().getMyBadges();
+      if (!mounted) return;
+      setState(() {
+        _badges = badges;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = apiErrorMessage(e, 'We could not load your badges. Please try again.');
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final badges = <BadgeModel>[];
+    final badges = _badges;
     final earned = badges.where((b) => b.earned).toList();
     final next = badges.where((b) => !b.earned).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('My Badges')),
+        body: const SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(AppSizes.pageHPad),
+            child: ShimmerCardList(itemHeight: 88),
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('My Badges')),
+        body: SafeArea(child: ErrorState(message: _error!, onRetry: _load)),
+      );
+    }
+
+    if (badges.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('My Badges')),
+        body: const SafeArea(
+          child: EmptyState(
+            icon: AppIcons.workspace_premium_rounded,
+            title: 'No badges yet',
+            message:
+                'SkillServe has not published any recognition badges. Check back soon.',
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('My Badges')),
       body: SafeArea(
-        child: ListView(
+        child: RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(AppSizes.pageHPad),
           children: [
             Row(
@@ -91,7 +173,8 @@ class BadgesScreen extends StatelessWidget {
                   child: _EarnedBadgeCard(badge: earned[i], index: i),
                 ),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -135,18 +218,6 @@ class _NextBadgeCard extends StatelessWidget {
                 Text(badge.title, style: AppTextStyles.titleMedium),
                 const SizedBox(height: 2),
                 Text(badge.criteria, style: AppTextStyles.bodySmall),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                  child: LinearProgressIndicator(
-                    value: badge.progress,
-                    minHeight: 6,
-                    backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.neutral100,
-                    valueColor: AlwaysStoppedAnimation(badge.color),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(badge.progressLabel, style: AppTextStyles.caption.copyWith(color: AppColors.neutral300)),
               ],
             ),
           ),

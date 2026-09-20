@@ -9,10 +9,12 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/cards/category_card.dart';
 import '../../../core/widgets/cards/provider_card.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/inputs/app_search_bar.dart';
 import '../../../core/widgets/misc/section_header.dart';
 import '../../marketplace/models/category_model.dart';
+import 'widgets/discovery_filter_sheet.dart';
 import '../../../core/constants/app_icons.dart';
 
 /// Guest-accessible marketplace browser. Booking a provider from here
@@ -31,6 +33,16 @@ class _BrowseServicesScreenState extends State<BrowseServicesScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MarketplaceController>().loadInitial();
     });
+  }
+
+  Future<void> _openFilters() async {
+    final marketplace = context.read<MarketplaceController>();
+    final updated = await showDiscoveryFilterSheet(
+      context,
+      filters: marketplace.filters,
+      categories: marketplace.categories,
+    );
+    if (updated != null) await marketplace.applyFilters(updated);
   }
 
   @override
@@ -54,8 +66,12 @@ class _BrowseServicesScreenState extends State<BrowseServicesScreen> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad, vertical: AppSizes.lg),
             children: [
-              AppSearchBar(onTap: () => context.push('/search'), readOnly: true)
-                  .animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0),
+              AppSearchBar(
+                onTap: () => context.push('/search'),
+                readOnly: true,
+                onFilterTap: _openFilters,
+                activeFilterCount: marketplace.filters.activeCount,
+              ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0),
               const SizedBox(height: AppSizes.xl),
               const SectionHeader(title: 'Categories')
                   .animate().fadeIn(delay: 100.ms, duration: 300.ms),
@@ -91,8 +107,21 @@ class _BrowseServicesScreenState extends State<BrowseServicesScreen> {
               const SizedBox(height: AppSizes.md),
               if (marketplace.isLoading)
                 const ShimmerCardList(count: 5, itemHeight: 100)
+              else if (marketplace.error != null)
+                ErrorState(
+                  message: marketplace.error!,
+                  onRetry: () => context.read<MarketplaceController>().loadInitial(),
+                )
               else if (marketplace.providers.isEmpty)
-                const EmptyState(icon: AppIcons.search_off_rounded, title: 'No providers found', message: 'Try a different category or search term.')
+                EmptyState(
+                  icon: AppIcons.search_off_rounded,
+                  title: 'No providers found',
+                  message: 'Try a different category or clear your filters.',
+                  actionLabel: marketplace.hasActiveFilters ? 'Clear filters' : null,
+                  onAction: marketplace.hasActiveFilters
+                      ? () => context.read<MarketplaceController>().clearFilters()
+                      : null,
+                )
               else
                 Column(
                   children: [

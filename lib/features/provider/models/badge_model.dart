@@ -22,6 +22,23 @@ class BadgeModel {
     this.progressLabel = '',
   });
 
+  /// Maps `GET /api/client/v1/provider/badges` and the `badges` array on a
+  /// public provider profile.
+  ///
+  /// The platform records which badges a provider holds, not how close they
+  /// are to the rest, so progress is simply earned or not.
+  factory BadgeModel.fromJson(Map<String, dynamic> json) {
+    final earned = json['earned'] == true;
+    return BadgeModel(
+      key: json['key'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      criteria: json['criteria'] as String? ?? '',
+      earned: earned,
+      progress: earned ? 1 : 0,
+      progressLabel: earned ? 'Earned' : 'Not earned yet',
+    );
+  }
+
   AppIconData get icon {
     switch (key) {
       case 'top_rated':

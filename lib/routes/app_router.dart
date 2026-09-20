@@ -60,6 +60,7 @@ import '../features/provider/views/upload_portfolio_screen.dart';
 import '../features/provider/views/portfolio_screen.dart';
 import '../features/provider/views/provider_onboarding_screen.dart';
 import '../features/provider/views/badges_screen.dart';
+import '../features/provider/views/availability_screen.dart';
 
 // Booking (provider views)
 import '../features/provider/views/calendar_screen.dart';
@@ -244,6 +245,9 @@ final List<RouteBase> appRoutes = [
       builder: (context, state) => const UploadPortfolioScreen()),
   GoRoute(
       path: '/calendar', builder: (context, state) => const CalendarScreen()),
+  GoRoute(
+      path: '/availability',
+      builder: (context, state) => const AvailabilityScreen()),
   GoRoute(
       path: '/booking-requests',
       builder: (context, state) => const BookingRequestsScreen()),
