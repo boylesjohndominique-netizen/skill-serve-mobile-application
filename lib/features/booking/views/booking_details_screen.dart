@@ -4,9 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/booking_controller.dart';
-import '../../booking/controllers/provider_booking_controller.dart';
+import '../controllers/provider_booking_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../services/booking_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -15,6 +14,7 @@ import '../../../core/widgets/buttons/outlined_app_button.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/info_row.dart';
@@ -33,314 +33,345 @@ class BookingDetailsScreen extends StatefulWidget {
 class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   BookingModel? _booking;
   bool _loading = true;
+  String? _error;
+  bool _acting = false;
+
+  /// Providers read their own job through the provider endpoint, which is the
+  /// only one that carries the customer's contact details.
+  bool get _isProviderView => context.read<AuthController>().isProvider;
 
   @override
   void initState() {
     super.initState();
-    _loadBooking();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadBooking());
   }
 
   Future<void> _loadBooking() async {
-    try {
-      final bookings = await BookingService().getClientBookings();
-      final match = bookings.where((b) => b.id == widget.bookingId);
-      if (!mounted) return;
-      setState(() {
-        _booking = match.isNotEmpty ? match.first : null;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loading = false);
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    final booking = _isProviderView
+        ? await context.read<ProviderBookingController>().loadBooking(widget.bookingId)
+        : await context.read<BookingController>().loadBooking(widget.bookingId);
+
+    if (!mounted) return;
+    setState(() {
+      _booking = booking;
+      _error = booking == null
+          ? (_isProviderView
+                  ? context.read<ProviderBookingController>().errorMessage
+                  : context.read<BookingController>().errorMessage) ??
+              'This booking could not be loaded.'
+          : null;
+      _loading = false;
+    });
+  }
+
+  /// Runs a status change, shows its outcome and keeps the screen in step
+  /// with the booking the API returned.
+  Future<void> _act(Future<bool> Function() action, String successMessage) async {
+    setState(() => _acting = true);
+    final ok = await action();
+    if (!mounted) return;
+    setState(() => _acting = false);
+
+    if (ok) {
+      AppSnackbar.success(context, successMessage);
+      await _loadBooking();
+      return;
     }
+    final message = _isProviderView
+        ? context.read<ProviderBookingController>().errorMessage
+        : context.read<BookingController>().errorMessage;
+    if (mounted) AppSnackbar.error(context, message ?? 'That did not work. Please try again.');
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) return const Scaffold(body: LoadingState());
+
     final booking = _booking;
-    if (booking == null) return const Scaffold(body: LoadingState());
+    if (booking == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Booking Details')),
+        body: SafeArea(
+          child: ErrorState(
+            message: _error ?? 'This booking could not be loaded.',
+            onRetry: _loadBooking,
+          ),
+        ),
+      );
+    }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = context.read<AuthController>().currentUser;
-    final isProviderView = user != null && booking.providerId == user.id;
+    final isProviderView = _isProviderView;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Booking Details')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.pageHPad),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('#${booking.id}', style: AppTextStyles.monoSm),
-                  StatusBadge.fromStatus(booking.status.name),
-                ],
-              ).animate().fadeIn(duration: 300.ms),
-              const SizedBox(height: AppSizes.sm),
-              Text(booking.serviceTitle, style: AppTextStyles.displayMedium)
-                  .animate()
-                  .fadeIn(delay: 80.ms, duration: 350.ms)
-                  .slideY(begin: 0.08, end: 0),
-              const SizedBox(height: AppSizes.xl),
+        child: RefreshIndicator(
+          onRefresh: _loadBooking,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSizes.pageHPad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        booking.bookingNumber.isEmpty ? '#${booking.id}' : booking.bookingNumber,
+                        style: AppTextStyles.monoSm,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.sm),
+                    StatusBadge.fromStatus(booking.status.name),
+                  ],
+                ).animate().fadeIn(duration: 300.ms),
+                const SizedBox(height: AppSizes.sm),
+                Text(booking.serviceTitle, style: AppTextStyles.displayMedium)
+                    .animate()
+                    .fadeIn(delay: 80.ms, duration: 350.ms)
+                    .slideY(begin: 0.08, end: 0),
+                const SizedBox(height: AppSizes.xl),
 
-              // Disputed banner
-              if (booking.status == BookingStatus.disputed) ...[
+                // Disputed banner
+                if (booking.status == BookingStatus.disputed) ...[
+                  const _Banner(
+                    icon: AppIcons.gavel_rounded,
+                    title: 'This booking is under dispute',
+                    message:
+                        'Our support team is reviewing the case. You can track progress in Reports or contact support anytime.',
+                  )
+                      .animate()
+                      .fadeIn(delay: 130.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                  const SizedBox(height: AppSizes.lg),
+                ],
+
+                // Why it was called off — the API records a reason for both
+                // a customer cancellation and a provider decline.
+                if (booking.status == BookingStatus.cancelled &&
+                    (booking.cancellationReason?.isNotEmpty ?? false)) ...[
+                  _Banner(
+                    icon: AppIcons.cancel_outlined,
+                    title: 'Cancellation reason',
+                    message: booking.cancellationReason!,
+                  )
+                      .animate()
+                      .fadeIn(delay: 130.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                  const SizedBox(height: AppSizes.lg),
+                ],
+
+                _SectionCard(
+                  title: 'Schedule',
+                  isDark: isDark,
+                  children: [
+                    InfoRow(
+                        icon: AppIcons.calendar_today_rounded,
+                        label: 'Date',
+                        value: Formatters.dateShort(booking.bookingDate)),
+                    InfoRow(
+                        icon: AppIcons.access_time_rounded,
+                        label: 'Time',
+                        value: booking.schedule),
+                    if (booking.serviceDuration.isNotEmpty)
+                      InfoRow(
+                          icon: AppIcons.schedule_rounded,
+                          label: 'Duration',
+                          value: booking.serviceDuration),
+                    InfoRow(
+                        icon: AppIcons.location_on_outlined,
+                        label: 'Address',
+                        value: booking.address.isEmpty ? 'Not provided' : booking.address),
+                  ],
+                )
+                    .animate()
+                    .fadeIn(delay: 150.ms, duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
+                const SizedBox(height: AppSizes.lg),
+                _SectionCard(
+                  title: isProviderView ? 'Customer' : 'Provider',
+                  isDark: isDark,
+                  children: [
+                    if (isProviderView) ...[
+                      InfoRow(
+                          icon: AppIcons.person_outline_rounded,
+                          label: 'Name',
+                          value: booking.clientName.isEmpty ? '—' : booking.clientName),
+                      InfoRow(
+                          icon: AppIcons.phone_outlined,
+                          label: 'Contact',
+                          value: booking.clientPhone.isEmpty ? 'Not provided' : booking.clientPhone),
+                    ] else
+                      InfoRow(
+                          icon: AppIcons.handyman_outlined,
+                          label: 'Provider',
+                          value: booking.providerName.isEmpty ? '—' : booking.providerName),
+                    InfoRow(
+                        icon: AppIcons.account_balance_wallet_rounded,
+                        label: 'Payment',
+                        value: booking.paymentMethod),
+                  ],
+                )
+                    .animate()
+                    .fadeIn(delay: 250.ms, duration: 350.ms)
+                    .slideY(begin: 0.06, end: 0),
+                if (booking.notes != null && booking.notes!.isNotEmpty) ...[
+                  const SizedBox(height: AppSizes.lg),
+                  _SectionCard(title: 'Notes', isDark: isDark, children: [
+                    Text(booking.notes!, style: AppTextStyles.bodyLarge)
+                  ])
+                      .animate()
+                      .fadeIn(delay: 350.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                ],
+                const SizedBox(height: AppSizes.lg),
                 Container(
-                  width: double.infinity,
                   padding: const EdgeInsets.all(AppSizes.lg),
                   decoration: BoxDecoration(
-                    color: AppColors.errorBg,
+                    color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                    border: Border.all(
-                        color: AppColors.error.withValues(alpha: 0.3),
-                        width: 1),
                   ),
                   child: Row(
                     children: [
-                      const AppIcon(AppIcons.gavel_rounded,
-                          color: AppColors.error, size: 22),
-                      const SizedBox(width: AppSizes.md),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('This booking is under dispute',
-                                style: AppTextStyles.titleMedium
-                                    .copyWith(color: AppColors.error)),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Our support team is reviewing the case. You can track progress in Reports or contact support anytime.',
-                              style: AppTextStyles.bodySmall
-                                  .copyWith(color: AppColors.error),
-                            ),
-                          ],
+                          child: Text('Total amount', style: AppTextStyles.titleMedium)),
+                      const SizedBox(width: AppSizes.sm),
+                      Flexible(
+                        child: Text(
+                          Formatters.peso(booking.amount),
+                          style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary),
+                          textAlign: TextAlign.right,
                         ),
                       ),
                     ],
                   ),
                 )
                     .animate()
-                    .fadeIn(delay: 130.ms, duration: 350.ms)
+                    .fadeIn(delay: 400.ms, duration: 350.ms)
                     .slideY(begin: 0.06, end: 0),
+
+                // ── Timeline ──
+                if (booking.timeline.isNotEmpty) ...[
+                  const SizedBox(height: AppSizes.xl),
+                  Text('Timeline', style: AppTextStyles.titleLarge)
+                      .animate()
+                      .fadeIn(delay: 440.ms, duration: 300.ms),
+                  const SizedBox(height: AppSizes.md),
+                  _Timeline(entries: booking.timeline)
+                      .animate()
+                      .fadeIn(delay: 480.ms, duration: 350.ms)
+                      .slideY(begin: 0.05, end: 0),
+                ],
+
+                const SizedBox(height: AppSizes.xxl),
+                _buildActions(context, booking, isProviderView),
                 const SizedBox(height: AppSizes.lg),
               ],
-
-              _SectionCard(
-                title: 'Schedule',
-                isDark: isDark,
-                children: [
-                  InfoRow(
-                      icon: AppIcons.calendar_today_rounded,
-                      label: 'Date',
-                      value: Formatters.dateShort(booking.bookingDate)),
-                  InfoRow(
-                      icon: AppIcons.access_time_rounded,
-                      label: 'Time',
-                      value: booking.schedule),
-                  InfoRow(
-                      icon: AppIcons.location_on_outlined,
-                      label: 'Address',
-                      value: booking.address.isEmpty ? '—' : booking.address),
-                ],
-              )
-                  .animate()
-                  .fadeIn(delay: 150.ms, duration: 350.ms)
-                  .slideY(begin: 0.06, end: 0),
-              const SizedBox(height: AppSizes.lg),
-              _SectionCard(
-                title: 'Parties',
-                isDark: isDark,
-                children: [
-                  InfoRow(
-                      icon: AppIcons.person_outline_rounded,
-                      label: 'Client',
-                      value: booking.clientName),
-                  InfoRow(
-                      icon: AppIcons.handyman_outlined,
-                      label: 'Provider',
-                      value: booking.providerName),
-                  InfoRow(
-                      icon: AppIcons.account_balance_wallet_rounded,
-                      label: 'Payment',
-                      value: booking.paymentMethod),
-                ],
-              )
-                  .animate()
-                  .fadeIn(delay: 250.ms, duration: 350.ms)
-                  .slideY(begin: 0.06, end: 0),
-              if (booking.notes != null && booking.notes!.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.lg),
-                _SectionCard(title: 'Notes', isDark: isDark, children: [
-                  Text(booking.notes!, style: AppTextStyles.bodyLarge)
-                ])
-                    .animate()
-                    .fadeIn(delay: 350.ms, duration: 350.ms)
-                    .slideY(begin: 0.06, end: 0),
-              ],
-              const SizedBox(height: AppSizes.lg),
-              Container(
-                padding: const EdgeInsets.all(AppSizes.lg),
-                decoration: BoxDecoration(
-                  color:
-                      isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                        child: Text('Total amount',
-                            style: AppTextStyles.titleMedium)),
-                    const SizedBox(width: AppSizes.sm),
-                    Flexible(
-                      child: Text(
-                        Formatters.peso(booking.amount),
-                        style: AppTextStyles.monoLg
-                            .copyWith(color: AppColors.secondary),
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  .animate()
-                  .fadeIn(delay: 400.ms, duration: 350.ms)
-                  .slideY(begin: 0.06, end: 0),
-
-              // ── Timeline ──
-              if (booking.timeline.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.xl),
-                Text('Timeline', style: AppTextStyles.titleLarge)
-                    .animate()
-                    .fadeIn(delay: 440.ms, duration: 300.ms),
-                const SizedBox(height: AppSizes.md),
-                _Timeline(entries: booking.timeline)
-                    .animate()
-                    .fadeIn(delay: 480.ms, duration: 350.ms)
-                    .slideY(begin: 0.05, end: 0),
-              ],
-
-              const SizedBox(height: AppSizes.xxl),
-              _buildActions(context, booking, isProviderView),
-              const SizedBox(height: AppSizes.lg),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildActions(
-      BuildContext context, BookingModel booking, bool isProviderView) {
+  Widget _buildActions(BuildContext context, BookingModel booking, bool isProviderView) {
+    return isProviderView
+        ? _providerActions(context, booking)
+        : _clientActions(context, booking);
+  }
+
+  /// Accept / decline a request, start a confirmed job, complete one in
+  /// progress — the same transitions the API allows, and nothing else.
+  Widget _providerActions(BuildContext context, BookingModel booking) {
+    final controller = context.read<ProviderBookingController>();
     final actions = <Widget>[];
 
-    if (isProviderView) {
-      // ── Provider-side contextual actions ──
-      switch (booking.status) {
-        case BookingStatus.pending:
-          actions.add(PrimaryButton(
-            label: 'Accept request',
-            icon: AppIcons.check_rounded,
-            onPressed: () async {
-              await context
-                  .read<ProviderBookingController>()
-                  .accept(booking.id);
-              if (context.mounted) {
-                AppSnackbar.success(context, 'Booking accepted!');
-              }
-            },
-          ));
-          actions.add(const SizedBox(height: AppSizes.sm));
-          actions.add(OutlinedAppButton(
-            label: 'Decline request',
-            icon: AppIcons.close_rounded,
-            color: AppColors.error,
-            onPressed: () async {
-              final confirmed = await AppDialog.confirm(
-                context,
-                title: 'Decline this request?',
-                message:
-                    'The client will be notified that this request was declined.',
-                confirmLabel: 'Decline',
-                danger: true,
-              );
-              if (confirmed && context.mounted) {
-                await context
-                    .read<ProviderBookingController>()
-                    .decline(booking.id);
-                if (context.mounted) {
-                  AppSnackbar.success(context, 'Request declined.');
-                }
-              }
-            },
-          ));
-        case BookingStatus.confirmed:
-          actions.add(PrimaryButton(
-            label: 'Start job',
-            icon: AppIcons.play_arrow_rounded,
-            onPressed: () async {
-              await context.read<ProviderBookingController>().start(booking.id);
-              if (context.mounted) {
-                AppSnackbar.success(context, 'Job started — good luck!');
-              }
-            },
-          ));
-          actions.add(const SizedBox(height: AppSizes.sm));
-          actions.add(OutlinedAppButton(
-            label: 'Message client',
-            icon: AppIcons.chat_bubble_outline_rounded,
-            onPressed: () =>
-                context.push('/chat-conversation/${booking.clientId}'),
-          ));
-        case BookingStatus.inProgress:
-          actions.add(PrimaryButton(
-            label: 'Mark as completed',
-            icon: AppIcons.task_alt_rounded,
-            onPressed: () async {
-              await context
-                  .read<ProviderBookingController>()
-                  .complete(booking.id);
-              if (context.mounted) {
-                AppSnackbar.success(context, 'Job marked as completed.');
-              }
-            },
-          ));
-        default:
-          break;
-      }
-      return Column(children: actions);
+    switch (booking.status) {
+      case BookingStatus.pending:
+        actions.add(PrimaryButton(
+          label: 'Accept request',
+          icon: AppIcons.check_rounded,
+          isLoading: _acting,
+          onPressed: _acting
+              ? null
+              : () => _act(() => controller.accept(booking.id), 'Booking accepted!'),
+        ));
+        actions.add(const SizedBox(height: AppSizes.sm));
+        actions.add(OutlinedAppButton(
+          label: 'Decline request',
+          icon: AppIcons.close_rounded,
+          color: AppColors.error,
+          onPressed: _acting ? null : () => _declineRequest(booking, controller),
+        ));
+      case BookingStatus.confirmed:
+        actions.add(PrimaryButton(
+          label: 'Start job',
+          icon: AppIcons.play_arrow_rounded,
+          isLoading: _acting,
+          onPressed: _acting
+              ? null
+              : () => _act(() => controller.start(booking.id), 'Job started — good luck!'),
+        ));
+        actions.add(const SizedBox(height: AppSizes.sm));
+        actions.add(OutlinedAppButton(
+          label: 'Message client',
+          icon: AppIcons.chat_bubble_outline_rounded,
+          onPressed: () => context.push('/chat-conversation/${booking.id}'),
+        ));
+      case BookingStatus.inProgress:
+        actions.add(PrimaryButton(
+          label: 'Mark as completed',
+          icon: AppIcons.task_alt_rounded,
+          isLoading: _acting,
+          onPressed: _acting
+              ? null
+              : () => _act(() => controller.complete(booking.id), 'Job marked as completed.'),
+        ));
+      default:
+        break;
     }
+    return Column(children: actions);
+  }
 
-    // ── Client-side contextual actions ──
-    if (booking.status == BookingStatus.pending ||
-        booking.status == BookingStatus.confirmed) {
+  Future<void> _declineRequest(
+    BookingModel booking,
+    ProviderBookingController controller,
+  ) async {
+    final reason = await AppDialog.prompt(
+      context,
+      title: 'Decline this request?',
+      message: 'The client will be notified that this request was declined.',
+      fieldLabel: 'Reason (optional)',
+      hint: 'Let the client know why, e.g. fully booked that day',
+      confirmLabel: 'Decline',
+      danger: true,
+    );
+    if (reason == null || !mounted) return;
+    await _act(() => controller.decline(booking.id, reason: reason), 'Request declined.');
+  }
+
+  Widget _clientActions(BuildContext context, BookingModel booking) {
+    final controller = context.read<BookingController>();
+    final actions = <Widget>[];
+
+    if (booking.isCancellable) {
       actions.add(OutlinedAppButton(
         label: 'Cancel booking',
         icon: AppIcons.close_rounded,
         color: AppColors.error,
-        onPressed: () async {
-          final confirmed = await AppDialog.confirm(
-            context,
-            title: 'Cancel this booking?',
-            message:
-                'This will notify ${booking.providerName} that the booking is cancelled.',
-            confirmLabel: 'Cancel booking',
-            danger: true,
-          );
-          if (confirmed && context.mounted) {
-            await context.read<BookingController>().cancel(booking.id);
-            if (context.mounted) {
-              AppSnackbar.success(context, 'Booking cancelled.');
-              context.pop();
-            }
-          }
-        },
+        onPressed: _acting ? null : () => _cancelBooking(booking, controller),
       ));
     }
-    if (booking.status == BookingStatus.completed) {
+    if (booking.canBeReviewed) {
       actions.add(PrimaryButton(
         label: 'Leave a review',
         icon: AppIcons.star_border_rounded,
@@ -357,12 +388,81 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     actions.add(const SizedBox(height: AppSizes.sm));
     actions.add(TextButton.icon(
       onPressed: () => context.push('/file-report?bookingId=${booking.id}'),
-      icon: const AppIcon(AppIcons.flag_outlined,
-          size: 16, color: AppColors.neutral300),
+      icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
       label: Text('Report an issue',
           style: AppTextStyles.label.copyWith(color: AppColors.neutral300)),
     ));
     return Column(children: actions);
+  }
+
+  Future<void> _cancelBooking(BookingModel booking, BookingController controller) async {
+    final providerName =
+        booking.providerName.isEmpty ? 'the provider' : booking.providerName;
+    final reason = await AppDialog.prompt(
+      context,
+      title: 'Cancel this booking?',
+      message: 'This will notify $providerName that the booking is cancelled.',
+      fieldLabel: 'Reason (optional)',
+      hint: 'Why are you cancelling?',
+      confirmLabel: 'Cancel booking',
+      danger: true,
+    );
+    if (reason == null || !mounted) return;
+
+    setState(() => _acting = true);
+    final cancelled = await controller.cancel(booking.id, reason: reason);
+    if (!mounted) return;
+    setState(() {
+      _acting = false;
+      if (cancelled != null) _booking = cancelled;
+    });
+
+    if (cancelled != null) {
+      AppSnackbar.success(context, 'Booking cancelled.');
+    } else {
+      AppSnackbar.error(
+          context, controller.errorMessage ?? 'Unable to cancel this booking.');
+    }
+  }
+}
+
+/// Full-width tinted notice used for the dispute and cancellation banners.
+class _Banner extends StatelessWidget {
+  final AppIconData icon;
+  final String title;
+  final String message;
+
+  const _Banner({required this.icon, required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.lg),
+      decoration: BoxDecoration(
+        color: AppColors.errorBg,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          AppIcon(icon, color: AppColors.error, size: 22),
+          const SizedBox(width: AppSizes.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: AppTextStyles.titleMedium.copyWith(color: AppColors.error)),
+                const SizedBox(height: 2),
+                Text(message,
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -444,8 +544,7 @@ class _Timeline extends StatelessWidget {
                           color: _colorFor(entries[i].status),
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color:
-                                  isDark ? AppColors.surfaceDark : Colors.white,
+                              color: isDark ? AppColors.surfaceDark : Colors.white,
                               width: 2),
                         ),
                       ),
@@ -453,8 +552,7 @@ class _Timeline extends StatelessWidget {
                         Expanded(
                           child: Container(
                             width: 2,
-                            color: _colorFor(entries[i].status)
-                                .withValues(alpha: 0.3),
+                            color: _colorFor(entries[i].status).withValues(alpha: 0.3),
                           ),
                         ),
                     ],

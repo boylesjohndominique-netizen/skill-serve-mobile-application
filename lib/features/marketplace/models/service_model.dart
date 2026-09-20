@@ -39,6 +39,30 @@ class ServiceModel {
   /// bookable amount.
   bool get isQuoteOnly => priceType == 'custom' || price <= 0;
 
+  /// How long a booking of this service runs, in minutes.
+  ///
+  /// [duration] is free text ("2 hours", "90 minutes"), so this mirrors the
+  /// backend's parse exactly — largest number, last unit named, one hour when
+  /// nothing parses — and the booking form can therefore offer only the start
+  /// times that still fit inside the provider's published window.
+  int get durationMinutes {
+    final matches = RegExp(r'(\d+(?:\.\d+)?)\s*(minute|hour|day)s?', caseSensitive: false)
+        .allMatches(duration)
+        .toList();
+    if (matches.isEmpty) return 60;
+
+    final amount = matches
+        .map((m) => double.tryParse(m.group(1)!) ?? 0)
+        .reduce((a, b) => a > b ? a : b);
+    final unit = matches.last.group(2)!.toLowerCase();
+
+    return switch (unit) {
+      'minute' => amount.ceil(),
+      'day' => (amount * 24 * 60).ceil(),
+      _ => (amount * 60).ceil(),
+    };
+  }
+
   /// [providerId] fills in the owner when the service is embedded in a
   /// provider payload, which omits the nested `provider` object.
   factory ServiceModel.fromJson(Map<String, dynamic> json, {String? providerId, String? providerName}) {

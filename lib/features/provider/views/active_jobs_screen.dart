@@ -8,6 +8,7 @@ import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/cards/booking_card.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/constants/app_icons.dart';
 
@@ -28,6 +29,20 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
     });
   }
 
+  Future<void> _reload() =>
+      context.read<ProviderBookingController>().loadProviderBookings();
+
+  Future<void> _complete(ProviderBookingController controller, String id) async {
+    final ok = await controller.complete(id);
+    if (!mounted) return;
+    if (ok) {
+      AppSnackbar.success(context, 'Job marked as completed.');
+    } else {
+      AppSnackbar.error(
+          context, controller.errorMessage ?? 'Unable to complete this job.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProviderBookingController>();
@@ -37,7 +52,9 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
       body: SafeArea(
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
-            : controller.active.isEmpty
+            : controller.errorMessage != null && controller.bookings.isEmpty
+                ? ErrorState(message: controller.errorMessage!, onRetry: _reload)
+                : controller.active.isEmpty
                 ? const EmptyState(icon: AppIcons.work_outline_rounded, title: 'No active jobs', message: 'Accepted bookings you\'re currently working on will show up here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
@@ -53,10 +70,10 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                           PrimaryButton(
                             label: 'Mark as completed',
                             icon: AppIcons.task_alt_rounded,
-                            onPressed: () async {
-                              await controller.complete(booking.id);
-                              if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');
-                            },
+                            isLoading: controller.busyBookingId == booking.id,
+                            onPressed: controller.busyBookingId == booking.id
+                                ? null
+                                : () => _complete(controller, booking.id),
                           ),
                           const SizedBox(height: AppSizes.md),
                         ],

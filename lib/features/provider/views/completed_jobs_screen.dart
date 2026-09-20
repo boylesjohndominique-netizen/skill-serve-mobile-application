@@ -6,6 +6,7 @@ import '../../booking/controllers/provider_booking_controller.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/cards/booking_card.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/constants/app_icons.dart';
 
@@ -26,6 +27,9 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
     });
   }
 
+  Future<void> _reload() =>
+      context.read<ProviderBookingController>().loadProviderBookings();
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProviderBookingController>();
@@ -35,7 +39,9 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
       body: SafeArea(
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
-            : controller.completed.isEmpty
+            : controller.errorMessage != null && controller.bookings.isEmpty
+                ? ErrorState(message: controller.errorMessage!, onRetry: _reload)
+                : controller.completed.isEmpty
                 ? const EmptyState(icon: AppIcons.task_alt_rounded, title: 'No completed jobs yet', message: 'Your finished bookings will be listed here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),

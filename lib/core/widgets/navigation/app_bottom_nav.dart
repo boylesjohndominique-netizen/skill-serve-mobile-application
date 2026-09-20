@@ -10,7 +10,23 @@ class NavItem {
   final AppIconData icon;
   final AppIconData activeIcon;
   final String label;
-  const NavItem({required this.icon, required this.activeIcon, required this.label});
+
+  /// Unread count shown on the icon; 0 hides the badge.
+  final int badgeCount;
+
+  const NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    this.badgeCount = 0,
+  });
+
+  NavItem withBadge(int count) => NavItem(
+        icon: icon,
+        activeIcon: activeIcon,
+        label: label,
+        badgeCount: count,
+      );
 }
 
 /// Premium bottom navigation bar with animated sliding pill indicator,
@@ -92,13 +108,17 @@ class _NavItemWidget extends StatelessWidget {
             scale: selected ? 1.15 : 1.0,
             duration: AppAnimations.md,
             curve: AppAnimations.springCurve,
-            child: AnimatedSwitcher(
-              duration: AppAnimations.fast,
-              child: AppIcon(
-                selected ? item.activeIcon : item.icon,
-                key: ValueKey('${item.label}_$selected'),
-                size: 24,
-                color: selected ? AppColors.secondary : AppColors.neutral300,
+            child: Badge(
+              isLabelVisible: item.badgeCount > 0,
+              label: Text(item.badgeCount > 99 ? '99+' : '${item.badgeCount}'),
+              child: AnimatedSwitcher(
+                duration: AppAnimations.fast,
+                child: AppIcon(
+                  selected ? item.activeIcon : item.icon,
+                  key: ValueKey('${item.label}_$selected'),
+                  size: 24,
+                  color: selected ? AppColors.secondary : AppColors.neutral300,
+                ),
               ),
             ),
           ),

@@ -165,9 +165,10 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/favorites', builder: (context, state) => const FavoritesScreen()),
   GoRoute(
-    path: '/chat-conversation/:id',
+    // Messaging is booking-scoped, so the thread is addressed by booking id.
+    path: '/chat-conversation/:bookingId',
     builder: (context, state) =>
-        ChatConversationScreen(conversationId: state.pathParameters['id']!),
+        ChatConversationScreen(bookingId: state.pathParameters['bookingId']!),
   ),
   GoRoute(
       path: '/payments', builder: (context, state) => const PaymentsScreen()),

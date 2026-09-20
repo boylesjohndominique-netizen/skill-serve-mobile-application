@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -19,6 +21,11 @@ class BookingConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // The booking a customer creates describes the provider, not themselves,
+    // so the greeting comes from the signed-in account.
+    final firstName = context.read<AuthController>().currentUser?.firstName ?? '';
+    final providerName =
+        booking.providerName.isEmpty ? 'your provider' : booking.providerName;
 
     return Scaffold(
       body: SafeArea(
@@ -39,7 +46,7 @@ class BookingConfirmationScreen extends StatelessWidget {
               ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
               const SizedBox(height: AppSizes.xl),
               Text(
-                'You\'re all set, ${booking.clientName.split(' ').first}!',
+                firstName.isEmpty ? 'You\'re all set!' : 'You\'re all set, $firstName!',
                 style: AppTextStyles.displayMedium,
                 textAlign: TextAlign.center,
               )
@@ -48,13 +55,13 @@ class BookingConfirmationScreen extends StatelessWidget {
                   .slideY(begin: 0.15, end: 0),
               const SizedBox(height: AppSizes.sm),
               Text(
-                'Your booking request has been sent to ${booking.providerName}. You\'ll be notified once it\'s accepted.',
+                'Your booking request has been sent to $providerName. You\'ll be notified once it\'s accepted.',
                 style: AppTextStyles.bodyLarge,
                 textAlign: TextAlign.center,
               ).animate().fadeIn(delay: 250.ms),
               const SizedBox(height: AppSizes.sm),
               Text(
-                'REF ${booking.id}',
+                'REF ${booking.bookingNumber.isEmpty ? booking.id : booking.bookingNumber}',
                 style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary),
               ).animate().fadeIn(delay: 300.ms),
               const SizedBox(height: AppSizes.lg),
@@ -69,7 +76,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _row('Service', booking.serviceTitle),
-                    _row('Provider', booking.providerName),
+                    _row('Provider', providerName),
                     _row('Date', Formatters.dateShort(booking.bookingDate)),
                     _row('Time', booking.schedule),
                     _row('Payment', booking.paymentMethod),
@@ -81,8 +88,12 @@ class BookingConfirmationScreen extends StatelessWidget {
               PrimaryButton(label: 'View booking details', onPressed: () => context.go('/booking-details/${booking.id}'))
                   .animate().fadeIn(delay: 500.ms, duration: 350.ms),
               const SizedBox(height: AppSizes.sm),
-              OutlinedAppButton(label: 'Make another booking', onPressed: () => context.push('/booking-form/${booking.providerId}'))
-                  .animate().fadeIn(delay: 560.ms, duration: 350.ms),
+              if (booking.providerId.isNotEmpty)
+                OutlinedAppButton(
+                        label: 'Make another booking',
+                        onPressed: () => context.push('/booking-form/${booking.providerId}'))
+                    .animate()
+                    .fadeIn(delay: 560.ms, duration: 350.ms),
               TextButton(onPressed: () => context.go('/client'), child: const Text('Back to home'))
                   .animate().fadeIn(delay: 620.ms, duration: 300.ms),
             ],

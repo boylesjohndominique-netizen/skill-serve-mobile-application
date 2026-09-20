@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/services/realtime_client.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../booking/controllers/booking_controller.dart';
+import '../../booking/controllers/provider_booking_controller.dart';
+import '../../messaging/controllers/chat_controller.dart';
 import '../../provider/controllers/provider_services_controller.dart';
 import '../../settings/controllers/preferences_controller.dart';
 import '../controllers/notification_controller.dart';
@@ -23,6 +26,7 @@ class NotificationPoller extends StatefulWidget {
 class _NotificationPollerState extends State<NotificationPoller> with WidgetsBindingObserver {
   late final AuthController _auth;
   late final NotificationController _notifications;
+  late final ChatController _chat;
   final RealtimeClient _realtime = RealtimeClient.instance;
   String? _listeningUserId;
   bool _foreground = true;
@@ -33,6 +37,7 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
     WidgetsBinding.instance.addObserver(this);
     _auth = context.read<AuthController>();
     _notifications = context.read<NotificationController>();
+    _chat = context.read<ChatController>();
     _auth.addListener(_sync);
     _notifications.addListener(_showIncoming);
     _realtime.isConnected.addListener(_onRealtimeStatus);
@@ -78,16 +83,32 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       _realtime.listen('App.Models.User.$userId', 'client.notification.created', (_) {
         _notifications.onRealtimeNotification();
       });
+      // Chat content rides the same channel, so an open conversation updates
+      // the moment the other party sends something. Deliberately separate from
+      // the notification above: muting message alerts must not stop a
+      // conversation the user is looking at from moving.
+      _realtime.listen('App.Models.User.$userId', 'client.message.created', (data) {
+        final bookingId = data['booking_id']?.toString();
+        final message = data['message'];
+        if (bookingId != null && message is Map<String, dynamic>) {
+          _chat.onRealtimeMessage(bookingId, message);
+        }
+      });
       _listeningUserId = userId;
     }
     _notifications.startPolling();
+    // The Messages badge has to be right before the tab is ever opened.
+    _chat.refreshUnreadCount();
   }
 
   void _onRealtimeStatus() {
     final connected = _realtime.isConnected.value;
     _notifications.realtimeConnected = connected;
     // Catch up on anything sent while the socket was down.
-    if (connected) _notifications.checkForNew();
+    if (connected) {
+      _notifications.checkForNew();
+      _chat.refreshUnreadCount();
+    }
   }
 
   void _showIncoming() {
@@ -98,6 +119,18 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
     // Service moderation (approved, rejected, …) changes the provider's list.
     if (notification.type == NotificationType.service) {
       context.read<ProviderServicesController>().load();
+    }
+
+    // A booking that was accepted, started, completed or cancelled moves to a
+    // different tab, so the list behind the banner is reloaded. This happens
+    // before the preference gate: muting the banner silences the alert, it
+    // does not mean the screen should keep showing a stale status.
+    if (notification.type == NotificationType.booking) {
+      if (_auth.isProvider) {
+        context.read<ProviderBookingController>().loadProviderBookings();
+      } else {
+        context.read<BookingController>().loadClientBookings();
+      }
     }
 
     if (!_enabledInPreferences(notification.type)) return;

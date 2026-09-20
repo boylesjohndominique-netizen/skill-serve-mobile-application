@@ -18,18 +18,42 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../../marketplace/models/service_model.dart';
+import '../../provider/models/provider_availability_model.dart';
+import '../../../core/utils/api_error.dart';
+import '../models/booking_model.dart';
 import '../services/booking_service.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-const _slots = ['8:00 AM', '9:30 AM', '11:00 AM', '1:30 PM', '3:00 PM', '4:30 PM'];
-const _paymentMethods = [
-  ('GCash', AppIcons.account_balance_wallet_rounded, 'Pay instantly via GCash'),
-  ('Maya', AppIcons.account_balance_wallet_rounded, 'Pay instantly via Maya'),
-  ('Cash on hand', AppIcons.payments_outlined, 'Pay when the job is done'),
-  ('Card', AppIcons.credit_card_rounded, 'Pay with a debit / credit card'),
-];
+/// Start times are offered every half hour inside the provider's window.
+const _slotStepMinutes = 30;
+
+/// The working day offered when a provider publishes no weekly hours at all —
+/// the API leaves those bookings unrestricted, so any sensible time works.
+const _openDayStartMinutes = 8 * 60;
+const _openDayEndMinutes = 17 * 60;
+
+/// Presentation for the payment methods the API accepts
+/// ({@link BookingModel.paymentMethods}). Selection only: nothing is charged,
+/// because no payment provider is called yet.
+const _paymentIcons = <String, AppIconData>{
+  'cash': AppIcons.payments_outlined,
+  'gcash': AppIcons.account_balance_wallet_rounded,
+  'credit_card': AppIcons.credit_card_rounded,
+  'debit_card': AppIcons.credit_card_rounded,
+  'bank_transfer': AppIcons.account_balance_wallet_outlined,
+  'paypal': AppIcons.account_balance_wallet_outlined,
+};
+
+const _paymentBlurbs = <String, String>{
+  'cash': 'Pay in cash when the job is done',
+  'gcash': 'Settle with the provider through GCash',
+  'credit_card': 'Arrange card payment with the provider',
+  'debit_card': 'Arrange card payment with the provider',
+  'bank_transfer': 'Transfer to the provider\'s bank account',
+  'paypal': 'Settle with the provider through PayPal',
+};
 
 /// SkillServe 4-step booking wizard —
 /// 1 Service → 2 Schedule → 3 Details & Payment → 4 Confirm.
@@ -43,10 +67,13 @@ class BookingFormScreen extends StatefulWidget {
 
 class _BookingFormScreenState extends State<BookingFormScreen> {
   final _bookingService = BookingService();
-  late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
   final _notesController = TextEditingController();
+
+  /// The signed-in customer's name, shown on the review step. It is not sent:
+  /// the booking is already tied to the account that creates it.
+  String _clientName = '';
 
   ProviderModel? _provider;
   List<ServiceModel> _services = [];
@@ -55,19 +82,34 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   int _step = 0;
   ServiceModel? _selectedService;
   DateTime _date = DateTime.now().add(const Duration(days: 1));
-  String _slot = _slots[0];
-  String _paymentMethod = 'Cash on hand';
+
+  /// Chosen start time as minutes from midnight; null until one is picked,
+  /// because a provider's published window decides what is on offer.
+  int? _slotMinutes;
+  String _paymentMethod = BookingModel.paymentMethods.first.$1;
   bool _submitting = false;
+
+  /// One key for this wizard, so a retried or double-tapped submit returns
+  /// the booking already created instead of making a second one.
+  final String _idempotencyKey = 'booking-${DateTime.now().microsecondsSinceEpoch}';
 
   @override
   void initState() {
     super.initState();
     final auth = context.read<AuthController>();
     final user = auth.currentUser;
-    _nameController = TextEditingController(text: user?.fullName ?? '');
+    _clientName = user?.fullName ?? '';
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _addressController = TextEditingController(text: user?.address ?? '');
     _load();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _addressController.dispose();
+    _notesController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -87,7 +129,71 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         _selectedService = services.isEmpty ? null : services.first;
         _loading = false;
       });
+      _selectFirstSlot();
     }
+  }
+
+  /// The provider's published window for [_date], or null when they do not
+  /// work that weekday. A provider with no published hours at all is
+  /// unrestricted, which the open working day below stands in for.
+  ProviderAvailabilityModel? get _window =>
+      _provider?.availability.isEmpty ?? true
+          // `day_of_week` is 0 = Sunday, while Dart's Sunday is 7.
+          ? null
+          : _provider!.availability
+              .where((w) => w.dayOfWeek == _date.weekday % 7)
+              .firstOrNull;
+
+  bool get _publishesHours => _provider?.availability.isNotEmpty ?? false;
+
+  /// True when the provider publishes hours but none for the chosen day.
+  bool get _closedOnSelectedDay => _publishesHours && _window == null;
+
+  /// Start times that still leave room for the whole service inside the day's
+  /// window — the same rule the API enforces, so a pick cannot be refused.
+  List<int> get _slotOptions {
+    if (_closedOnSelectedDay) return const [];
+
+    final window = _window;
+    final start = window == null ? _openDayStartMinutes : _minutes(window.startTime);
+    final end = window == null ? _openDayEndMinutes : _minutes(window.endTime);
+    final duration = _selectedService?.durationMinutes ?? 60;
+
+    final slots = <int>[];
+    for (var at = start; at + duration <= end; at += _slotStepMinutes) {
+      slots.add(at);
+    }
+    // A window shorter than the service still offers its opening time; the
+    // API decides, and refusing to show anything would look like a bug.
+    if (slots.isEmpty && end > start) slots.add(start);
+    return slots;
+  }
+
+  /// A longer service leaves fewer start times inside the provider's window,
+  /// so a slot chosen for a shorter one is re-picked rather than silently
+  /// submitted and refused by the API.
+  void _selectService(ServiceModel service) {
+    setState(() => _selectedService = service);
+    if (!_slotOptions.contains(_slotMinutes)) _selectFirstSlot();
+  }
+
+  void _selectFirstSlot() {
+    final slots = _slotOptions;
+    setState(() => _slotMinutes = slots.isEmpty ? null : slots.first);
+  }
+
+  static int _minutes(String hhmm) {
+    final parts = hhmm.split(':');
+    return ((int.tryParse(parts.first) ?? 0) * 60) +
+        (parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0);
+  }
+
+  static String _slotLabel(int minutes) {
+    final hour = minutes ~/ 60;
+    final minute = minutes % 60;
+    final suffix = hour < 12 ? 'AM' : 'PM';
+    final display = hour % 12 == 0 ? 12 : hour % 12;
+    return '$display:${minute.toString().padLeft(2, '0')} $suffix';
   }
 
   bool get _stepValid {
@@ -95,10 +201,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       case 0:
         return _selectedService != null;
       case 1:
-        return true; // date + slot always selected by default
+        return _slotMinutes != null;
       case 2:
-        return _nameController.text.trim().isNotEmpty &&
-            Validators.phone(_phoneController.text) == null &&
+        return Validators.phone(_phoneController.text) == null &&
             _addressController.text.trim().isNotEmpty;
       default:
         return true;
@@ -107,7 +212,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   void _next() {
     if (!_stepValid) {
-      AppSnackbar.error(context, _step == 2 ? 'Please complete your details to continue.' : 'Select a service to continue.');
+      AppSnackbar.error(context, switch (_step) {
+        1 => 'Pick an available time slot to continue.',
+        2 => 'Please complete your details to continue.',
+        _ => 'Select a service to continue.',
+      });
       return;
     }
     if (_step < 3) {
@@ -125,26 +234,41 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       lastDate: DateTime.now().add(const Duration(days: 90)),
       helpText: 'Pick a service date',
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) {
+      setState(() => _date = picked);
+      // A different weekday can have different hours, so re-offer the slots.
+      _selectFirstSlot();
+    }
   }
 
   Future<void> _submit() async {
+    final slot = _slotMinutes;
+    if (slot == null) return;
+
     setState(() => _submitting = true);
-    final booking = await _bookingService.createBooking(
-      providerId: widget.providerId,
-      serviceId: _selectedService!.id,
-      serviceTitle: _selectedService!.title,
-      amount: _selectedService!.price,
-      date: _date,
-      schedule: _slot,
-      address: _addressController.text.trim(),
-      paymentMethod: _paymentMethod,
-      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      clientName: _nameController.text.trim(),
-    );
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    context.pushReplacement('/booking-confirmation', extra: booking);
+    try {
+      final booking = await _bookingService.createBooking(
+        serviceId: _selectedService!.id,
+        // The chosen day and slot are one wall-clock start; the API derives
+        // the end from the service duration.
+        scheduledDate: DateTime(_date.year, _date.month, _date.day)
+            .add(Duration(minutes: slot)),
+        notes: _notesController.text.trim(),
+        paymentMethod: _paymentMethod,
+        serviceAddress: _addressController.text.trim(),
+        contactPhone: _phoneController.text.trim(),
+        idempotencyKey: _idempotencyKey,
+      );
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      context.pushReplacement('/booking-confirmation', extra: booking);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      // The API refuses a taken window, a paused provider or a time outside
+      // the published hours — each comes back as a message worth reading.
+      AppSnackbar.error(context, apiErrorMessage(e, 'Unable to create this booking.'));
+    }
   }
 
   @override
@@ -259,7 +383,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
               subtitle: _services[i].duration,
               category: _provider!.categoryName,
               price: _services[i].price,
-              onTap: () => setState(() => _selectedService = _services[i]),
+              onTap: () => _selectService(_services[i]),
             )
                 .animate()
                 .fadeIn(delay: Duration(milliseconds: 100 + i * 60), duration: 300.ms)
@@ -271,6 +395,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   // ── Step 2: schedule ──
   Widget _stepSchedule(BuildContext context, bool isDark) {
+    final slots = _slotOptions;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -302,28 +428,57 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         ),
         const SizedBox(height: AppSizes.xl),
         Text('Available time slots', style: AppTextStyles.titleMedium),
-        const SizedBox(height: AppSizes.sm),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (var i = 0; i < _slots.length; i++)
-              ChoiceChip(
-                label: Text(_slots[i]),
-                selected: _slot == _slots[i],
-                selectedColor: AppColors.secondary,
-                labelStyle: AppTextStyles.label.copyWith(
-                  color: _slot == _slots[i] ? AppColors.primary : null,
-                  fontWeight: FontWeight.w600,
-                ),
-                showCheckmark: false,
-                onSelected: (_) => setState(() => _slot = _slots[i]),
-              )
-                  .animate()
-                  .fadeIn(delay: Duration(milliseconds: 150 + i * 40), duration: 300.ms)
-                  .slideX(begin: 0.08, end: 0),
-          ],
+        const SizedBox(height: 4),
+        Text(
+          _closedOnSelectedDay
+              ? '${_provider!.user.firstName} does not work on ${ProviderAvailabilityModel.dayNames[_date.weekday % 7]}s. Pick another date.'
+              : _window != null
+                  ? 'Published hours: ${_window!.label}.'
+                  : 'This provider has not published weekly hours, so any time in the working day can be requested.',
+          style: AppTextStyles.bodySmall,
         ),
+        const SizedBox(height: AppSizes.sm),
+        if (slots.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSizes.md),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+            child: Row(
+              children: [
+                const AppIcon(AppIcons.event_busy_rounded, size: 18, color: AppColors.neutral400),
+                const SizedBox(width: AppSizes.sm),
+                Expanded(
+                  child: Text('No slots on this date — choose another day.',
+                      style: AppTextStyles.bodyMedium),
+                ),
+              ],
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < slots.length; i++)
+                ChoiceChip(
+                  label: Text(_slotLabel(slots[i])),
+                  selected: _slotMinutes == slots[i],
+                  selectedColor: AppColors.secondary,
+                  labelStyle: AppTextStyles.label.copyWith(
+                    color: _slotMinutes == slots[i] ? AppColors.primary : null,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  showCheckmark: false,
+                  onSelected: (_) => setState(() => _slotMinutes = slots[i]),
+                )
+                    .animate()
+                    .fadeIn(delay: Duration(milliseconds: 150 + i.clamp(0, 10) * 40), duration: 300.ms)
+                    .slideX(begin: 0.08, end: 0),
+            ],
+          ),
       ],
     );
   }
@@ -336,8 +491,6 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         Text('Your details', style: AppTextStyles.titleLarge),
         const SizedBox(height: 4),
         Text('Where should ${_provider!.user.firstName} go, and how will you pay?', style: AppTextStyles.bodyMedium),
-        const SizedBox(height: AppSizes.lg),
-        AppTextField(label: 'Full name', hint: 'Juan Dela Cruz', controller: _nameController, prefixIcon: AppIcons.person_outline_rounded),
         const SizedBox(height: AppSizes.lg),
         AppTextField(
           label: 'Phone number',
@@ -364,17 +517,21 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         const SizedBox(height: AppSizes.xl),
         Text('Payment method', style: AppTextStyles.titleLarge),
         const SizedBox(height: 4),
-        Text('Choose how you want to pay for this booking.', style: AppTextStyles.bodyMedium),
+        Text(
+          'Choose how you want to settle this booking. Nothing is charged here — '
+          'you arrange payment with the provider.',
+          style: AppTextStyles.bodyMedium,
+        ),
         const SizedBox(height: AppSizes.md),
-        for (var i = 0; i < _paymentMethods.length; i++)
+        for (var i = 0; i < BookingModel.paymentMethods.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSizes.sm),
             child: _MethodTile(
-              selected: _paymentMethod == _paymentMethods[i].$1,
-              icon: _paymentMethods[i].$2,
-              label: _paymentMethods[i].$1,
-              subtitle: _paymentMethods[i].$3,
-              onTap: () => setState(() => _paymentMethod = _paymentMethods[i].$1),
+              selected: _paymentMethod == BookingModel.paymentMethods[i].$1,
+              icon: _paymentIcons[BookingModel.paymentMethods[i].$1] ?? AppIcons.payments_outlined,
+              label: BookingModel.paymentMethods[i].$2,
+              subtitle: _paymentBlurbs[BookingModel.paymentMethods[i].$1] ?? '',
+              onTap: () => setState(() => _paymentMethod = BookingModel.paymentMethods[i].$1),
             )
                 .animate()
                 .fadeIn(delay: Duration(milliseconds: 150 + i * 50), duration: 300.ms)
@@ -407,11 +564,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
               _summaryRow(AppIcons.handyman_outlined, 'Provider', _provider!.user.fullName),
               _summaryRow(AppIcons.design_services_outlined, 'Service', _selectedService!.title),
               _summaryRow(AppIcons.schedule_rounded, 'Duration', _selectedService!.duration),
-              _summaryRow(AppIcons.calendar_today_rounded, 'Schedule', '${Formatters.dateShort(_date)} · $_slot'),
-              _summaryRow(AppIcons.person_outline_rounded, 'Client', _nameController.text.trim()),
+              _summaryRow(AppIcons.calendar_today_rounded, 'Schedule',
+                  '${Formatters.dateShort(_date)} · ${_slotLabel(_slotMinutes!)}'),
+              _summaryRow(AppIcons.person_outline_rounded, 'Client', _clientName),
               _summaryRow(AppIcons.phone_outlined, 'Phone', _phoneController.text.trim()),
               _summaryRow(AppIcons.location_on_outlined, 'Address', _addressController.text.trim()),
-              _summaryRow(AppIcons.account_balance_wallet_rounded, 'Payment', _paymentMethod),
+              _summaryRow(AppIcons.account_balance_wallet_rounded, 'Payment',
+                  BookingModel.paymentMethodLabel(_paymentMethod)),
             ],
           ),
         ),

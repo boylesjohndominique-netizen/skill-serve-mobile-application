@@ -14,6 +14,7 @@ import '../../../core/widgets/cards/booking_card.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
+import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../booking/models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
@@ -31,7 +32,15 @@ class BookingRequestsScreen extends StatefulWidget {
 }
 
 class _BookingRequestsScreenState extends State<BookingRequestsScreen> with SingleTickerProviderStateMixin {
-  static const _tabs = ['Requests', 'Confirmed', 'In Progress', 'Completed', 'Cancelled', 'Disputed'];
+  static const _tabs = <(String, List<BookingStatus>)>[
+    ('Requests', [BookingStatus.pending]),
+    ('Confirmed', [BookingStatus.confirmed]),
+    ('In Progress', [BookingStatus.inProgress]),
+    ('Completed', [BookingStatus.completed]),
+    ('Cancelled', [BookingStatus.cancelled]),
+    ('Disputed', [BookingStatus.disputed]),
+  ];
+
   late final TabController _tabController = TabController(length: _tabs.length, vsync: this);
 
   @override
@@ -42,26 +51,19 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> with Sing
     });
   }
 
-  List<BookingModel> _forTab(ProviderBookingController c, int tab) {
-    switch (tab) {
-      case 0:
-        return c.requests;
-      case 1:
-        return c.bookings.where((b) => b.status == BookingStatus.confirmed).toList();
-      case 2:
-        return c.bookings.where((b) => b.status == BookingStatus.inProgress).toList();
-      case 3:
-        return c.bookings.where((b) => b.status == BookingStatus.completed).toList();
-      case 4:
-        return c.bookings.where((b) => b.status == BookingStatus.cancelled).toList();
-      default:
-        return c.bookings.where((b) => b.status == BookingStatus.disputed).toList();
-    }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
+
+  Future<void> _reload() =>
+      context.read<ProviderBookingController>().loadProviderBookings();
 
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ProviderBookingController>();
+    final failed = controller.errorMessage != null && controller.bookings.isEmpty;
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,27 +74,35 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> with Sing
             child: Text('Bookings', style: AppTextStyles.displayMedium)
                 .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
           ),
-        TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: [for (final t in _tabs) Tab(text: t)],
-        ),
-        Expanded(
-          child: controller.isLoading
-              ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    for (var t = 0; t < _tabs.length; t++)
-                      _TabList(
-                        bookings: _forTab(controller, t),
-                        tabIndex: t,
-                        controller: controller,
-                      ),
-                  ],
-                ),
-        ),
+        if (failed)
+          Expanded(child: ErrorState(message: controller.errorMessage!, onRetry: _reload))
+        else ...[
+          TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [for (final t in _tabs) Tab(text: t.$1)],
+          ),
+          Expanded(
+            child: controller.isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(AppSizes.pageHPad),
+                    child: ShimmerCardList(itemHeight: 130),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      for (var t = 0; t < _tabs.length; t++)
+                        _TabList(
+                          bookings: controller.withStatus(_tabs[t].$2),
+                          tabIndex: t,
+                          controller: controller,
+                          onRefresh: _reload,
+                        ),
+                    ],
+                  ),
+          ),
+        ],
       ],
     );
 
@@ -101,36 +111,69 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> with Sing
   }
 }
 
+/// Runs a status change and reports its outcome — the controller keeps the
+/// list in step, so the card moves to its new tab on success.
+Future<void> _runAction(
+  BuildContext context,
+  Future<bool> Function() action,
+  String successMessage,
+) async {
+  final controller = context.read<ProviderBookingController>();
+  final ok = await action();
+  if (!context.mounted) return;
+  if (ok) {
+    AppSnackbar.success(context, successMessage);
+  } else {
+    AppSnackbar.error(
+        context, controller.errorMessage ?? 'That did not work. Please try again.');
+  }
+}
+
 class _TabList extends StatelessWidget {
   final List<BookingModel> bookings;
   final int tabIndex;
   final ProviderBookingController controller;
+  final Future<void> Function() onRefresh;
 
-  const _TabList({required this.bookings, required this.tabIndex, required this.controller});
+  const _TabList({
+    required this.bookings,
+    required this.tabIndex,
+    required this.controller,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (bookings.isEmpty) {
-      return EmptyState(
-        icon: tabIndex == 0
-            ? AppIcons.inbox_outlined
-            : (tabIndex == 4 ? AppIcons.cancel_outlined : (tabIndex == 5 ? AppIcons.gavel_rounded : AppIcons.event_note_outlined)),
-        title: 'Nothing here',
-        message: 'Bookings in this category will appear here.',
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSizes.pageHPad),
-      itemCount: bookings.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
-      itemBuilder: (context, i) => _ActionableCard(
-        booking: bookings[i],
-        tabIndex: tabIndex,
-        controller: controller,
-      )
-          .animate()
-          .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
-          .slideY(begin: 0.06, end: 0),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: bookings.isEmpty
+          ? ListView(
+              padding: const EdgeInsets.only(top: AppSizes.xxl),
+              children: [
+                EmptyState(
+                  icon: tabIndex == 0
+                      ? AppIcons.inbox_outlined
+                      : (tabIndex == 4
+                          ? AppIcons.cancel_outlined
+                          : (tabIndex == 5 ? AppIcons.gavel_rounded : AppIcons.event_note_outlined)),
+                  title: 'Nothing here',
+                  message: 'Bookings in this category will appear here.',
+                ),
+              ],
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(AppSizes.pageHPad),
+              itemCount: bookings.length,
+              separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
+              itemBuilder: (context, i) => _ActionableCard(
+                booking: bookings[i],
+                tabIndex: tabIndex,
+                controller: controller,
+              )
+                  .animate()
+                  .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
+                  .slideY(begin: 0.06, end: 0),
+            ),
     );
   }
 }
@@ -144,9 +187,11 @@ class _ActionableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final busy = controller.busyBookingId == booking.id;
+
     switch (tabIndex) {
       case 0:
-        return _RequestCard(booking: booking, controller: controller);
+        return _RequestCard(booking: booking, controller: controller, busy: busy);
       case 1:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -159,7 +204,7 @@ class _ActionableCard extends StatelessWidget {
                   child: OutlinedAppButton(
                     label: 'Message client',
                     icon: AppIcons.chat_bubble_outline_rounded,
-                    onPressed: () => context.push('/chat-conversation/${booking.clientId}'),
+                    onPressed: () => context.push('/chat-conversation/${booking.id}'),
                   ),
                 ),
                 const SizedBox(width: AppSizes.md),
@@ -167,10 +212,11 @@ class _ActionableCard extends StatelessWidget {
                   child: PrimaryButton(
                     label: 'Start job',
                     icon: AppIcons.play_arrow_rounded,
-                    onPressed: () async {
-                      await controller.start(booking.id);
-                      if (context.mounted) AppSnackbar.success(context, 'Job started — good luck!');
-                    },
+                    isLoading: busy,
+                    onPressed: busy
+                        ? null
+                        : () => _runAction(context, () => controller.start(booking.id),
+                            'Job started — good luck!'),
                   ),
                 ),
               ],
@@ -186,10 +232,11 @@ class _ActionableCard extends StatelessWidget {
             PrimaryButton(
               label: 'Mark as completed',
               icon: AppIcons.task_alt_rounded,
-              onPressed: () async {
-                await controller.complete(booking.id);
-                if (context.mounted) AppSnackbar.success(context, 'Job marked as completed.');
-              },
+              isLoading: busy,
+              onPressed: busy
+                  ? null
+                  : () => _runAction(context, () => controller.complete(booking.id),
+                      'Job marked as completed.'),
             ),
           ],
         );
@@ -203,13 +250,31 @@ class _ActionableCard extends StatelessWidget {
 class _RequestCard extends StatelessWidget {
   final BookingModel booking;
   final ProviderBookingController controller;
-  const _RequestCard({required this.booking, required this.controller});
+  final bool busy;
+
+  const _RequestCard({required this.booking, required this.controller, required this.busy});
+
+  Future<void> _decline(BuildContext context) async {
+    final reason = await AppDialog.prompt(
+      context,
+      title: 'Decline this request?',
+      message: 'The client will be notified this request was declined.',
+      fieldLabel: 'Reason (optional)',
+      hint: 'Let the client know why, e.g. fully booked that day',
+      confirmLabel: 'Decline',
+      danger: true,
+    );
+    if (reason == null || !context.mounted) return;
+    await _runAction(
+        context, () => controller.decline(booking.id, reason: reason), 'Request declined.');
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
     final lineColor = isDark ? AppColors.lineDark : AppColors.line;
+    final clientName = booking.clientName.isEmpty ? 'Customer' : booking.clientName;
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
@@ -224,16 +289,13 @@ class _RequestCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              AppAvatar(
-                initials: booking.clientName.isNotEmpty ? booking.clientName[0].toUpperCase() : '?',
-                radius: 20,
-              ),
+              AppAvatar(initials: clientName[0].toUpperCase(), radius: 20),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(booking.clientName, style: AppTextStyles.titleMedium),
+                    Text(clientName, style: AppTextStyles.titleMedium),
                     Text(booking.serviceTitle, style: AppTextStyles.bodySmall),
                   ],
                 ),
@@ -250,9 +312,25 @@ class _RequestCard extends StatelessWidget {
               const SizedBox(width: 14),
               const AppIcon(AppIcons.access_time_rounded, size: 14, color: AppColors.neutral300),
               const SizedBox(width: 6),
-              Text(booking.schedule, style: AppTextStyles.bodySmall),
+              Flexible(
+                child: Text(booking.schedule,
+                    style: AppTextStyles.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
+          if (booking.address.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const AppIcon(AppIcons.location_on_outlined, size: 14, color: AppColors.neutral300),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(booking.address,
+                      style: AppTextStyles.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: AppSizes.md),
           Row(
             children: [
@@ -260,29 +338,18 @@ class _RequestCard extends StatelessWidget {
                 child: OutlinedAppButton(
                   label: 'Decline',
                   color: AppColors.error,
-                  onPressed: () async {
-                    final confirmed = await AppDialog.confirm(
-                      context,
-                      title: 'Decline this request?',
-                      message: 'The client will be notified this request was declined.',
-                      confirmLabel: 'Decline',
-                      danger: true,
-                    );
-                    if (confirmed && context.mounted) {
-                      await controller.decline(booking.id);
-                      if (context.mounted) AppSnackbar.success(context, 'Request declined.');
-                    }
-                  },
+                  onPressed: busy ? null : () => _decline(context),
                 ),
               ),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: PrimaryButton(
                   label: 'Accept',
-                  onPressed: () async {
-                    await controller.accept(booking.id);
-                    if (context.mounted) AppSnackbar.success(context, 'Booking accepted!');
-                  },
+                  isLoading: busy,
+                  onPressed: busy
+                      ? null
+                      : () => _runAction(
+                          context, () => controller.accept(booking.id), 'Booking accepted!'),
                 ),
               ),
             ],
