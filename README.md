@@ -17,8 +17,8 @@ to the backend database. Mock mode remains available for standalone UI developme
 - **google_fonts** — Space Grotesk (display) + Inter (body) + IBM Plex Mono (IDs/prices/timestamps), matching the admin web app
 - **flutter_svg**, **lottie**, **cached_network_image**, **flutter_animate**, **shimmer** — visuals & motion
 - **flutter_screenutil**, **responsive_framework** — responsive layout across phones/tablets
-- **shared_preferences** — placeholder for session persistence
-- **image_picker** — UI-only integration for the Upload Portfolio screen
+- **shared_preferences** — keeps the signed-in session and preferences across app restarts
+- **image_picker** — photos for the profile, portfolio and dispute evidence
 - **intl** — currency/date formatting
 
 ## Getting started
@@ -26,6 +26,17 @@ to the backend database. Mock mode remains available for standalone UI developme
 ```bash
 flutter pub get
 flutter run
+```
+
+### Running Flutter from WSL
+
+The Windows Flutter SDK cannot be called directly from WSL (its shell entry point
+has Windows line endings). Use the wrapper, which hands the command to Windows:
+
+```bash
+tool/wsl-flutter.sh analyze
+tool/wsl-flutter.sh test
+tool/wsl-flutter.sh test test/booking_test.dart
 ```
 
 > This deliverable includes the `lib/`, `assets/`, `pubspec.yaml`, and `analysis_options.yaml`

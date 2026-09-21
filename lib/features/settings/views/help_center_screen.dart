@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -69,30 +72,66 @@ class HelpCenterScreen extends StatelessWidget {
                   .fadeIn(delay: Duration(milliseconds: 200 + i * 60), duration: 350.ms)
                   .slideY(begin: 0.05, end: 0),
             const SizedBox(height: AppSizes.lg),
-            Container(
-              padding: const EdgeInsets.all(AppSizes.lg),
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 6))],
-              ),
-              child: Row(
-                children: [
-                  const AppIcon(AppIcons.support_agent_rounded, color: AppColors.secondary, size: 28),
-                  const SizedBox(width: AppSizes.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Still need help?', style: AppTextStyles.onDark(AppTextStyles.titleMedium)),
-                        Text('Our support team responds within a day.', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            // Signed-in customers and providers both raise tickets; a guest is
+            // pointed at the contact details instead.
+            _StillNeedHelpCard(
+              canRaiseTickets: context.read<AuthController>().status == AuthStatus.authenticated,
             ).animate().fadeIn(delay: 600.ms, duration: 400.ms).slideY(begin: 0.08, end: 0),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The Help Center's route into Support.
+class _StillNeedHelpCard extends StatelessWidget {
+  final bool canRaiseTickets;
+  const _StillNeedHelpCard({required this.canRaiseTickets});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: () => context.push(canRaiseTickets ? '/support/tickets' : '/contact'),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSizes.lg),
+          decoration: BoxDecoration(
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const AppIcon(AppIcons.support_agent_rounded, color: AppColors.secondary, size: 28),
+              const SizedBox(width: AppSizes.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Still need help?',
+                        style: AppTextStyles.onDark(AppTextStyles.titleMedium)),
+                    Text(
+                      canRaiseTickets
+                          ? 'Open a support ticket and we will reply in the app.'
+                          : 'Get in touch with our support team.',
+                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
+                    ),
+                  ],
+                ),
+              ),
+              const AppIcon(AppIcons.chevron_right_rounded,
+                  color: AppColors.secondary, size: 20),
+            ],
+          ),
         ),
       ),
     );

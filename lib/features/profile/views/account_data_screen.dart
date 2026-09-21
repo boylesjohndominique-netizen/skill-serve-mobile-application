@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../services/account_data_service.dart';
+import '../../../core/utils/api_error.dart';
+import '../../../core/widgets/buttons/outlined_app_button.dart';
+import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -9,13 +14,40 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-/// PDF §15.1 — View Account Data
+/// View the account's data, and take a copy of it.
 ///
-/// Displays the personal account information maintained by the platform.
-/// Live mode reads from GET /api/client/v1/auth/me; mock mode returns
-/// the current session user.
-class AccountDataScreen extends StatelessWidget {
+/// The summary on screen comes from the session (GET /api/client/v1/auth/me);
+/// "Copy my data" pulls the full export, which also covers bookings, reviews,
+/// reports and support tickets.
+class AccountDataScreen extends StatefulWidget {
   const AccountDataScreen({super.key});
+
+  @override
+  State<AccountDataScreen> createState() => _AccountDataScreenState();
+}
+
+class _AccountDataScreenState extends State<AccountDataScreen> {
+  bool _exporting = false;
+
+  /// There is no file picker or share sheet in this app, so the export goes to
+  /// the clipboard as indented JSON — no extra dependency, and the person can
+  /// paste it wherever they keep their records.
+  Future<void> _copyData() async {
+    setState(() => _exporting = true);
+    try {
+      final json = await AccountDataService().exportAccountDataAsJson();
+      await Clipboard.setData(ClipboardData(text: json));
+      if (mounted) {
+        AppSnackbar.success(context, 'Your data was copied to the clipboard.');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.error(context, apiErrorMessage(e, 'Unable to export your data.'));
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +100,13 @@ class AccountDataScreen extends StatelessWidget {
             ] else
               const _NoUserCard(),
             const SizedBox(height: AppSizes.xl),
+            if (user != null)
+              OutlinedAppButton(
+                label: _exporting ? 'Preparing…' : 'Copy my data',
+                icon: AppIcons.description_outlined,
+                onPressed: _exporting ? null : _copyData,
+              ).animate().fadeIn(delay: 260.ms, duration: 350.ms),
+            const SizedBox(height: AppSizes.md),
             _InfoNote(
               isDark: isDark,
             ).animate().fadeIn(delay: 300.ms, duration: 350.ms),

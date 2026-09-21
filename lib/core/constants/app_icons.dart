@@ -109,6 +109,10 @@ abstract final class AppIcons {
   static const AppIconData visibility_off_outlined = HugeIcons.strokeRoundedViewOff;
   static const AppIconData local_offer_rounded = HugeIcons.strokeRoundedTag01;
 
+  /// Platform announcements from the administrators — an alert bell rather than
+  /// the plain notification bell, so they stand apart in the feed.
+  static const AppIconData announcement_rounded = HugeIcons.strokeRoundedAlert01;
+
   // ── Actions ────────────────────────────────────────────────────────
   static const AppIconData add_rounded = HugeIcons.strokeRoundedAdd01;
   static const AppIconData add_circle_outline_rounded = HugeIcons.strokeRoundedAddCircle;

@@ -8,6 +8,7 @@ import '../models/auth_results.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/services/api_client.dart';
 import '../../../core/services/token_storage.dart';
 
 enum AuthStatus { unauthenticated, authenticating, authenticated }
@@ -29,20 +30,40 @@ enum GoogleAuthOutcome {
 }
 
 /// Session state — who's signed in (if anyone) and as what role.
-/// Backed by [AuthService] placeholders; swap for real token persistence
-/// (SharedPreferences / secure storage) once the backend exists.
+///
+/// A session lasts until the user signs out. Closing the app does not end it:
+/// the signed-in account is cached locally and restored at launch, and the
+/// short-lived access token is renewed from the refresh token as needed (see
+/// [ApiClient]). Only the server can end a session early — a sign-out on the
+/// server, a suspension or a deleted account — and then [sessionExpired] is set
+/// so the login screen can say why.
 class AuthController extends ChangeNotifier {
+  AuthController() {
+    ApiClient.onSessionRevoked = _onSessionRevoked;
+  }
+
   final AuthService _authService = AuthService();
 
   AuthStatus status = AuthStatus.unauthenticated;
   UserModel? currentUser;
   String? errorMessage;
+
+  /// True when the server ended the session (not when the user signed out),
+  /// so the login screen can explain why they are there.
   bool sessionExpired = false;
-  Timer? _sessionTimer;
 
   static const _sessionUserKey = 'skillserve.session.user';
-  static const _sessionExpiryKey = 'skillserve.session.expiresAt';
-  static const sessionDuration = Duration(hours: 8);
+
+  /// Written by earlier builds that timed sessions out after eight hours;
+  /// removed at launch so it cannot linger.
+  static const _legacySessionExpiryKey = 'skillserve.session.expiresAt';
+
+  final Completer<void> _ready = Completer<void>();
+
+  /// Completes once launch has decided whether someone is signed in. The
+  /// splash screen waits on this instead of guessing with a fixed delay, so a
+  /// slow backend can never make a signed-in user look signed out.
+  Future<void> get ready => _ready.future;
 
   /// Google OAuth **Web** client ID (see [AppConfig.googleWebClientId]).
   /// Required so google_sign_in returns an ID token on Android.
@@ -71,17 +92,74 @@ class AuthController extends ChangeNotifier {
   /// server-side while this is set — dropping it cancels the sign-up.
   GoogleProfileDraft? googleDraft;
 
+  /// Restores the session saved by the last sign-in.
+  ///
+  /// The cached account is used at once, so the app opens straight onto the
+  /// user's home screen even offline or while the free-tier backend is still
+  /// waking up. The account is then refreshed from the API in the background.
+  /// Nothing here signs the user out except a refusal from the server.
   Future<void> initialize() async {
-    final accessToken = await TokenStorage.readAccessToken();
-    if (accessToken == null) return;
     try {
-      currentUser = await _authService.getCurrentUser();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_legacySessionExpiryKey);
+
+      final hasTokens = await TokenStorage.readAccessToken() != null ||
+          await TokenStorage.readRefreshToken() != null;
+      if (!hasTokens) return;
+
+      final cached = _cachedUser(prefs);
+      if (cached != null) {
+        currentUser = cached;
+        status = AuthStatus.authenticated;
+        notifyListeners();
+        // Not awaited: the user is already in; this only brings them up to date.
+        unawaited(_refreshCurrentUser());
+        return;
+      }
+
+      // No cached account (a build that predates the cache): the API has to say
+      // who this is before the app can pick a home screen.
+      await _refreshCurrentUser();
+    } finally {
+      if (!_ready.isCompleted) _ready.complete();
+    }
+  }
+
+  UserModel? _cachedUser(SharedPreferences prefs) {
+    final raw = prefs.getString(_sessionUserKey);
+    if (raw == null) return null;
+    try {
+      return UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reloads the signed-in account from the API. A network failure keeps the
+  /// cached session; a 401 has already been handled by [ApiClient], which
+  /// tried the refresh token first and only then called [_onSessionRevoked].
+  Future<void> _refreshCurrentUser() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      currentUser = user;
       status = AuthStatus.authenticated;
-      _scheduleExpiry(DateTime.now().add(sessionDuration));
+      await _persistSession();
       notifyListeners();
     } catch (_) {
-      await TokenStorage.clear();
+      // Offline, or the backend is still waking: stay signed in.
     }
+  }
+
+  /// The server ended the session. Clears it locally and returns to login.
+  Future<void> _onSessionRevoked() async {
+    if (status != AuthStatus.authenticated && currentUser == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await _clearSession(prefs);
+    _clearPendingRegistration();
+    currentUser = null;
+    status = AuthStatus.unauthenticated;
+    sessionExpired = true;
+    notifyListeners();
   }
 
   Future<bool> login(String email, String password) async {
@@ -432,11 +510,15 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _authService.logout();
+    try {
+      await _authService.logout();
+    } catch (_) {
+      // Signing out must work offline too; the server token simply expires.
+    }
     final prefs = await SharedPreferences.getInstance();
     await _clearSession(prefs);
     await TokenStorage.clear();
-    _sessionTimer?.cancel();
+    sessionExpired = false;
     _clearPendingRegistration();
     googleDraft = null;
     currentUser = null;
@@ -452,14 +534,14 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Caches the signed-in account so the next launch can restore it without
+  /// waiting on the network. There is deliberately no expiry: a session lasts
+  /// until the user signs out or the server revokes it.
   Future<void> _persistSession() async {
     final user = currentUser;
     if (user == null) return;
     final prefs = await SharedPreferences.getInstance();
-    final expiry = DateTime.now().add(sessionDuration);
     await prefs.setString(_sessionUserKey, jsonEncode(user.toJson()));
-    await prefs.setInt(_sessionExpiryKey, expiry.millisecondsSinceEpoch);
-    _scheduleExpiry(expiry);
   }
 
   Future<void> _saveApiTokens() => TokenStorage.save(
@@ -468,32 +550,16 @@ class AuthController extends ChangeNotifier {
         expiresAt: _authService.lastExpiresAt,
       );
 
-  void _scheduleExpiry(DateTime expiry) {
-    _sessionTimer?.cancel();
-    final delay = expiry.difference(DateTime.now());
-    _sessionTimer =
-        Timer(delay.isNegative ? Duration.zero : delay, _expireSession);
-  }
-
-  Future<void> _expireSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await _clearSession(prefs);
-    await TokenStorage.clear();
-    _clearPendingRegistration();
-    currentUser = null;
-    status = AuthStatus.unauthenticated;
-    sessionExpired = true;
-    notifyListeners();
-  }
-
   Future<void> _clearSession(SharedPreferences prefs) async {
     await prefs.remove(_sessionUserKey);
-    await prefs.remove(_sessionExpiryKey);
+    await prefs.remove(_legacySessionExpiryKey);
   }
 
   @override
   void dispose() {
-    _sessionTimer?.cancel();
+    if (ApiClient.onSessionRevoked == _onSessionRevoked) {
+      ApiClient.onSessionRevoked = null;
+    }
     super.dispose();
   }
 }

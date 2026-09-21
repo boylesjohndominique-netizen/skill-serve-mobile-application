@@ -86,3 +86,37 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `POST /api/client/v1/bookings/{booking}/messages/read`
+
+For an open conversation that already shows a pushed message: clears its unread state without re-reading the thread, and returns the account's remaining unread total for the Messages badge.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Marked read
+
+Response schema: `#/components/schemas/MessagesMarkedReadEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Booking participant access required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+

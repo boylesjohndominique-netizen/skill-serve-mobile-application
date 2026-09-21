@@ -1,17 +1,28 @@
+import '../../booking/services/booking_service.dart';
 import '../models/payment_model.dart';
 
-/// Service for payments & receipts.
+/// Payment history — live API only, read from the customer's bookings.
 ///
-/// No documented client endpoints for payments. These methods will
-/// throw [UnsupportedError] until the backend documents client payment routes.
+/// Every booking carries its own payment record (`payment_method`,
+/// `payment_status`, `total_price`), and that is all the platform holds:
+/// payments are settled with the provider, not processed in the app. So this
+/// reads the bookings rather than inventing a separate payments source.
+///
+/// Endpoints:
+/// - GET /api/client/v1/bookings
+/// - GET /api/client/v1/bookings/{booking}
 class PaymentService {
-  // No documented client endpoint.
+  final BookingService _bookings = BookingService();
+
+  /// Newest first.
   Future<List<PaymentModel>> getPayments() async {
-    throw UnsupportedError('Client payment endpoints are not documented.');
+    final bookings = await _bookings.getClientBookings();
+    return [for (final booking in bookings) PaymentModel.fromBooking(booking)]
+      ..sort((a, b) => b.date.compareTo(a.date));
   }
 
-  // No documented client endpoint.
-  Future<PaymentModel> getPaymentById(String id) async {
-    throw UnsupportedError('Client payment endpoints are not documented.');
+  /// The payment for one booking.
+  Future<PaymentModel> getPaymentForBooking(String bookingId) async {
+    return PaymentModel.fromBooking(await _bookings.getClientBooking(bookingId));
   }
 }

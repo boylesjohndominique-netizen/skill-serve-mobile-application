@@ -21,17 +21,27 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (!mounted) return;
-      final auth = context.read<AuthController>();
-      if (auth.isClient) {
-        context.go('/client');
-      } else if (auth.isProvider) {
-        context.go('/provider');
-      } else {
-        context.go('/onboarding');
-      }
-    });
+    _routeWhenReady();
+  }
+
+  /// Holds the brand beat for at least its animation, and otherwise waits for
+  /// the session to be restored — never guessing, so a slow backend cannot
+  /// send a signed-in user to the onboarding screens.
+  Future<void> _routeWhenReady() async {
+    final auth = context.read<AuthController>();
+    await Future.wait([
+      auth.ready,
+      Future<void>.delayed(const Duration(milliseconds: 1200)),
+    ]);
+    if (!mounted) return;
+
+    if (auth.isClient) {
+      context.go('/client');
+    } else if (auth.isProvider) {
+      context.go('/provider');
+    } else {
+      context.go('/onboarding');
+    }
   }
 
   @override

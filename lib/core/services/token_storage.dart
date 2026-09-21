@@ -12,6 +12,11 @@ class TokenStorage {
   static Future<String?> readAccessToken() async =>
       (await SharedPreferences.getInstance()).getString(accessTokenKey);
 
+  /// The long-lived token that renews the access token. Present for as long
+  /// as the user stays signed in.
+  static Future<String?> readRefreshToken() async =>
+      (await SharedPreferences.getInstance()).getString(refreshTokenKey);
+
   static Future<void> save(
       {String? accessToken, String? refreshToken, String? expiresAt}) async {
     final prefs = await SharedPreferences.getInstance();

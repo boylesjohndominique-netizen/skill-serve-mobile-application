@@ -13,6 +13,7 @@ import '../../../core/services/api_client.dart';
 /// - GET  /api/client/v1/conversations/unread-count
 /// - GET  /api/client/v1/bookings/{booking}/messages
 /// - POST /api/client/v1/bookings/{booking}/messages
+/// - POST /api/client/v1/bookings/{booking}/messages/read
 class MessageService {
   static const _conversations = '/client/v1/conversations';
 
@@ -60,5 +61,15 @@ class MessageService {
           : Options(headers: {'Idempotency-Key': idempotencyKey}),
     );
     return MessageModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// POST /api/client/v1/bookings/{booking}/messages/read — clears the
+  /// thread's unread state without re-reading it. Returns the unread total
+  /// left across every thread, for the Messages badge.
+  Future<int> markThreadRead(String bookingId) async {
+    final response =
+        await ApiClient.instance.dio.post('/client/v1/bookings/$bookingId/messages/read');
+    final data = response.data['data'] as Map<String, dynamic>?;
+    return (data?['unread_count'] as num?)?.toInt() ?? 0;
   }
 }

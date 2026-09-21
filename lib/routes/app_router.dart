@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/controllers/auth_controller.dart';
 import '../features/booking/models/booking_model.dart';
@@ -47,6 +48,10 @@ import '../features/reports/views/file_report_screen.dart';
 import '../features/reports/views/my_reports_screen.dart';
 
 // Reviews
+import '../features/support/views/new_ticket_screen.dart';
+import '../features/support/views/support_tickets_screen.dart';
+import '../features/support/views/ticket_detail_screen.dart';
+import '../features/reviews/views/my_reviews_screen.dart';
 import '../features/reviews/views/write_review_screen.dart';
 import '../features/reviews/views/reviews_screen.dart';
 
@@ -70,7 +75,6 @@ import '../features/provider/views/completed_jobs_screen.dart';
 
 // Provider earnings
 import '../features/provider/views/earnings_screen.dart';
-import '../features/provider/views/withdrawal_history_screen.dart';
 import '../features/provider/views/verification_status_screen.dart';
 
 // Settings
@@ -173,9 +177,10 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/payments', builder: (context, state) => const PaymentsScreen()),
   GoRoute(
-    path: '/payment-details/:id',
+    // A payment lives on its booking, so it is addressed by the booking id.
+    path: '/payment-details/:bookingId',
     builder: (context, state) =>
-        PaymentDetailsScreen(paymentId: state.pathParameters['id']!),
+        PaymentDetailsScreen(bookingId: state.pathParameters['bookingId']!),
   ),
   GoRoute(
     path: '/file-report',
@@ -196,6 +201,18 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/change-password',
       builder: (context, state) => const ChangePasswordScreen()),
+  GoRoute(
+      path: '/my-reviews', builder: (context, state) => const MyReviewsScreen()),
+  GoRoute(
+      path: '/support/tickets',
+      builder: (context, state) => const SupportTicketsScreen()),
+  GoRoute(
+      path: '/support/new', builder: (context, state) => const NewTicketScreen()),
+  GoRoute(
+    path: '/support/tickets/:ticketId',
+    builder: (context, state) =>
+        TicketDetailScreen(ticketId: state.pathParameters['ticketId']!),
+  ),
   GoRoute(
       path: '/help-center',
       builder: (context, state) => const HelpCenterScreen()),
@@ -261,9 +278,6 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/earnings', builder: (context, state) => const EarningsScreen()),
   GoRoute(
-      path: '/withdrawal-history',
-      builder: (context, state) => const WithdrawalHistoryScreen()),
-  GoRoute(
       path: '/verification-status',
       builder: (context, state) => const VerificationStatusScreen()),
   GoRoute(
@@ -293,26 +307,119 @@ final List<RouteBase> appRoutes = [
 final GoRouter appRouter =
     GoRouter(initialLocation: '/splash', routes: appRoutes);
 
-final _protectedPrefixes = <String>[
-  '/client',
-  '/provider',
-  '/booking',
-  '/favorites',
-  '/chat',
-  '/payments',
-  '/file-report',
-  '/my-reports',
-  '/write-review',
-  '/edit-profile',
-  '/change-password',
-  '/activity-history',
-  '/notification-preferences',
-  '/privacy-settings',
-  '/application-preferences',
-  '/security-activity',
-  '/account-data',
-  '/account-deletion',
-];
+/// Screens either role may use once signed in.
+const _sharedSignedIn = <String>{
+  'notifications',
+  'chat-conversation',
+  'booking-details',
+  'file-report',
+  'my-reports',
+  'support',
+  'edit-profile',
+  'change-password',
+  'activity-history',
+  'notification-preferences',
+  'privacy-settings',
+  'application-preferences',
+  'security-activity',
+  'account-data',
+  'account-deletion',
+};
+
+/// The customer and provider experiences are separate apps within the app:
+/// different workflows, different permissions. Every route belongs to one of
+/// them or is deliberately shared, and a signed-in user who reaches the other
+/// role's route is sent to their own home.
+///
+/// Matched on the whole first path segment — `/provider-preview` is the guest
+/// marketplace view, not a provider screen, so prefixes are not enough.
+const _customerOnly = <String>{
+  'client',
+  'booking-form',
+  'booking-confirmation',
+  'booking-history',
+  'favorites',
+  'payments',
+  'payment-details',
+  'write-review',
+  'my-reviews',
+};
+
+const _providerOnly = <String>{
+  'provider',
+  'provider-onboarding',
+  'booking-requests',
+  'active-jobs',
+  'completed-jobs',
+  'calendar',
+  'earnings',
+  'my-services',
+  'add-service',
+  'edit-service',
+  'availability',
+  'portfolio',
+  'upload-portfolio',
+  'provider-badges',
+  'verification-status',
+  'statistics',
+};
+
+/// The marketplace: open to guests and customers. A provider runs their
+/// business from the provider app and does not shop as a customer.
+///
+/// Two read-only pages stay open to providers too, because they are how a
+/// provider sees themselves as customers do: `/provider-preview/:id` (the
+/// public profile, with no booking action for a provider) and
+/// `/reviews/:providerId`.
+const _marketplace = <String>{
+  'browse',
+  'categories',
+  'search',
+  'service-details',
+  'provider-profile',
+  'portfolio-gallery',
+};
+
+/// Screens that only make sense before signing in.
+const _signedOutOnly = <String>{'', 'login', 'register', 'welcome', 'onboarding'};
+
+String _firstSegment(String path) {
+  final segments = Uri.parse(path).pathSegments;
+  return segments.isEmpty ? '' : segments.first;
+}
+
+/// Where a user should be sent from [path], or null to let them through.
+///
+/// Signed out: only the routes that need an account send them to login.
+/// Signed in: the other role's routes, and the sign-in screens, send them to
+/// their own home.
+@visibleForTesting
+String? redirectFor({
+  required String path,
+  required bool isClient,
+  required bool isProvider,
+}) {
+  final segment = _firstSegment(path);
+  final signedIn = isClient || isProvider;
+
+  if (!signedIn) {
+    final protected = _customerOnly.contains(segment) ||
+        _providerOnly.contains(segment) ||
+        _sharedSignedIn.contains(segment);
+    return protected ? '/login' : null;
+  }
+
+  // The splash screen decides for itself once the session is restored.
+  if (segment == 'splash') return null;
+
+  final home = isProvider ? '/provider' : '/client';
+  if (_signedOutOnly.contains(segment)) return home;
+  if (isProvider && (_customerOnly.contains(segment) || _marketplace.contains(segment))) {
+    return home;
+  }
+  if (isClient && _providerOnly.contains(segment)) return home;
+  return null;
+}
 
 GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(
       initialLocation: '/splash',
@@ -333,14 +440,12 @@ GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(
               : '/verify-email?email=${Uri.encodeComponent(email)}';
         }
 
-        final protected =
-            _protectedPrefixes.any((prefix) => path.startsWith(prefix));
-        if (protected && auth.status != AuthStatus.authenticated) {
-          return '/login';
-        }
-        if (path == '/login' && auth.isClient) return '/client';
-        if (path == '/login' && auth.isProvider) return '/provider';
-        return null;
+        final signedIn = auth.status == AuthStatus.authenticated;
+        return redirectFor(
+          path: path,
+          isClient: signedIn && auth.isClient,
+          isProvider: signedIn && auth.isProvider,
+        );
       },
       routes: appRoutes,
     );

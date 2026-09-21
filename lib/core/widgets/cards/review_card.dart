@@ -6,13 +6,19 @@ import '../../utils/formatters.dart';
 import '../../../features/reviews/models/review_model.dart';
 import '../misc/rating_widget.dart';
 import '../misc/app_avatar.dart';
+import '../misc/app_icon.dart';
+import '../../constants/app_icons.dart';
 
 /// Single review entry used on Provider Profile and the provider's own
 /// Reviews screen. Features soft shadow and dark-mode-aware colors.
 class ReviewCard extends StatelessWidget {
   final ReviewModel review;
 
-  const ReviewCard({super.key, required this.review});
+  /// Shows a report action when set. Leave null for a guest, or for the
+  /// signed-in user's own review — the API refuses both.
+  final VoidCallback? onReport;
+
+  const ReviewCard({super.key, required this.review, this.onReport});
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +55,13 @@ class ReviewCard extends StatelessWidget {
                 ),
               ),
               RatingWidget(rating: review.rating),
+              if (onReport != null)
+                IconButton(
+                  tooltip: 'Report review',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onReport,
+                  icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
+                ),
             ],
           ),
           const SizedBox(height: AppSizes.sm),

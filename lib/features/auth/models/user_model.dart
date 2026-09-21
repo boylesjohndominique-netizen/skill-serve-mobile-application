@@ -55,7 +55,8 @@ class UserModel {
         createdAt: createdAt,
       );
 
-  /// Placeholder — maps a future `GET /me` / `GET /users/:id` JSON payload.
+  /// Maps the `GET /api/client/v1/auth/me` payload, or a session cached by
+  /// [toJson].
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final role = roleFromJson(json);
     return UserModel(

@@ -1,3 +1,6 @@
+import '../../reports/views/report_content_sheet.dart';
+import '../../auth/controllers/auth_controller.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -83,7 +86,10 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad).copyWith(bottom: AppSizes.xl),
                             itemCount: _reviews!.length,
                             separatorBuilder: (_, __) => const SizedBox(height: AppSizes.md),
-                            itemBuilder: (context, i) => ReviewCard(review: _reviews![i])
+                            itemBuilder: (context, i) => ReviewCard(
+                              review: _reviews![i],
+                              onReport: _reportAction(context, _reviews![i]),
+                            )
                                 .animate()
                                 .fadeIn(delay: Duration(milliseconds: 150 + i.clamp(0, 8) * 60), duration: 350.ms)
                                 .slideY(begin: 0.06, end: 0),
@@ -94,4 +100,17 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
       ),
     );
   }
+}
+
+/// A report action for [review], or null when there should be none: a guest
+/// cannot report, and nobody reports their own review — they edit it.
+VoidCallback? _reportAction(BuildContext context, ReviewModel review) {
+  final auth = context.read<AuthController>();
+  final me = auth.currentUser?.id;
+  if (me == null || review.reviewerId == me) return null;
+  return () => showReportContentSheet(
+        context,
+        reviewId: review.id,
+        title: 'Report this review',
+      );
 }

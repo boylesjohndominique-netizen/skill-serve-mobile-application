@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `GET /api/client/v1/support/tickets`
 
-List the authenticated customer support tickets
+List the signed-in account's support tickets
 
 **Authentication:** Bearer token
 
@@ -22,11 +22,11 @@ No JSON request body.
 
 ### Responses
 
-#### HTTP 200: Paginated customer tickets
+#### HTTP 200: Paginated tickets raised by the account
 
 Response schema: `#/components/schemas/ClientSupportTicketListEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 
@@ -36,7 +36,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/support/tickets`
 
-Create a support ticket for the authenticated customer
+Raise a support ticket as a customer or provider
 
 **Authentication:** Bearer token
 
@@ -58,7 +58,7 @@ None.
 
 Response schema: `#/components/schemas/ClientSupportTicketEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 
@@ -68,7 +68,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/client/v1/support/tickets/{ticket}`
 
-Get an owned customer support ticket
+Get a support ticket the account raised
 
 **Authentication:** Bearer token
 
@@ -88,7 +88,7 @@ No JSON request body.
 
 Response schema: `#/components/schemas/ClientSupportTicketEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 
@@ -98,7 +98,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/support/tickets/{ticket}/replies`
 
-Reply to an owned customer support ticket
+Reply to a support ticket the account raised
 
 **Authentication:** Bearer token
 
@@ -120,7 +120,7 @@ Reply to an owned customer support ticket
 
 Response schema: `#/components/schemas/ClientSupportTicketEnvelope`
 
-#### HTTP 403: Active, verified client access required
+#### HTTP 403: Active, verified customer or provider account required
 
 Response schema: `see openapi.json`
 

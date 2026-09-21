@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -15,8 +17,9 @@ import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-/// Read-only provider profile for guests. Any booking action routes to
-/// Login instead of the booking form.
+/// Read-only provider profile. For guests any booking action routes to Login
+/// instead of the booking form; for a signed-in provider it is "how customers
+/// see my profile", so it offers no booking action at all.
 class ProviderPreviewScreen extends StatefulWidget {
   final String providerId;
   const ProviderPreviewScreen({super.key, required this.providerId});
@@ -80,6 +83,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
   Widget build(BuildContext context) {
     if (_provider == null) return const Scaffold(body: LoadingState());
     final p = _provider!;
+    final viewerIsProvider = context.watch<AuthController>().isProvider;
 
     return Scaffold(
       appBar: AppBar(title: Text(p.user.fullName)),
@@ -157,10 +161,19 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                     ],
                   ),
                 ),
-              SizedBox(
-                width: 180,
-                child: PrimaryButton(label: 'Book now', icon: AppIcons.calendar_month_rounded, onPressed: _promptLogin),
-              ),
+              if (viewerIsProvider)
+                Expanded(
+                  child: Text(
+                    'This is how customers see your profile.',
+                    style: AppTextStyles.bodySmall,
+                    textAlign: TextAlign.right,
+                  ),
+                )
+              else
+                SizedBox(
+                  width: 180,
+                  child: PrimaryButton(label: 'Book now', icon: AppIcons.calendar_month_rounded, onPressed: _promptLogin),
+                ),
             ],
           ),
         ),

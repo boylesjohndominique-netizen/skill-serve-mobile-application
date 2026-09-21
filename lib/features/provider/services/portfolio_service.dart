@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/portfolio_model.dart';
 import '../../../core/services/api_client.dart';
+import '../../../core/utils/image_upload.dart';
 
 /// A provider's portfolio of work samples.
 ///
@@ -33,15 +34,10 @@ class PortfolioService {
     required String description,
     required String imagePath,
   }) async {
-    final path = imagePath.replaceFirst('file://', '');
     final form = FormData.fromMap({
       'title': title,
       if (description.isNotEmpty) 'description': description,
-      'image': await MultipartFile.fromFile(
-        path,
-        filename: _basename(path),
-        contentType: _mediaTypeFor(path),
-      ),
+      'image': await imageMultipart(imagePath),
     });
 
     final response = await ApiClient.instance.dio.post(_base, data: form);
@@ -58,14 +54,4 @@ class PortfolioService {
           PortfolioModel.fromJson(item as Map<String, dynamic>),
       ];
 
-  String _basename(String path) => path.split(RegExp(r'[/\\]')).last;
-
-  /// The API only accepts JPG, PNG and WebP, so the part is labelled from
-  /// the file's extension rather than sent as octet-stream.
-  DioMediaType _mediaTypeFor(String path) {
-    final name = _basename(path).toLowerCase();
-    if (name.endsWith('.png')) return DioMediaType('image', 'png');
-    if (name.endsWith('.webp')) return DioMediaType('image', 'webp');
-    return DioMediaType('image', 'jpeg');
-  }
 }

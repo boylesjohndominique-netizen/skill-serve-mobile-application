@@ -60,8 +60,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final providerProfile = _providerProfile;
 
+    // Labelled "This Month", so it has to be this month — the same net figure
+    // the Earnings screen shows, after the platform fee.
+    final now = DateTime.now();
     final earningsThisMonth = bookings.completed
-        .fold<double>(0, (sum, b) => sum + b.amount);
+        .where((b) => b.bookingDate.year == now.year && b.bookingDate.month == now.month)
+        .fold<double>(0, (sum, b) => sum + b.providerEarnings);
 
     return Scaffold(
       body: SafeArea(

@@ -132,7 +132,13 @@ class ConversationModel {
     );
   }
 
-  ConversationModel copyWith({int? unreadCount}) => ConversationModel(
+  ConversationModel copyWith({
+    int? unreadCount,
+    String? lastMessage,
+    bool? lastMessageIsMine,
+    DateTime? lastMessageAt,
+  }) =>
+      ConversationModel(
         bookingId: bookingId,
         bookingNumber: bookingNumber,
         bookingStatus: bookingStatus,
@@ -140,9 +146,9 @@ class ConversationModel {
         participantId: participantId,
         participantName: participantName,
         participantAvatar: participantAvatar,
-        lastMessage: lastMessage,
-        lastMessageIsMine: lastMessageIsMine,
-        lastMessageAt: lastMessageAt,
+        lastMessage: lastMessage ?? this.lastMessage,
+        lastMessageIsMine: lastMessageIsMine ?? this.lastMessageIsMine,
+        lastMessageAt: lastMessageAt ?? this.lastMessageAt,
         unreadCount: unreadCount ?? this.unreadCount,
       );
 }

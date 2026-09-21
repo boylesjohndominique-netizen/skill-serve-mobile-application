@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../controllers/booking_controller.dart';
 import '../controllers/provider_booking_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../reports/controllers/report_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -339,6 +340,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       default:
         break;
     }
+    actions.addAll(_escalationActions(context, booking));
     return Column(children: actions);
   }
 
@@ -385,14 +387,62 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         onPressed: () => context.push('/help-center'),
       ));
     }
-    actions.add(const SizedBox(height: AppSizes.sm));
-    actions.add(TextButton.icon(
-      onPressed: () => context.push('/file-report?bookingId=${booking.id}'),
-      icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
-      label: Text('Report an issue',
-          style: AppTextStyles.label.copyWith(color: AppColors.neutral300)),
-    ));
+    actions.addAll(_escalationActions(context, booking));
     return Column(children: actions);
+  }
+
+  /// Escalation paths open to either party: dispute the job itself, or report
+  /// the person. A job that is under way or finished can be disputed once.
+  List<Widget> _escalationActions(BuildContext context, BookingModel booking) {
+    final canDispute = booking.status == BookingStatus.inProgress ||
+        booking.status == BookingStatus.completed;
+
+    return [
+      if (canDispute) ...[
+        const SizedBox(height: AppSizes.sm),
+        OutlinedAppButton(
+          label: 'Raise a dispute',
+          icon: AppIcons.gavel_rounded,
+          color: AppColors.error,
+          onPressed: _acting ? null : () => _raiseDispute(booking),
+        ),
+      ],
+      const SizedBox(height: AppSizes.sm),
+      TextButton.icon(
+        onPressed: () => context.push('/file-report?bookingId=${booking.id}'),
+        icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
+        label: Text('Report an issue',
+            style: AppTextStyles.label.copyWith(color: AppColors.neutral300)),
+      ),
+    ];
+  }
+
+  Future<void> _raiseDispute(BookingModel booking) async {
+    final reason = await AppDialog.prompt(
+      context,
+      title: 'Raise a dispute?',
+      message:
+          'Our support team will review this booking and contact both of you. Tell us what went wrong.',
+      fieldLabel: 'What went wrong?',
+      hint: 'Describe the problem in at least 10 characters',
+      confirmLabel: 'Raise dispute',
+      danger: true,
+      maxLength: 2000,
+    );
+    if (reason == null || !mounted) return;
+
+    final reports = context.read<ReportController>();
+    setState(() => _acting = true);
+    final dispute = await reports.raiseDispute(bookingId: booking.id, reason: reason);
+    if (!mounted) return;
+    setState(() => _acting = false);
+
+    if (dispute == null) {
+      AppSnackbar.error(context, reports.errorMessage ?? 'Unable to raise this dispute.');
+      return;
+    }
+    AppSnackbar.success(context, 'Dispute raised. Our support team will review it.');
+    await _loadBooking();
   }
 
   Future<void> _cancelBooking(BookingModel booking, BookingController controller) async {

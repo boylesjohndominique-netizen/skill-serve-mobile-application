@@ -29,6 +29,8 @@ class StatusBadge extends StatelessWidget {
         return const StatusBadge(label: 'Verified', tone: StatusTone.success, icon: AppIcons.verified_rounded);
       case 'completed':
         return const StatusBadge(label: 'Completed', tone: StatusTone.success, icon: AppIcons.task_alt_rounded);
+      case 'resolved':
+        return const StatusBadge(label: 'Resolved', tone: StatusTone.success, icon: AppIcons.task_alt_rounded);
       case 'visible':
         return const StatusBadge(label: 'Visible', tone: StatusTone.success, icon: AppIcons.visibility_outlined);
       case 'sent':
@@ -49,6 +51,7 @@ class StatusBadge extends StatelessWidget {
       case 'inprogress':
         return const StatusBadge(label: 'In Progress', tone: StatusTone.info, icon: AppIcons.play_arrow_rounded);
       case 'investigating':
+      case 'investigated':
         return const StatusBadge(label: 'Investigating', tone: StatusTone.info, icon: AppIcons.search_rounded);
       // Orange — warned / refunded
       case 'warned':

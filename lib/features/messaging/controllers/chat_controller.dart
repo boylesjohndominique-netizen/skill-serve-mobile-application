@@ -141,42 +141,53 @@ class ChatController extends ChangeNotifier {
 
   /// A message pushed over the realtime channel.
   ///
-  /// When its thread is open the bubble appears at once and the thread is then
-  /// re-read, which is what marks it read server-side — so a message the user
-  /// is looking at never leaves an unread badge behind. Otherwise only the
-  /// inbox and the badge move.
+  /// The push carries the whole message, so the inbox row is updated from it
+  /// directly rather than refetching the inbox. When its thread is open the
+  /// bubble appears at once and one small request marks it read, so a message
+  /// the user is looking at never leaves an unread badge behind. Only a message
+  /// in a conversation the inbox has not seen yet costs a reload.
   Future<void> onRealtimeMessage(String bookingId, Map<String, dynamic> payload) async {
-    if (activeBookingId == bookingId) {
-      final message = MessageModel.fromJson(payload);
-      // Guard against a duplicate if a refetch raced the push.
-      if (!activeMessages.any((m) => m.id == message.id)) {
-        activeMessages = [...activeMessages, message];
-        notifyListeners();
-      }
-      await _reconcileThread(bookingId);
+    final message = MessageModel.fromJson(payload);
+    final isOpen = activeBookingId == bookingId;
+
+    if (isOpen && !activeMessages.any((m) => m.id == message.id)) {
+      activeMessages = [...activeMessages, message];
+    }
+
+    final known = _bumpConversation(bookingId, message, countAsUnread: !isOpen);
+    if (!isOpen) unreadCount += 1;
+    notifyListeners();
+
+    if (!known) {
       await _refreshConversationsQuietly();
       return;
     }
 
-    unreadCount += 1;
-    notifyListeners();
-    await _refreshConversationsQuietly();
+    if (isOpen) {
+      try {
+        unreadCount = await _service.markThreadRead(bookingId);
+        notifyListeners();
+      } catch (_) {
+        // Stays unread on the server; the next open of the thread clears it.
+      }
+    }
   }
 
-  /// Re-reads the open thread to pick up server state (read receipts above all)
-  /// while keeping bubbles that have not been accepted yet — a refetch must not
-  /// swallow a message still in flight or one the user can still retry.
-  Future<void> _reconcileThread(String bookingId) async {
-    final unsent = activeMessages.where((m) => m.isPending || m.hasFailed).toList();
-    try {
-      final fetched = await _service.getMessages(bookingId);
-      if (activeBookingId != bookingId) return;
-      activeMessages = [...fetched, ...unsent];
-      _clearUnread(bookingId);
-      notifyListeners();
-    } catch (_) {
-      // The bubble is already on screen; the next open reconciles.
-    }
+  /// Moves a conversation to the top of the inbox with [message] as its
+  /// preview. Returns false when the inbox does not have that conversation.
+  bool _bumpConversation(String bookingId, MessageModel message, {required bool countAsUnread}) {
+    final index = conversations.indexWhere((c) => c.bookingId == bookingId);
+    if (index == -1) return false;
+
+    final current = conversations[index];
+    final updated = current.copyWith(
+      lastMessage: message.content,
+      lastMessageIsMine: false,
+      lastMessageAt: message.sentAt,
+      unreadCount: countAsUnread ? current.unreadCount + 1 : 0,
+    );
+    conversations = [updated, ...conversations.where((c) => c.bookingId != bookingId)];
+    return true;
   }
 
   /// Reloads the inbox without flipping [isLoading], so a message arriving

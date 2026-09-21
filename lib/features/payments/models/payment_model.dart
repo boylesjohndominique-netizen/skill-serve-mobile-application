@@ -1,39 +1,99 @@
-/// Mirrors the `payments` table. Payment methods match the platform list:
-/// GCash · Maya · Cash on hand · Card.
-enum PaymentStatus { paid, pending, failed, refunded }
+import '../../booking/models/booking_model.dart';
+
+/// Where a booking's payment stands, as the customer should read it.
+///
+/// SkillServe does not process payments yet: the customer chooses how they will
+/// settle with the provider, and the booking records whether it has been paid.
+/// There is no separate payments table and no transaction reference, so this
+/// is a view over each booking — never a made-up receipt.
+enum PaymentStatus {
+  /// Settled — an administrator recorded the booking as paid.
+  paid,
+
+  /// Owed to the provider for a job that is going ahead or has been done.
+  unpaid,
+
+  /// The booking was cancelled before anything was paid, so nothing is owed.
+  notDue,
+  refunded,
+  partiallyRefunded,
+}
 
 class PaymentModel {
-  final String id; // PAY-8001
+  /// The booking this payment belongs to — also how it is opened.
   final String bookingId;
-  final String clientName;
+  final String bookingNumber;
+  final String serviceTitle;
   final String providerName;
-  final String method; // GCash | Maya | Cash on hand | Card
+
+  /// The method the customer chose at booking time, as a label.
+  final String method;
+  final String? methodCode;
   final double amount;
+  final String currency;
   final PaymentStatus status;
-  final String reference; // TXN-123456 or COD-123456
-  final DateTime paidAt;
+  final BookingStatus bookingStatus;
+
+  /// When the job is (or was) scheduled — the date the payment relates to.
+  final DateTime date;
 
   const PaymentModel({
-    required this.id,
     required this.bookingId,
-    required this.clientName,
-    required this.providerName,
+    this.bookingNumber = '',
+    this.serviceTitle = '',
+    this.providerName = '',
     required this.method,
+    this.methodCode,
     required this.amount,
+    this.currency = 'PHP',
     required this.status,
-    required this.reference,
-    required this.paidAt,
+    required this.bookingStatus,
+    required this.date,
   });
 
-  factory PaymentModel.fromJson(Map<String, dynamic> json) => PaymentModel(
-        id: json['payment_id'].toString(),
-        bookingId: json['booking_id'].toString(),
-        clientName: json['client_name'] as String? ?? '',
-        providerName: json['provider_name'] as String? ?? '',
-        method: json['method'] as String? ?? 'Cash on hand',
-        amount: (json['amount'] as num?)?.toDouble() ?? 0,
-        status: PaymentStatus.values.byName(json['status'] as String? ?? 'pending'),
-        reference: json['reference'] as String? ?? 'TXN-000000',
-        paidAt: DateTime.tryParse(json['paid_at'] as String? ?? '') ?? DateTime.now(),
+  /// The status key the shared badge understands.
+  String get statusKey => switch (status) {
+        PaymentStatus.paid => 'paid',
+        PaymentStatus.unpaid => 'pending',
+        PaymentStatus.notDue => 'closed',
+        PaymentStatus.refunded => 'refunded',
+        PaymentStatus.partiallyRefunded => 'refunded',
+      };
+
+  String get statusLabel => switch (status) {
+        PaymentStatus.paid => 'Paid',
+        PaymentStatus.unpaid => 'Unpaid',
+        PaymentStatus.notDue => 'Nothing due',
+        PaymentStatus.refunded => 'Refunded',
+        PaymentStatus.partiallyRefunded => 'Partly refunded',
+      };
+
+  factory PaymentModel.fromBooking(BookingModel booking) => PaymentModel(
+        bookingId: booking.id,
+        bookingNumber: booking.bookingNumber,
+        serviceTitle: booking.serviceTitle,
+        providerName: booking.providerName,
+        method: booking.paymentMethod,
+        methodCode: booking.paymentMethodCode,
+        amount: booking.amount,
+        currency: booking.currency,
+        status: statusFor(booking),
+        bookingStatus: booking.status,
+        date: booking.bookingDate,
       );
+
+  static PaymentStatus statusFor(BookingModel booking) {
+    switch (booking.paymentStatus) {
+      case 'paid':
+        return PaymentStatus.paid;
+      case 'refunded':
+        return PaymentStatus.refunded;
+      case 'partially_refunded':
+        return PaymentStatus.partiallyRefunded;
+    }
+    // Unpaid: owed, unless the job was called off before any work.
+    return booking.status == BookingStatus.cancelled
+        ? PaymentStatus.notDue
+        : PaymentStatus.unpaid;
+  }
 }

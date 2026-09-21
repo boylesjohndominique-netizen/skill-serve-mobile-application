@@ -43,6 +43,10 @@ class BookingModel {
 
   /// `total_price` — what the customer owes for the job.
   final double amount;
+
+  /// SkillServe's cut of [amount]. Only the provider's payload carries it, so
+  /// it reads as zero on the customer's side, where it is not shown.
+  final double platformFee;
   final String currency;
   final String address;
   final String? notes;
@@ -75,6 +79,7 @@ class BookingModel {
     required this.status,
     this.paymentStatus = 'unpaid',
     required this.amount,
+    this.platformFee = 0,
     this.currency = 'PHP',
     this.address = '',
     this.notes,
@@ -103,6 +108,11 @@ class BookingModel {
       status == BookingStatus.pending || status == BookingStatus.confirmed;
 
   bool get canBeReviewed => status == BookingStatus.completed && !isReviewed;
+
+  /// What the provider keeps from this job once the platform fee is taken.
+  double get providerEarnings => (amount - platformFee).clamp(0, double.infinity).toDouble();
+
+  bool get isPaid => paymentStatus == 'paid';
 
   /// Status history built from the timestamps the API records, oldest first.
   List<BookingTimelineEntry> get timeline => [
@@ -145,6 +155,7 @@ class BookingModel {
       status: statusFromApi(json['status'] as String?),
       paymentStatus: json['payment_status'] as String? ?? 'unpaid',
       amount: _money(json['total_price']) ?? _money(json['service_price']) ?? 0,
+      platformFee: _money(json['platform_fee']) ?? 0,
       currency: json['currency'] as String? ?? 'PHP',
       address: json['service_address'] as String? ?? '',
       notes: json['client_notes'] as String?,

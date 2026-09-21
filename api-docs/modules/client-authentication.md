@@ -231,6 +231,41 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
+## `DELETE /api/client/v1/auth/me`
+
+Confirmed with the account password. Refused while the account still has open bookings, so the other party is never left mid-job. The account is soft-deleted and every device is signed out; an administrator can restore it from Data Management. There is no separate "pending deletion" state.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `password` | yes | string |
+| `reason` | no | string, maxLength=1000 |
+
+### Responses
+
+#### HTTP 200: Account deleted and sessions revoked
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active mobile account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Wrong password, or open bookings remain
+
+Response schema: `see openapi.json`
+
 ## `GET /api/client/v1/auth/me`
 
 Get the current customer
@@ -295,6 +330,34 @@ Response schema: `#/components/schemas/ApiEnvelope`
 #### HTTP 422: Validation error
 
 Response schema: `#/components/schemas/ApiEnvelope`
+
+## `GET /api/client/v1/auth/me/data-export`
+
+Own data only: profile, preferences, provider profile, bookings, reviews, reports filed and support tickets.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The account's data
+
+Response schema: `#/components/schemas/AccountDataExportEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active mobile account required
+
+Response schema: `see openapi.json`
 
 ## `DELETE /api/client/v1/auth/me/photo`
 

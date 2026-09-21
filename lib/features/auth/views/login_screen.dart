@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                     ),
                     child: const Text(
-                        'Your session expired. Please sign in again.'),
+                        'You were signed out by the server. Please sign in again.'),
                   ),
                   const SizedBox(height: AppSizes.lg),
                 ],

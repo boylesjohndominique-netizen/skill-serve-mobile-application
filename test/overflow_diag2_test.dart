@@ -26,7 +26,6 @@ import 'package:skilllink_mobile/features/provider/views/dashboard_screen.dart';
 import 'package:skilllink_mobile/features/provider/views/earnings_screen.dart';
 import 'package:skilllink_mobile/features/provider/views/statistics_screen.dart';
 import 'package:skilllink_mobile/features/provider/views/booking_requests_screen.dart';
-import 'package:skilllink_mobile/features/provider/views/withdrawal_history_screen.dart';
 
 Widget _app(Widget home) {
   return MultiProvider(
@@ -85,8 +84,8 @@ void main() {
   testWidgets('provider dashboard 390', (tester) async {
     await _pump(tester, const ProviderDashboardScreen(), const Size(390, 844));
   });
-  testWidgets('withdrawal history 390', (tester) async {
-    await _pump(tester, const WithdrawalHistoryScreen(), const Size(390, 844));
+  testWidgets('earnings 390', (tester) async {
+    await _pump(tester, const EarningsScreen(), const Size(390, 844));
   });
   testWidgets('client shell 390', (tester) async {
     await _pump(tester, const ClientShell(), const Size(390, 844));
@@ -103,8 +102,8 @@ void main() {
   testWidgets('calendar 320', (tester) async {
     await _pump(tester, const CalendarScreen(), const Size(320, 568));
   });
-  testWidgets('withdrawal 390', (tester) async {
-    await _pump(tester, const WithdrawalHistoryScreen(), const Size(390, 844));
+  testWidgets('earnings 320', (tester) async {
+    await _pump(tester, const EarningsScreen(), const Size(320, 568));
   });
   testWidgets('statistics 390', (tester) async {
     await _pump(tester, const StatisticsScreen(), const Size(390, 844));

@@ -17,6 +17,8 @@ import 'features/payments/controllers/payment_controller.dart';
 import 'features/provider/controllers/portfolio_controller.dart';
 import 'features/provider/controllers/provider_services_controller.dart';
 import 'features/reports/controllers/report_controller.dart';
+import 'features/reviews/controllers/review_controller.dart';
+import 'features/support/controllers/support_controller.dart';
 import 'features/settings/controllers/preferences_controller.dart';
 import 'core/config/app_config.dart';
 import 'core/services/api_client.dart';
@@ -75,6 +77,8 @@ class SkillLinkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProviderServicesController()),
         ChangeNotifierProvider(create: (_) => PaymentController()),
         ChangeNotifierProvider(create: (_) => ReportController()),
+        ChangeNotifierProvider(create: (_) => ReviewController()),
+        ChangeNotifierProvider(create: (_) => SupportController()),
       ],
       child: Consumer<PreferencesController>(
         builder: (context, preferences, _) {

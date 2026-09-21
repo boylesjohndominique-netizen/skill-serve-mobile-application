@@ -41,15 +41,15 @@ class SecurityNotificationsScreen extends StatelessWidget {
           if (auth.sessionExpired)
             const _SecurityEvent(
               icon: AppIcons.warning_amber_rounded,
-              title: 'Session expired',
+              title: 'Signed out by the server',
               detail:
-                  'For your protection, the previous session was cleared and authentication is required again.',
+                  'Your session was ended on the server — for example after a password change or an account action — so you need to sign in again.',
             ),
           const _SecurityEvent(
             icon: AppIcons.privacy_tip_outlined,
             title: 'Credential handling',
             detail:
-                'The prototype stores session metadata locally and never stores your password.',
+                'You stay signed in on this device until you sign out. Your password is never stored — only a session token that the server can revoke.',
           ),
         ],
       ),

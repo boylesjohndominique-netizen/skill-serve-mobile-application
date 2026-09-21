@@ -17,6 +17,10 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final AppIconData? prefixIcon;
   final int maxLines;
+
+  /// Hard cap on the number of characters, matching the API's limit so a value
+  /// that would be rejected cannot be typed. The counter stays hidden.
+  final int? maxLength;
   final void Function(String)? onChanged;
 
   /// Set false while a request is in flight so the value cannot change
@@ -33,6 +37,7 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.prefixIcon,
     this.maxLines = 1,
+    this.maxLength,
     this.onChanged,
     this.enabled = true,
   });
@@ -90,12 +95,16 @@ class _AppTextFieldState extends State<AppTextField> {
               keyboardType: widget.keyboardType,
               validator: widget.validator,
               maxLines: widget.obscureText ? 1 : widget.maxLines,
+              maxLength: widget.maxLength,
               onChanged: widget.onChanged,
               style: AppTextStyles.bodyLarge.copyWith(
                 color: widget.enabled ? null : muted,
               ),
               decoration: InputDecoration(
                 hintText: widget.hint,
+                // The cap is enforced, not advertised — the field keeps its
+                // shape whether or not a limit is set.
+                counterText: '',
                 prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 prefixIcon: widget.prefixIcon != null

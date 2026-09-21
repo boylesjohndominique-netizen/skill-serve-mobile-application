@@ -104,6 +104,22 @@ class SettingsScreen extends StatelessWidget {
                 .animate()
                 .fadeIn(delay: 380.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
+            _Tile(
+                    icon: AppIcons.star_outline_rounded,
+                    label: 'My reviews',
+                    onTap: () => context.push('/my-reviews'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 385.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            _Tile(
+                    icon: AppIcons.support_agent_rounded,
+                    label: 'Support tickets',
+                    onTap: () => context.push('/support/tickets'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 390.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
             const SizedBox(height: AppSizes.lg),
             const _SectionLabel('Data & Account Control')
                 .animate()

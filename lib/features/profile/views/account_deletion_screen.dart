@@ -11,12 +11,14 @@ import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../profile/services/account_data_service.dart';
+import '../../../core/utils/api_error.dart';
+import '../../../core/widgets/feedback/app_snackbar.dart';
 
 /// PDF §15.3 — Request Account Deletion
 ///
 /// Allows users to request deletion of their account and eligible
 /// associated data subject to applicable platform rules.
-/// No client API endpoint is documented; the deletion request is mock-only.
+/// Deletes the account through DELETE /api/client/v1/auth/me.
 class AccountDeletionScreen extends StatefulWidget {
   const AccountDeletionScreen({super.key});
 
@@ -41,10 +43,11 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
     if (!_formKey.currentState!.validate()) return;
     final confirmed = await AppDialog.confirm(
       context,
-      title: 'Permanently delete account?',
+      title: 'Delete account?',
       message:
-          'This action cannot be undone. Your account and associated data '
-          'will be permanently deleted after a 30-day grace period.',
+          'Your account is closed immediately and you are signed out of every '
+          'device. Contact support if you change your mind — an administrator '
+          'can restore it.',
       confirmLabel: 'Delete',
       danger: true,
     );
@@ -52,32 +55,26 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await AccountDataService().requestDeletion(
-        reason: _reasonController.text.trim(),
+      await AccountDataService().deleteAccount(
         password: _passwordController.text,
+        reason: _reasonController.text.trim(),
       );
+      if (!mounted) return;
+
+      // The API has already revoked every token, so the local session is
+      // cleared rather than logged out over the network.
+      await context.read<AuthController>().logout();
       if (mounted) {
-        await AppDialog.confirm(
-          context,
-          title: 'Deletion request submitted',
-          message:
-              'Your account will be permanently deleted after 30 days. '
-              'You can contact support within this period to cancel.',
-          confirmLabel: 'OK',
-        );
-        if (mounted) {
-          await context.read<AuthController>().logout();
-          if (mounted) context.go('/welcome');
-        }
+        AppSnackbar.success(context, 'Your account has been deleted.');
+        context.go('/welcome');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        setState(() => _isSubmitting = false);
+        // The API explains why: a wrong password, or bookings still open.
+        AppSnackbar.error(
+            context, apiErrorMessage(e, 'Unable to delete your account right now.'));
       }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -109,15 +106,15 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                       const AppIcon(AppIcons.warning_amber_rounded,
                           size: 22, color: AppColors.error),
                       const SizedBox(width: AppSizes.sm),
-                      Text('This action is permanent',
+                      Text('You will lose access to your account',
                           style: AppTextStyles.titleMedium
                               .copyWith(fontWeight: FontWeight.w700)),
                     ],
                   ),
                   const SizedBox(height: AppSizes.sm),
                   Text(
-                    'Once your account is deleted, the following data will be '
-                    'permanently removed:',
+                    'Deleting your account signs you out everywhere and closes '
+                    'your access to:',
                     style: AppTextStyles.bodySmall.copyWith(
                         color: isDark
                             ? AppColors.textMutedDark
@@ -128,6 +125,16 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                   _BulletPoint('Booking history and reviews', isDark: isDark),
                   _BulletPoint('Messages and conversations', isDark: isDark),
                   _BulletPoint('Saved preferences and favorites', isDark: isDark),
+                  const SizedBox(height: AppSizes.sm),
+                  Text(
+                    'Settle or cancel any open bookings first — we will not close '
+                    'an account that still owes someone a job. Want a copy of '
+                    'your data? Take it from "View account data" before you go.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                        color: isDark
+                            ? AppColors.textMutedDark
+                            : AppColors.textSecondary),
+                  ),
                 ],
               ),
             ).animate().fadeIn(duration: 350.ms),
@@ -182,7 +189,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
             ).animate().fadeIn(delay: 100.ms, duration: 350.ms),
             const SizedBox(height: AppSizes.xl),
             DangerButton(
-              label: _isSubmitting ? 'Submitting…' : 'Permanently Delete Account',
+              label: _isSubmitting ? 'Deleting…' : 'Delete My Account',
               onPressed: _isSubmitting ? null : _submit,
             ).animate().fadeIn(delay: 200.ms, duration: 350.ms),
             const SizedBox(height: AppSizes.xxl),

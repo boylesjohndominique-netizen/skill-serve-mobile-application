@@ -2,6 +2,7 @@
 
 - [Administrators](modules/administrators.md)
 - [Authentication](modules/authentication.md)
+- [Booking Disputes](modules/booking-disputes.md)
 - [Booking Messages](modules/booking-messages.md)
 - [Bookings](modules/bookings.md)
 - [Client Authentication](modules/client-authentication.md)
@@ -9,6 +10,7 @@
 - [Client Marketplace](modules/client-marketplace.md)
 - [Client Notifications](modules/client-notifications.md)
 - [Client Preferences](modules/client-preferences.md)
+- [Client Reports](modules/client-reports.md)
 - [Client Reviews](modules/client-reviews.md)
 - [Client Support](modules/client-support.md)
 - [Conversations](modules/conversations.md)

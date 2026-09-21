@@ -107,6 +107,41 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 Response schema: `see openapi.json`
 
+## `GET /api/disputes/{booking}/evidence/{evidence}`
+
+Served from private storage after checking the view-disputes permission. The evidence id comes from the booking's dispute_evidence list.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+| `evidence` | path | yes | string |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The evidence file
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Missing the view-disputes permission
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Evidence or file not found
+
+Response schema: `see openapi.json`
+
 ## `GET /api/disputes/{booking}/history`
 
 View paginated dispute history

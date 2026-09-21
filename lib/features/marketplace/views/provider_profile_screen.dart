@@ -1,3 +1,5 @@
+import '../../reports/views/report_content_sheet.dart';
+import '../../auth/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -315,7 +317,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 for (var i = 0; i < _reviews.take(2).length; i++)
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSizes.md),
-                    child: ReviewCard(review: _reviews[i])
+                    child: ReviewCard(
+                      review: _reviews[i],
+                      onReport: _reportAction(context, _reviews[i]),
+                    )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 560 + i * 60), duration: 350.ms)
                         .slideY(begin: 0.05, end: 0),
@@ -635,4 +640,17 @@ class _ServiceRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A report action for [review], or null when there should be none: a guest
+/// cannot report, and nobody reports their own review — they edit it.
+VoidCallback? _reportAction(BuildContext context, ReviewModel review) {
+  final auth = context.read<AuthController>();
+  final me = auth.currentUser?.id;
+  if (me == null || review.reviewerId == me) return null;
+  return () => showReportContentSheet(
+        context,
+        reviewId: review.id,
+        title: 'Report this review',
+      );
 }

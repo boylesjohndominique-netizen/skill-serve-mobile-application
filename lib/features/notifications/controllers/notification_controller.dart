@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/api_error.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
 
@@ -16,6 +17,10 @@ class NotificationController extends ChangeNotifier {
   List<NotificationModel> notifications = [];
   bool isLoading = false;
   int unreadCount = 0;
+
+  /// Set when the feed itself could not be loaded, so the screen can offer a
+  /// retry instead of claiming the user is all caught up.
+  String? errorMessage;
 
   /// The newest notification that arrived since the last check; the app shell
   /// shows it as a banner and then calls [clearIncoming].
@@ -34,35 +39,68 @@ class NotificationController extends ChangeNotifier {
 
   Future<void> load() async {
     isLoading = true;
+    errorMessage = null;
     notifyListeners();
     try {
       notifications = await _service.getNotifications();
       unreadCount = notifications.where((n) => !n.isRead).length;
-    } catch (_) {
+    } catch (e) {
       notifications = [];
+      errorMessage = apiErrorMessage(e, 'Unable to load your notifications.');
     }
     isLoading = false;
     notifyListeners();
   }
 
+  /// The feed narrowed to [types]; an empty list means everything.
+  List<NotificationModel> withTypes(List<NotificationType> types) => types.isEmpty
+      ? notifications
+      : notifications.where((n) => types.contains(n.type)).toList();
+
   Future<void> markAsRead(String id) async {
-    await _service.markAsRead(id);
+    // Shown as read at once; the request confirms it. An already-read
+    // notification is not re-sent.
+    final target = notifications.where((n) => n.id == id).firstOrNull;
+    if (target == null || target.isRead) return;
+
     notifications = [
-      for (final n in notifications)
-        if (n.id == id)
-          NotificationModel(
-            id: n.id,
-            title: n.title,
-            message: n.message,
-            type: n.type,
-            createdAt: n.createdAt,
-            isRead: true,
-          )
-        else
-          n,
+      for (final n in notifications) n.id == id ? n.copyWith(isRead: true) : n,
     ];
     unreadCount = notifications.where((n) => !n.isRead).length;
     notifyListeners();
+
+    try {
+      await _service.markAsRead(id);
+    } catch (_) {
+      // Put the badge back rather than claim it was read.
+      notifications = [
+        for (final n in notifications) n.id == id ? n.copyWith(isRead: false) : n,
+      ];
+      unreadCount = notifications.where((n) => !n.isRead).length;
+      notifyListeners();
+    }
+  }
+
+  /// Marks the whole feed read. Returns false when the API refused, so the
+  /// screen can say so instead of showing a cleared feed that is not.
+  Future<bool> markAllAsRead() async {
+    if (unreadCount == 0) return true;
+
+    final previous = notifications;
+    notifications = [for (final n in notifications) n.copyWith(isRead: true)];
+    unreadCount = 0;
+    notifyListeners();
+
+    try {
+      await _service.markAllAsRead();
+      return true;
+    } catch (e) {
+      notifications = previous;
+      unreadCount = notifications.where((n) => !n.isRead).length;
+      errorMessage = apiErrorMessage(e, 'Unable to mark everything as read.');
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Starts checking for new notifications (idempotent).
@@ -86,6 +124,7 @@ class NotificationController extends ChangeNotifier {
     notifications = [];
     unreadCount = 0;
     incoming = null;
+    errorMessage = null;
     _hasBaseline = false;
     notifyListeners();
   }

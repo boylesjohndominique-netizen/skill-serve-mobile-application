@@ -111,7 +111,9 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             stagger(_Tile(
                 icon: AppIcons.reviews_outlined,
                 label: 'Reviews',
-                onTap: () => context.push('/reviews/${provider?.id ?? ''}'),
+                // Disabled until the profile has loaded: '/reviews/' with no id
+                // opens nothing.
+                onTap: provider == null ? null : () => context.push('/reviews/${provider.id}'),
                 isDark: isDark)),
             stagger(_Tile(
                 icon: AppIcons.payments_outlined,
@@ -131,7 +133,9 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             stagger(_Tile(
                 icon: AppIcons.visibility_outlined,
                 label: 'View public profile',
-                onTap: () => context.push('/provider-profile-preview'),
+                // '/provider-profile-preview' never existed; the read-only
+                // preview is the customer's view of this profile.
+                onTap: provider == null ? null : () => context.push('/provider-preview/${provider.id}'),
                 isDark: isDark)),
             const SizedBox(height: AppSizes.lg),
             stagger(const _SectionLabel('Account')),
@@ -164,6 +168,11 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                 icon: AppIcons.receipt_long_outlined,
                 label: 'My reports',
                 onTap: () => context.push('/my-reports'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.support_agent_rounded,
+                label: 'Support tickets',
+                onTap: () => context.push('/support/tickets'),
                 isDark: isDark)),
             const SizedBox(height: AppSizes.lg),
             stagger(const _SectionLabel('Preferences')),
@@ -254,7 +263,9 @@ class _SectionLabel extends StatelessWidget {
 class _Tile extends StatelessWidget {
   final AppIconData icon;
   final String label;
-  final VoidCallback onTap;
+
+  /// Null disables the tile (e.g. while the profile it needs is loading).
+  final VoidCallback? onTap;
   final bool danger;
   final bool isDark;
   const _Tile(

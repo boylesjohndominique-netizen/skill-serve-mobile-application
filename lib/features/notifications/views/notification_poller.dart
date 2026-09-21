@@ -147,7 +147,12 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       NotificationType.booking => preferences.bookingNotifications,
       NotificationType.message => preferences.messageNotifications,
       NotificationType.service || NotificationType.verification => preferences.serviceNotifications,
-      NotificationType.system || NotificationType.promo => preferences.announcementNotifications,
+      // Announcements, promos and system notices all sit behind the one
+      // "Announcements" switch, which is how the API groups them too.
+      NotificationType.announcement ||
+      NotificationType.promo ||
+      NotificationType.system =>
+        preferences.announcementNotifications,
     };
   }
 

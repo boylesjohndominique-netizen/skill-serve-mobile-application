@@ -14,6 +14,7 @@ import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../models/message_model.dart';
+import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_icons.dart';
 
 /// One booking's conversation. [bookingId] addresses the thread, because a
@@ -175,6 +176,14 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
           fromMe: fromMe,
           isDark: isDark,
           onRetry: message.hasFailed ? () => _retry(message) : null,
+          // Only a message you received can be reported.
+          onReport: fromMe || message.isPending
+              ? null
+              : () => showReportContentSheet(
+                    context,
+                    messageId: message.id,
+                    title: 'Report this message',
+                  ),
         )
             .animate()
             .fadeIn(delay: Duration(milliseconds: i.clamp(0, 12) * 30), duration: 250.ms)
@@ -266,11 +275,15 @@ class _Bubble extends StatelessWidget {
   final bool isDark;
   final VoidCallback? onRetry;
 
+  /// Long-press action on a received message.
+  final VoidCallback? onReport;
+
   const _Bubble({
     required this.message,
     required this.fromMe,
     required this.isDark,
     this.onRetry,
+    this.onReport,
   });
 
   @override
@@ -283,9 +296,7 @@ class _Bubble extends StatelessWidget {
         ? AppColors.error
         : (fromMe ? AppColors.primary : (isDark ? AppColors.textOnDark : AppColors.textPrimary));
 
-    return Align(
-      alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
+    final bubble = Container(
         margin: const EdgeInsets.only(bottom: AppSizes.sm),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
@@ -360,7 +371,16 @@ class _Bubble extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      );
+
+    return Align(
+      alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: onReport == null
+          ? bubble
+          : Semantics(
+              onLongPressHint: 'Report this message',
+              child: GestureDetector(onLongPress: onReport, child: bubble),
+            ),
     );
   }
 }
