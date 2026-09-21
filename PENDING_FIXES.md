@@ -1,51 +1,125 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
-Last audited: 2026-09-21. Each item names where the problem is, why it matters,
-and a suggested fix. Ordered by priority. The web project has its own list in
-`web-project-bsit3blk3group6/PENDING_FIXES.md`; items that need backend work
-first are marked **(needs backend)**.
+Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
+Laravel API. The master list — including backend, admin web and deployment — is
+`web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
+**(needs backend)** need the API change listed in the master file first.
+
+---
+
+## Critical
+
+### C1. Verification upload is fake (needs backend)
+- **Requirement:** M 9.3, M 9.4, M 9.5.
+- **Where:** `lib/features/provider/views/verification_status_screen.dart` (`_uploadDoc`,
+  `_resubmit`) and step 2 of `provider_onboarding_screen.dart` only add a local
+  `VerificationDocumentModel` and show "Document submitted for review"; nothing reaches the server.
+  A new provider therefore never gets verified and can never create a service.
+- **Fix:** once `GET/POST /api/client/v1/provider/verification` exist, add a
+  `VerificationService` + controller; pick files with `image_picker` (camera/gallery) and
+  `file_picker` (PDF); upload multipart with progress; show the real status, the admin's rejection
+  reason or requested information, and a "Submit more documents" action for `info_requested`.
+  Tests for the model/controller.
+
+### C2. Booking times are sent without a timezone (needs backend)
+- **Where:** `lib/features/booking/services/booking_service.dart` sends
+  `scheduledDate.toIso8601String()` for create and reschedule — a local time with no offset. The
+  server reads it as UTC, so times come back shifted by 8 hours.
+- **Fix:** send the offset (`2026-10-05T09:00:00+08:00`) or UTC (`toUtc().toIso8601String()`),
+  together with the backend timezone change; add a model test that a sent time round-trips.
+
+### C3. Show and respect the admin's booking rules (needs backend)
+- **Requirement:** M 5.6 "cancel according to the platform's configured cancellation rules".
+- **Fix:** when the API exposes the cancellation window and "bookings enabled", explain the rule in
+  the cancel dialog and disable Cancel inside the window; show the API's message when booking is
+  switched off; show a maintenance screen on a 503 from maintenance mode.
+
+### C4. No account status / restriction screen (needs backend)
+- **Requirement:** M 1.6, M 2.4, M 9.6, M 15.4, M 16.4.
+- **Where:** a suspended or banned user sees only "Your account is not active."; a refused refresh
+  in `lib/core/services/api_client.dart` just ends the session.
+- **Fix:** read `errors.account {status, reason, until}` from login/refresh refusals and show an
+  "Account restricted" screen with the reason, the end date and "Contact support"; show the
+  account status (and provider verification/suspension) on the profile/settings screen from
+  `/auth/me`.
 
 ---
 
 ## High
 
-Nothing open.
+### H1. Notifications for admin decisions (needs backend)
+- Verification decisions, suspensions, report outcomes and dispute updates will arrive as
+  notifications once the backend sends them. Make sure `NotificationModel.destination` routes them:
+  verification → `/verification-status`, report → `/my-reports`, dispute → the booking.
+
+### H2. Policies come from the admin (needs backend)
+- **Requirement:** M 14.4.
+- **Where:** `lib/features/settings/views/terms_screen.dart` and `privacy_screen.dart` are static;
+  there is no Community Guidelines screen.
+- **Fix:** read `GET /api/client/v1/platform`; one policy screen for Terms, Privacy and Community
+  Guidelines (bundled text as offline fallback); link them from registration.
+
+### H4. Release readiness
+- `android/app/build.gradle.kts`: `applicationId = "com.example.skilllink_mobile"` and release
+  builds signed with the debug key; `AndroidManifest.xml` label `skilllink_mobile`; default icon.
+- **Fix:** label "SkillServe"; a real `applicationId` plus a new Google OAuth Android client with
+  the release SHA-1 (`SETUP_CREDENTIALS.md`), or Google sign-in breaks; release keystore via a
+  gitignored `key.properties`; launcher icon and splash; a monochrome notification icon
+  (`@drawable/ic_stat_notification`, used in `background_notifications.dart`); bump `version`;
+  delete the committed `flutter_01.log` and ignore `*.log`. Build with
+  `flutter build apk --release --dart-define-from-file=env/production.json` and test on a clean
+  phone.
 
 ---
 
 ## Medium
 
-### 4. No notifications while the app is closed
-- **Why:** closed-app delivery needs FCM (Android) / APNs (iOS). The project deliberately uses
-  realtime over the Laravel backend (Reverb) instead of Firebase, so notifications arrive
-  instantly while the app is open and wait in the feed otherwise.
-- **Fix, if wanted later:** FCM/APNs is the only transport the OS offers for a closed app; it can
-  be sent from Laravel without using Firebase for anything else.
-
-### 5. Help Center search does nothing
-- **Where:** `lib/features/settings/views/help_center_screen.dart` — `AppSearchBar` has no
-  `onChanged`.
-- **Fix:** filter `_faqs` by question and answer text, as `chat_list_screen.dart` filters
-  conversations.
-
-### 7. No presence or typing indicators in chat
-- Deliberately not faked. Needs a presence channel on Reverb if wanted.
+Nothing open.
 
 ---
 
 ## Low
 
-### 8. Active Jobs offers "Mark as completed" on jobs that have not started
-- **Where:** `lib/features/provider/views/active_jobs_screen.dart` lists `controller.active`
-  (confirmed and in progress) and gives every card "Mark as completed".
-- **Why it matters:** on a confirmed job the API refuses it ("Only a job in progress can be
-  completed"), so the button always fails there.
-- **Fix:** show "Start job" for a confirmed booking and "Mark as completed" only for one in
-  progress, as the Booking Requests tabs already do.
+Nothing open.
 
 ---
 
 ## Resolved on 2026-09-21
+
+**Medium and Low from the full audit:**
+- **M2 — Account deactivation decision.** Documented in `TEST_PLAN.md` ("Design decisions to defend")
+  and `README.md`: accounts are active or deleted; deletion is a restorable soft delete.
+- **M6 — Test evidence.** `TEST_PLAN.md` maps every mobile requirement (M 1.1 … M 17.1) to its screen,
+  endpoint, Flutter/backend tests and UAT steps, with space for results.
+- **M3 (app side).** A 429 from the new sign-up/OTP/password-reset rate limits shows "Too many
+  attempts. Please wait a minute and try again." (`lib/core/utils/api_error.dart`,
+  `test/api_error_test.dart`).
+- **M4 (app side).** Review moderation notices from the backend carry the booking id, so tapping one
+  opens the booking.
+- **L4** `README.md` rewritten: real structure (`lib/features/*`), no mock mode, secure token storage,
+  realtime, closed-app notifications, build steps.
+- **L6** `workmanager` is already the latest release; the Kotlin Gradle Plugin warning is upstream and
+  harmless. Nothing further to do until a new release ships.
+
+**Earlier on 2026-09-21:**
+
+- **Notifications while the app is closed — without Firebase.** Android WorkManager runs a
+  background check about every 15 minutes (the OS minimum; it may stretch it to save battery)
+  and posts each new notification as a system notification; tapping one opens what it is about
+  (`lib/core/services/background_notifications.dart`). The check uses a separate read-only token
+  (`POST /api/client/v1/notifications/background-token`, then
+  `GET /api/client/v1/notifications/background`) that can do nothing else and never refreshes, so it
+  cannot disturb the signed-in session. While the app is open, Reverb stays the instant path and
+  the check shows nothing twice. Not instant when closed, and a force-stopped app gets nothing
+  until reopened — that needs FCM, which the project does not use.
+- **Help Center search works.** It filters the FAQs by question and answer as you type, with a
+  no-results message; the FAQs now also cover rescheduling, payments and favorites.
+- **Presence and typing in chat.** Each booking conversation joins a Reverb presence channel
+  (`presence-booking-chat.{booking}`, participants only). The header shows "In this chat" when the
+  other person has the conversation open and "typing…" while they type (client events, renewed
+  every few seconds and expiring after five).
+- **Active Jobs button.** A confirmed job now offers "Start job"; only a job in progress offers
+  "Mark as completed".
 
 - **Favorites persist.** They are saved on the server (`lib/features/marketplace/services/favorites_service.dart`),
   loaded when a customer signs in and cleared on sign-out. Hearts flip at once and flip back if the

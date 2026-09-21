@@ -7,12 +7,17 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config/app_config.dart';
 import 'api_client.dart';
 
-/// Minimal Laravel Reverb (Pusher protocol v7) client for private channels.
+/// Minimal Laravel Reverb (Pusher protocol v7) client for private and
+/// presence channels.
 ///
 /// Connects, authorizes channels through `/api/broadcasting/auth` with the
 /// signed-in user's bearer token, answers server pings, and reconnects with
 /// back-off. [isConnected] reports whether events can currently arrive, so
 /// callers can fall back to polling.
+///
+/// Presence channels ([joinPresence]) report who else is subscribed and carry
+/// client events ([whisper]) between members — used for "in this chat" and
+/// "typing…" in a conversation.
 class RealtimeClient {
   RealtimeClient._();
 
@@ -21,6 +26,7 @@ class RealtimeClient {
   final ValueNotifier<bool> isConnected = ValueNotifier(false);
 
   final Map<String, Map<String, void Function(Map<String, dynamic> data)>> _handlers = {};
+  final Map<String, _Presence> _presence = {};
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   Timer? _reconnectTimer;
@@ -43,10 +49,47 @@ class RealtimeClient {
     }
   }
 
+  /// Join presence channel [channel] (without `presence-`). [onMembers] gets
+  /// the ids of everyone subscribed — including this user — whenever that
+  /// changes; [onClientEvent] gets `client-…` events other members send.
+  void joinPresence(
+    String channel, {
+    required void Function(Set<String> memberIds) onMembers,
+    void Function(String event, Map<String, dynamic> data)? onClientEvent,
+  }) {
+    final name = 'presence-$channel';
+    _presence[name] = _Presence(onMembers, onClientEvent);
+    _wanted = true;
+
+    if (_channel == null) {
+      _connect();
+    } else if (_socketId != null) {
+      _subscribe(name);
+    }
+  }
+
+  /// Leave presence channel [channel] (without `presence-`).
+  void leavePresence(String channel) {
+    final name = 'presence-$channel';
+    if (_presence.remove(name) != null) {
+      _send({'event': 'pusher:unsubscribe', 'data': {'channel': name}});
+    }
+  }
+
+  /// Send client event [event] (without `client-`) to the other members of
+  /// presence channel [channel]. Dropped silently while disconnected: these
+  /// are ephemeral hints, never data.
+  void whisper(String channel, String event, Map<String, dynamic> data) {
+    final name = 'presence-$channel';
+    if (_socketId == null || !_presence.containsKey(name)) return;
+    _send({'event': 'client-$event', 'channel': name, 'data': data});
+  }
+
   /// Leave every channel and close the connection (e.g. on logout).
   void disconnect() {
     _wanted = false;
     _handlers.clear();
+    _presence.clear();
     _close();
   }
 
@@ -67,6 +110,9 @@ class RealtimeClient {
     }
   }
 
+  @visibleForTesting
+  void handleMessageForTesting(dynamic raw) => _onMessage(raw);
+
   void _onMessage(dynamic raw) {
     final message = _decode(raw);
     if (message == null) return;
@@ -81,18 +127,42 @@ class RealtimeClient {
         final timeout = (established['activity_timeout'] as num?)?.toInt() ?? 30;
         _pingTimer?.cancel();
         _pingTimer = Timer.periodic(Duration(seconds: timeout), (_) => _send({'event': 'pusher:ping', 'data': {}}));
-        for (final name in _handlers.keys) {
+        for (final name in [..._handlers.keys, ..._presence.keys]) {
           _subscribe(name);
         }
       case 'pusher:ping':
         _send({'event': 'pusher:pong', 'data': {}});
       case 'pusher_internal:subscription_succeeded':
         isConnected.value = true;
+        final presence = _presence[message['channel']];
+        if (presence != null && data is Map) {
+          final ids = (data['presence'] is Map ? data['presence']['ids'] : null) as List? ?? const [];
+          presence.members
+            ..clear()
+            ..addAll(ids.map((id) => id.toString()));
+          presence.onMembers(Set.of(presence.members));
+        }
+      case 'pusher_internal:member_added' || 'pusher_internal:member_removed':
+        final presence = _presence[message['channel']];
+        final userId = data is Map ? data['user_id']?.toString() : null;
+        if (presence != null && userId != null) {
+          event == 'pusher_internal:member_added'
+              ? presence.members.add(userId)
+              : presence.members.remove(userId);
+          presence.onMembers(Set.of(presence.members));
+        }
       case 'pusher:subscription_error':
         debugPrint('[Realtime] subscription refused for ${message['channel']}');
       case 'pusher:error':
         debugPrint('[Realtime] server error: $data');
       default:
+        if (event != null && event.startsWith('client-')) {
+          final onClientEvent = _presence[message['channel']]?.onClientEvent;
+          if (onClientEvent != null && data is Map<String, dynamic>) {
+            onClientEvent(event.substring('client-'.length), data);
+          }
+          return;
+        }
         final handler = _handlers[message['channel']]?[event];
         if (handler != null && data is Map<String, dynamic>) handler(data);
     }
@@ -106,9 +176,18 @@ class RealtimeClient {
         AppConfig.broadcastingAuthUrl,
         data: {'socket_id': socketId, 'channel_name': name},
       );
-      final auth = (response.data as Map)['auth'] as String?;
+      final body = response.data as Map;
+      final auth = body['auth'] as String?;
       if (auth == null || socketId != _socketId) return;
-      _send({'event': 'pusher:subscribe', 'data': {'channel': name, 'auth': auth}});
+      _send({
+        'event': 'pusher:subscribe',
+        'data': {
+          'channel': name,
+          'auth': auth,
+          // Presence channels also carry the member info the auth signed.
+          if (body['channel_data'] != null) 'channel_data': body['channel_data'],
+        },
+      });
     } catch (e) {
       debugPrint('[Realtime] channel auth failed for $name: $e');
     }
@@ -150,4 +229,12 @@ class RealtimeClient {
       return null;
     }
   }
+}
+
+class _Presence {
+  _Presence(this.onMembers, this.onClientEvent);
+
+  final void Function(Set<String> memberIds) onMembers;
+  final void Function(String event, Map<String, dynamic> data)? onClientEvent;
+  final Set<String> members = {};
 }

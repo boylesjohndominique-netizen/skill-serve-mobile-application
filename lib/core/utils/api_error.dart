@@ -17,6 +17,12 @@ String apiErrorMessage(Object error, String fallback) {
       break;
   }
 
+  // Rate-limited (sign-up, OTP, password reset, login): the server's own
+  // "Too Many Attempts." does not say what to do next.
+  if (error.response?.statusCode == 429) {
+    return 'Too many attempts. Please wait a minute and try again.';
+  }
+
   final data = error.response?.data;
   if (data is Map<String, dynamic>) {
     final errors = data['errors'];

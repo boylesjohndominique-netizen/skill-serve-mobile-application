@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../booking/controllers/provider_booking_controller.dart';
+import '../../booking/models/booking_model.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/cards/booking_card.dart';
@@ -32,14 +33,17 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
   Future<void> _reload() =>
       context.read<ProviderBookingController>().loadProviderBookings();
 
-  Future<void> _complete(ProviderBookingController controller, String id) async {
-    final ok = await controller.complete(id);
+  /// The next step the API allows: a confirmed job is started, a job in
+  /// progress is completed. Completing a job that never started is refused.
+  Future<void> _advance(ProviderBookingController controller, BookingModel booking) async {
+    final starting = booking.status == BookingStatus.confirmed;
+    final ok = starting ? await controller.start(booking.id) : await controller.complete(booking.id);
     if (!mounted) return;
     if (ok) {
-      AppSnackbar.success(context, 'Job marked as completed.');
+      AppSnackbar.success(context, starting ? 'Job started — good luck!' : 'Job marked as completed.');
     } else {
-      AppSnackbar.error(
-          context, controller.errorMessage ?? 'Unable to complete this job.');
+      AppSnackbar.error(context,
+          controller.errorMessage ?? (starting ? 'Unable to start this job.' : 'Unable to complete this job.'));
     }
   }
 
@@ -68,12 +72,14 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                           BookingCard(booking: booking, isProviderView: true, onTap: () => context.push('/booking-details/${booking.id}')),
                           const SizedBox(height: AppSizes.sm),
                           PrimaryButton(
-                            label: 'Mark as completed',
-                            icon: AppIcons.task_alt_rounded,
+                            label: booking.status == BookingStatus.confirmed ? 'Start job' : 'Mark as completed',
+                            icon: booking.status == BookingStatus.confirmed
+                                ? AppIcons.play_arrow_rounded
+                                : AppIcons.task_alt_rounded,
                             isLoading: controller.busyBookingId == booking.id,
                             onPressed: controller.busyBookingId == booking.id
                                 ? null
-                                : () => _complete(controller, booking.id),
+                                : () => _advance(controller, booking),
                           ),
                           const SizedBox(height: AppSizes.md),
                         ],

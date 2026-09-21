@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `GET /api/settings`
 
-Get system settings
+meta.read_only lists "group.name" settings shown for information only (for example general.timezone, which follows the server APP_TIMEZONE).
 
 **Authentication:** Bearer token
 

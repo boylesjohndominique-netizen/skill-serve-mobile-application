@@ -72,6 +72,36 @@ Example request body:
 }
 ```
 
+## `POST /api/auth/forgot-password`
+
+Always answers the same way, whether or not the address belongs to an active administrator, so accounts cannot be discovered. The link opens the admin web reset page and expires in 60 minutes. Rate-limited like login.
+
+**Authentication:** Public
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `email` | yes | string, format=email |
+
+### Responses
+
+#### HTTP 200: Reset link sent if the account exists
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 422: Validation error
+
+Response schema: `see openapi.json`
+
+#### HTTP 429: Too many attempts
+
+Response schema: `see openapi.json`
+
 ## `POST /api/auth/login`
 
 POST /api/auth/login — validate credentials and issue a Sanctum token.
@@ -258,4 +288,37 @@ No JSON request body.
     "meta": []
 }
 ```
+
+## `POST /api/auth/reset-password`
+
+Sets the new password and signs the administrator out everywhere.
+
+**Authentication:** Public
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `token` | yes | string |
+| `email` | yes | string, format=email |
+| `password` | yes | string, format=password, minLength=8 |
+| `password_confirmation` | yes | string, format=password |
+
+### Responses
+
+#### HTTP 200: Password reset
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 422: Invalid or expired token, or validation error
+
+Response schema: `see openapi.json`
+
+#### HTTP 429: Too many attempts
+
+Response schema: `see openapi.json`
 

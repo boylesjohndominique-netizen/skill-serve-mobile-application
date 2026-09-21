@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../../../core/services/background_notifications.dart';
 import '../../../core/services/realtime_client.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../booking/controllers/booking_controller.dart';
@@ -29,6 +30,7 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
   late final ChatController _chat;
   final RealtimeClient _realtime = RealtimeClient.instance;
   String? _listeningUserId;
+  String? _backgroundUserId;
   bool _foreground = true;
 
   @override
@@ -41,6 +43,7 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
     _auth.addListener(_sync);
     _notifications.addListener(_showIncoming);
     _realtime.isConnected.addListener(_onRealtimeStatus);
+    BackgroundNotifications.setForeground(true);
     WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
   }
 
@@ -57,6 +60,9 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _foreground = state == AppLifecycleState.resumed;
+    // The background check posts system notifications only while the app is
+    // off screen; on screen, Reverb and the banner below already show them.
+    BackgroundNotifications.setForeground(_foreground);
     _sync();
   }
 
@@ -64,6 +70,12 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
 
   void _sync() {
     final userId = _signedIn ? _auth.currentUser!.id : null;
+
+    // Closed-app notifications follow the session, not the lifecycle.
+    if (userId != _backgroundUserId) {
+      _backgroundUserId = userId;
+      userId == null ? BackgroundNotifications.disable() : BackgroundNotifications.enable();
+    }
 
     if (userId == null || !_foreground) {
       if (_listeningUserId != null) {
@@ -115,6 +127,8 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
     final notification = _notifications.incoming;
     if (notification == null || !mounted) return;
     _notifications.clearIncoming();
+    // Still on screen: keep the background check from repeating this one.
+    if (_foreground) BackgroundNotifications.setForeground(true);
 
     // Service moderation (approved, rejected, …) changes the provider's list.
     if (notification.type == NotificationType.service) {

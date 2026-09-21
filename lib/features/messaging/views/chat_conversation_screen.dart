@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/realtime_client.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
@@ -35,18 +38,73 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   /// Captured in initState so dispose can still reach it: the controller
   /// outlives this screen, but its context does not.
   late final ChatController _chat;
+  late final String _myId;
+
+  /// Presence on this booking's chat: whether the other participant has the
+  /// conversation open, and whether they are typing. Both are live hints
+  /// over Reverb, never stored.
+  final _realtime = RealtimeClient.instance;
+  bool _otherInChat = false;
+  bool _otherTyping = false;
+  Timer? _typingExpiry;
+  DateTime _lastTypingSent = DateTime(0);
+
+  /// A "typing" hint lapses unless it is renewed; the sender renews it every
+  /// few seconds while they keep typing.
+  static const _typingTimeout = Duration(seconds: 5);
+  static const _typingResend = Duration(seconds: 3);
+
+  String get _presenceChannel => 'booking-chat.${widget.bookingId}';
 
   @override
   void initState() {
     super.initState();
     _chat = context.read<ChatController>();
+    _myId = context.read<AuthController>().currentUser?.id ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chat.openConversation(widget.bookingId);
     });
+    _realtime.joinPresence(
+      _presenceChannel,
+      onMembers: (ids) {
+        if (!mounted) return;
+        final present = ids.any((id) => id != _myId);
+        setState(() {
+          _otherInChat = present;
+          if (!present) _otherTyping = false;
+        });
+      },
+      onClientEvent: (event, data) {
+        if (event != 'typing' || data['user_id']?.toString() == _myId || !mounted) return;
+        _typingExpiry?.cancel();
+        setState(() => _otherTyping = data['typing'] != false);
+        if (_otherTyping) {
+          _typingExpiry = Timer(_typingTimeout, () {
+            if (mounted) setState(() => _otherTyping = false);
+          });
+        }
+      },
+    );
+  }
+
+  /// Tells the other participant we are typing, at most every few seconds.
+  void _onComposerChanged(String text) {
+    if (text.trim().isEmpty) return;
+    final now = DateTime.now();
+    if (now.difference(_lastTypingSent) < _typingResend) return;
+    _lastTypingSent = now;
+    _realtime.whisper(_presenceChannel, 'typing', {'user_id': _myId, 'typing': true});
+  }
+
+  void _stoppedTyping() {
+    _lastTypingSent = DateTime(0);
+    _realtime.whisper(_presenceChannel, 'typing', {'user_id': _myId, 'typing': false});
   }
 
   @override
   void dispose() {
+    _typingExpiry?.cancel();
+    _realtime.leavePresence(_presenceChannel);
     _controller.dispose();
     _scrollController.dispose();
     // The thread has left the screen, so an incoming message must not be
@@ -72,6 +130,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     final myId = context.read<AuthController>().currentUser?.id ?? '';
 
     _controller.clear();
+    _stoppedTyping();
     await chat.send(widget.bookingId, text, myUserId: myId);
   }
 
@@ -115,7 +174,18 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (conversation?.serviceTitle.isNotEmpty == true)
+                  // Live status first; the service otherwise.
+                  if (_otherTyping || _otherInChat)
+                    Text(
+                      _otherTyping ? 'typing…' : 'In this chat',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: _otherTyping ? AppColors.secondary : AppColors.success,
+                        fontStyle: _otherTyping ? FontStyle.italic : FontStyle.normal,
+                      ),
+                      maxLines: 1,
+                    )
+                  else if (conversation?.serviceTitle.isNotEmpty == true)
                     Text(
                       conversation!.serviceTitle,
                       style: const TextStyle(fontSize: 11, color: AppColors.neutral300),
@@ -225,6 +295,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                     border: InputBorder.none,
                     counterText: '',
                   ),
+                  onChanged: _onComposerChanged,
                   onSubmitted: (_) => _send(),
                 ),
               ),

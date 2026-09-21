@@ -22,6 +22,7 @@ import 'features/support/controllers/support_controller.dart';
 import 'features/settings/controllers/preferences_controller.dart';
 import 'core/config/app_config.dart';
 import 'core/services/api_client.dart';
+import 'core/services/background_notifications.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/feedback/connectivity_gate.dart';
 import 'routes/app_router.dart';
@@ -30,10 +31,31 @@ final _runtimeAuthController = AuthController()..initialize();
 final _runtimeRouter = createAuthenticatedRouter(_runtimeAuthController);
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   // Wake the sleeping free-tier Render backend as early as possible so the
   // user's first request doesn't bear the ~60-75 s cold start.
   ApiClient.instance.warmUp();
+  BackgroundNotifications.initialize().then((_) => _openTappedNotifications());
   runApp(const SkillLinkApp());
+}
+
+/// Opens what a tapped system notification is about — also when the tap
+/// launched the app, once the session is restored and the splash screen has
+/// moved on (otherwise its redirect would replace the screen we open).
+void _openTappedNotifications() {
+  Future<void> open() async {
+    final route = BackgroundNotifications.tappedRoute.value;
+    if (route == null) return;
+    BackgroundNotifications.tappedRoute.value = null;
+    await _runtimeAuthController.ready;
+    for (var i = 0; i < 50 && _runtimeRouter.state.uri.path == '/splash'; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    _runtimeRouter.push(route);
+  }
+
+  BackgroundNotifications.tappedRoute.addListener(open);
+  open();
 }
 
 /// Starts global connectivity monitoring once the first frame renders and a

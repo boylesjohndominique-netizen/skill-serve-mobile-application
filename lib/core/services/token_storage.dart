@@ -17,7 +17,11 @@ class TokenStorage {
   static const accessTokenKey = 'skillserve.api.accessToken';
   static const refreshTokenKey = 'skillserve.api.refreshToken';
   static const expiresAtKey = 'skillserve.api.expiresAt';
-  static const _keys = [accessTokenKey, refreshTokenKey, expiresAtKey];
+
+  /// The narrow token the background notification check uses; it can only
+  /// read pending notifications. Cleared with the rest on sign-out.
+  static const backgroundTokenKey = 'skillserve.api.backgroundToken';
+  static const _keys = [accessTokenKey, refreshTokenKey, expiresAtKey, backgroundTokenKey];
 
   // Readable after the first unlock following a reboot, so a token refresh
   // started while the phone is locked still works.
@@ -32,6 +36,13 @@ class TokenStorage {
   /// The long-lived token that renews the access token. Present for as long
   /// as the user stays signed in.
   static Future<String?> readRefreshToken() => _read(refreshTokenKey);
+
+  static Future<String?> readBackgroundToken() => _read(backgroundTokenKey);
+
+  static Future<void> saveBackgroundToken(String token) async {
+    await _migrateLegacy();
+    await _storage.write(key: backgroundTokenKey, value: token);
+  }
 
   static Future<void> save(
       {String? accessToken, String? refreshToken, String? expiresAt}) async {
