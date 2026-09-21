@@ -161,3 +161,48 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `PATCH /api/client/v1/bookings/{booking}/reschedule`
+
+Re-runs the provider hours and overlap checks for the new window. A confirmed booking returns to pending for the provider to accept again, and the provider is notified. Without scheduled_end_date the booking keeps its current length.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `scheduled_date` | yes | string, format=date-time |
+| `scheduled_end_date` | no | string, format=date-time |
+
+### Responses
+
+#### HTTP 200: Booking rescheduled; status is now pending
+
+Response schema: `#/components/schemas/ClientBookingEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Not owned by the customer
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 409: The new time overlaps another booking for this provider
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error, same time as now, outside the provider hours, or the booking is no longer pending/confirmed
+
+Response schema: `see openapi.json`
+

@@ -69,6 +69,26 @@ class BookingController extends ChangeNotifier {
     }
   }
 
+  /// Moves a booking to [scheduledDate]. Returns the updated booking, or
+  /// null when the API refused it — a taken window or a time outside the
+  /// provider's hours — with the reason in [errorMessage].
+  Future<BookingModel?> reschedule(String bookingId, DateTime scheduledDate) async {
+    isSaving = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final moved = await _bookingService.rescheduleBooking(bookingId, scheduledDate: scheduledDate);
+      _replace(moved);
+      return moved;
+    } catch (e) {
+      errorMessage = apiErrorMessage(e, 'Unable to reschedule this booking.');
+      return null;
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
   /// Keeps the cached list in step with a booking the API just returned, so a
   /// status change shows up without refetching everything.
   void _replace(BookingModel booking) {

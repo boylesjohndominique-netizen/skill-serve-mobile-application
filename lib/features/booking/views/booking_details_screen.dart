@@ -171,6 +171,24 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                   const SizedBox(height: AppSizes.lg),
                 ],
 
+                // A moved request: the provider may have accepted the old
+                // time, so say why it is back among their requests.
+                if (booking.isRescheduledRequest) ...[
+                  _Banner(
+                    icon: AppIcons.schedule_rounded,
+                    title: isProviderView ? 'Rescheduled by the customer' : 'Waiting for the new time to be accepted',
+                    message: isProviderView
+                        ? 'The customer moved this booking to ${Formatters.dateShort(booking.bookingDate)}, ${booking.schedule}. Accept or decline the new time.'
+                        : 'You moved this booking. It is confirmed once the provider accepts the new time.',
+                    color: AppColors.info,
+                    background: AppColors.infoBg,
+                  )
+                      .animate()
+                      .fadeIn(delay: 130.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                  const SizedBox(height: AppSizes.lg),
+                ],
+
                 _SectionCard(
                   title: 'Schedule',
                   isDark: isDark,
@@ -219,7 +237,12 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     InfoRow(
                         icon: AppIcons.account_balance_wallet_rounded,
                         label: 'Payment',
-                        value: booking.paymentMethod),
+                        value: '${booking.paymentMethod} · ${booking.paymentLabel}'),
+                    if (booking.refundedAmount > 0)
+                      InfoRow(
+                          icon: AppIcons.currency_exchange_rounded,
+                          label: 'Refunded',
+                          value: Formatters.peso(booking.refundedAmount)),
                   ],
                 )
                     .animate()
@@ -328,6 +351,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           icon: AppIcons.chat_bubble_outline_rounded,
           onPressed: () => context.push('/chat-conversation/${booking.id}'),
         ));
+        actions.add(const SizedBox(height: AppSizes.sm));
+        actions.add(OutlinedAppButton(
+          label: 'Cancel job',
+          icon: AppIcons.close_rounded,
+          color: AppColors.error,
+          onPressed: _acting ? null : () => _cancelAcceptedJob(booking, controller),
+        ));
       case BookingStatus.inProgress:
         actions.add(PrimaryButton(
           label: 'Mark as completed',
@@ -336,6 +366,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           onPressed: _acting
               ? null
               : () => _act(() => controller.complete(booking.id), 'Job marked as completed.'),
+        ));
+      case BookingStatus.completed when booking.canRecordPayment:
+        actions.add(PrimaryButton(
+          label: 'Payment received',
+          icon: AppIcons.payments_outlined,
+          isLoading: _acting,
+          onPressed: _acting ? null : () => _recordPayment(booking, controller),
         ));
       default:
         break;
@@ -361,10 +398,61 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     await _act(() => controller.decline(booking.id, reason: reason), 'Request declined.');
   }
 
+  /// Payment happens off-platform (cash, GCash, …), so the provider records
+  /// it once they have it; a reference number is optional.
+  Future<void> _recordPayment(
+    BookingModel booking,
+    ProviderBookingController controller,
+  ) async {
+    final reference = await AppDialog.prompt(
+      context,
+      title: 'Payment received?',
+      message:
+          'Confirm the customer paid ${Formatters.peso(booking.amount)} by ${booking.paymentMethod}. They will be notified, and this cannot be undone from the app.',
+      fieldLabel: 'Reference number (optional)',
+      hint: 'e.g. a GCash or bank transfer reference',
+      confirmLabel: 'Confirm payment',
+      maxLength: 100,
+    );
+    if (reference == null || !mounted) return;
+    await _act(
+      () => controller.recordPayment(booking.id, reference: reference),
+      'Payment recorded.',
+    );
+  }
+
+  /// An accepted job can still be called off before it starts, but the
+  /// customer was counting on it, so the API requires a reason.
+  Future<void> _cancelAcceptedJob(
+    BookingModel booking,
+    ProviderBookingController controller,
+  ) async {
+    final reason = await AppDialog.prompt(
+      context,
+      title: 'Cancel this job?',
+      message: 'You already accepted this booking. The client will be notified with your reason.',
+      fieldLabel: 'Reason',
+      hint: 'e.g. I am unwell and cannot make it that day',
+      confirmLabel: 'Cancel job',
+      danger: true,
+      minLength: 5,
+    );
+    if (reason == null || !mounted) return;
+    await _act(() => controller.cancel(booking.id, reason: reason), 'Job cancelled. The client has been told.');
+  }
+
   Widget _clientActions(BuildContext context, BookingModel booking) {
     final controller = context.read<BookingController>();
     final actions = <Widget>[];
 
+    if (booking.isReschedulable) {
+      actions.add(OutlinedAppButton(
+        label: 'Reschedule',
+        icon: AppIcons.calendar_today_rounded,
+        onPressed: _acting ? null : () => _reschedule(booking),
+      ));
+      actions.add(const SizedBox(height: AppSizes.sm));
+    }
     if (booking.isCancellable) {
       actions.add(OutlinedAppButton(
         label: 'Cancel booking',
@@ -445,6 +533,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     await _loadBooking();
   }
 
+  Future<void> _reschedule(BookingModel booking) async {
+    final moved = await context.push<bool>('/reschedule-booking/${booking.id}');
+    if (moved == true && mounted) await _loadBooking();
+  }
+
   Future<void> _cancelBooking(BookingModel booking, BookingController controller) async {
     final providerName =
         booking.providerName.isEmpty ? 'the provider' : booking.providerName;
@@ -476,13 +569,22 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 }
 
-/// Full-width tinted notice used for the dispute and cancellation banners.
+/// Full-width tinted notice used for the dispute, cancellation and
+/// reschedule banners.
 class _Banner extends StatelessWidget {
   final AppIconData icon;
   final String title;
   final String message;
+  final Color color;
+  final Color background;
 
-  const _Banner({required this.icon, required this.title, required this.message});
+  const _Banner({
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.color = AppColors.error,
+    this.background = AppColors.errorBg,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -490,23 +592,23 @@ class _Banner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSizes.lg),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: background,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         children: [
-          AppIcon(icon, color: AppColors.error, size: 22),
+          AppIcon(icon, color: color, size: 22),
           const SizedBox(width: AppSizes.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: AppTextStyles.titleMedium.copyWith(color: AppColors.error)),
+                    style: AppTextStyles.titleMedium.copyWith(color: color)),
                 const SizedBox(height: 2),
                 Text(message,
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error)),
+                    style: AppTextStyles.bodySmall.copyWith(color: color)),
               ],
             ),
           ),

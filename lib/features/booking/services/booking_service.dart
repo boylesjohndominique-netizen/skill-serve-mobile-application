@@ -10,14 +10,17 @@ import '../../../core/services/api_client.dart';
 /// - POST  /api/client/v1/bookings
 /// - GET   /api/client/v1/bookings/{booking}
 /// - PATCH /api/client/v1/bookings/{booking}/cancel
+/// - PATCH /api/client/v1/bookings/{booking}/reschedule
 ///
 /// Provider endpoints (api-docs/modules/provider-bookings.md):
 /// - GET   /api/client/v1/provider/bookings
 /// - GET   /api/client/v1/provider/bookings/{booking}
 /// - PATCH /api/client/v1/provider/bookings/{booking}/confirm
 /// - PATCH /api/client/v1/provider/bookings/{booking}/decline
+/// - PATCH /api/client/v1/provider/bookings/{booking}/cancel
 /// - PATCH /api/client/v1/provider/bookings/{booking}/start
 /// - PATCH /api/client/v1/provider/bookings/{booking}/complete
+/// - PATCH /api/client/v1/provider/bookings/{booking}/payment-received
 class BookingService {
   static const _clientBase = '/client/v1/bookings';
   static const _providerBase = '/client/v1/provider/bookings';
@@ -73,6 +76,24 @@ class BookingService {
     return _transition('$_clientBase/$id/cancel', reason: reason);
   }
 
+  /// PATCH /api/client/v1/bookings/{booking}/reschedule — move a pending or
+  /// confirmed booking. Without [scheduledEndDate] it keeps its length; a
+  /// confirmed booking comes back pending for the provider to accept again.
+  Future<BookingModel> rescheduleBooking(
+    String id, {
+    required DateTime scheduledDate,
+    DateTime? scheduledEndDate,
+  }) async {
+    final response = await ApiClient.instance.dio.patch(
+      '$_clientBase/$id/reschedule',
+      data: {
+        'scheduled_date': scheduledDate.toIso8601String(),
+        if (scheduledEndDate != null) 'scheduled_end_date': scheduledEndDate.toIso8601String(),
+      },
+    );
+    return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
   // ── Provider ──
 
   /// GET /api/client/v1/provider/bookings
@@ -95,6 +116,12 @@ class BookingService {
     return _transition('$_providerBase/$id/decline', reason: reason);
   }
 
+  /// PATCH …/cancel — call off an accepted job before it starts. The API
+  /// requires [reason]; it reaches the client.
+  Future<BookingModel> cancelAcceptedBooking(String id, {required String reason}) {
+    return _transition('$_providerBase/$id/cancel', reason: reason);
+  }
+
   /// PATCH …/start — begin a confirmed job.
   Future<BookingModel> startBooking(String id) {
     return _transition('$_providerBase/$id/start');
@@ -103,6 +130,18 @@ class BookingService {
   /// PATCH …/complete — finish a job in progress.
   Future<BookingModel> completeBooking(String id) {
     return _transition('$_providerBase/$id/complete');
+  }
+
+  /// PATCH …/payment-received — the customer paid for a completed job.
+  /// Nothing is charged; this records the off-platform payment.
+  Future<BookingModel> recordPayment(String id, {String? reference}) async {
+    final response = await ApiClient.instance.dio.patch(
+      '$_providerBase/$id/payment-received',
+      data: reference == null || reference.trim().isEmpty
+          ? null
+          : {'payment_reference': reference.trim()},
+    );
+    return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   // ── Shared plumbing ──

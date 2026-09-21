@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../marketplace/controllers/favorites_controller.dart';
+import 'favorite_toggle.dart';
 import '../../notifications/views/notification_poller.dart';
 import '../controllers/marketplace_controller.dart';
 import '../../../core/constants/app_animations.dart';
@@ -288,7 +289,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     return _GridProviderCard(
                       provider: p,
                       isFavorite: favorites.isFavorite(p.id),
-                      onFavoriteToggle: () => favorites.toggle(p.id),
+                      onFavoriteToggle: () => toggleFavorite(context, p),
                       onTap: () => context.push('/provider-profile/${p.id}'),
                       onBook: () => context.push('/booking-form/${p.id}'),
                     )

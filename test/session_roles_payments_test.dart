@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skilllink_mobile/core/services/token_storage.dart';
@@ -40,6 +41,44 @@ BookingModel _booking({
     });
 
 void main() {
+  group('secure token storage', () {
+    test('tokens an older build left in SharedPreferences move to secure storage', () async {
+      SharedPreferences.setMockInitialValues({
+        TokenStorage.accessTokenKey: 'access',
+        TokenStorage.refreshTokenKey: 'refresh',
+      });
+
+      expect(await TokenStorage.readRefreshToken(), 'refresh');
+      expect(await TokenStorage.readAccessToken(), 'access');
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString(TokenStorage.accessTokenKey), isNull);
+      expect(prefs.getString(TokenStorage.refreshTokenKey), isNull);
+      expect(await const FlutterSecureStorage().read(key: TokenStorage.refreshTokenKey), 'refresh');
+    });
+
+    test('new tokens are written only to secure storage and cleared on sign-out', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await TokenStorage.save(accessToken: 'a2', refreshToken: 'r2');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getKeys(), isEmpty);
+      expect(await TokenStorage.readAccessToken(), 'a2');
+
+      await TokenStorage.clear();
+      expect(await TokenStorage.readAccessToken(), isNull);
+      expect(await TokenStorage.readRefreshToken(), isNull);
+    });
+
+    test('a newer secure token is not overwritten by a stale legacy copy', () async {
+      SharedPreferences.setMockInitialValues({TokenStorage.refreshTokenKey: 'stale'});
+      FlutterSecureStorage.setMockInitialValues({TokenStorage.refreshTokenKey: 'current'});
+
+      expect(await TokenStorage.readRefreshToken(), 'current');
+      expect((await SharedPreferences.getInstance()).getString(TokenStorage.refreshTokenKey), isNull);
+    });
+  });
+
   group('staying signed in', () {
     test('a saved session is restored at launch without waiting on the network', () async {
       SharedPreferences.setMockInitialValues({
@@ -123,6 +162,7 @@ void main() {
         '/client',
         '/booking-form/3',
         '/booking-history',
+        '/reschedule-booking/42',
         '/favorites',
         '/payments',
         '/payment-details/42',

@@ -17,6 +17,7 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/section_header.dart';
 import '../controllers/discovery_controller.dart';
 import '../controllers/favorites_controller.dart';
+import 'favorite_toggle.dart';
 import '../models/discovery_filters.dart';
 import '../models/provider_model.dart';
 import 'widgets/discovery_filter_sheet.dart';
@@ -295,7 +296,7 @@ class _ProviderResult extends StatelessWidget {
     return ProviderCard(
       provider: provider,
       isFavorite: favorites.isFavorite(provider.id),
-      onFavoriteToggle: () => favorites.toggle(provider.id),
+      onFavoriteToggle: () => toggleFavorite(context, provider),
       onTap: () => context.push('/provider-profile/${provider.id}'),
     );
   }

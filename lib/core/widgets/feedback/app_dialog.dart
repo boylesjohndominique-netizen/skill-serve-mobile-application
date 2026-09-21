@@ -106,8 +106,10 @@ class AppDialog {
   /// Confirmation dialog with one optional free-text field — used where the
   /// API accepts a reason (cancelling a booking, declining a request).
   ///
-  /// Returns null when the person backed out, otherwise the trimmed text,
-  /// which may be empty because every reason the API takes is optional.
+  /// Returns null when the person backed out, otherwise the trimmed text.
+  /// The text may be empty unless [minLength] is set, which keeps the confirm
+  /// button disabled until the answer is at least that long — for the reasons
+  /// the API requires.
   static Future<String?> prompt(
     BuildContext context, {
     required String title,
@@ -117,6 +119,7 @@ class AppDialog {
     String confirmLabel = 'Confirm',
     bool danger = false,
     int maxLength = 1000,
+    int minLength = 0,
   }) {
     return showGeneralDialog<String>(
       context: context,
@@ -142,6 +145,7 @@ class AppDialog {
         confirmLabel: confirmLabel,
         danger: danger,
         maxLength: maxLength,
+        minLength: minLength,
       ),
     );
   }
@@ -155,6 +159,7 @@ class _PromptDialog extends StatefulWidget {
   final String confirmLabel;
   final bool danger;
   final int maxLength;
+  final int minLength;
 
   const _PromptDialog({
     required this.title,
@@ -164,6 +169,7 @@ class _PromptDialog extends StatefulWidget {
     required this.confirmLabel,
     required this.danger,
     required this.maxLength,
+    required this.minLength,
   });
 
   @override
@@ -225,9 +231,16 @@ class _PromptDialogState extends State<_PromptDialog> {
                     ),
                     const SizedBox(width: AppSizes.sm),
                     Expanded(
-                      child: widget.danger
-                          ? DangerButton(label: widget.confirmLabel, onPressed: _submit)
-                          : PrimaryButton(label: widget.confirmLabel, onPressed: _submit),
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _controller,
+                        builder: (context, value, _) {
+                          final onPressed =
+                              value.text.trim().length >= widget.minLength ? _submit : null;
+                          return widget.danger
+                              ? DangerButton(label: widget.confirmLabel, onPressed: onPressed)
+                              : PrimaryButton(label: widget.confirmLabel, onPressed: onPressed);
+                        },
+                      ),
                     ),
                   ],
                 ),

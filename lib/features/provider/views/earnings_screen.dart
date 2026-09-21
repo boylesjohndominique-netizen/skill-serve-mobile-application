@@ -60,7 +60,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
     final fees = sum(completed, (b) => b.platformFee);
     final net = sum(completed, (b) => b.providerEarnings);
     final netThisMonth = sum(thisMonth, (b) => b.providerEarnings);
-    final unpaid = sum(completed.where((b) => !b.isPaid), (b) => b.amount);
+    final unpaid = sum(completed.where((b) => b.isUnpaid), (b) => b.amount);
     final failed = bookings.errorMessage != null && bookings.bookings.isEmpty;
 
     return Scaffold(
@@ -272,8 +272,12 @@ class _JobRow extends StatelessWidget {
                     style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
                 const SizedBox(height: 4),
                 StatusBadge(
-                  label: job.isPaid ? 'Paid' : 'Unpaid',
-                  tone: job.isPaid ? StatusTone.success : StatusTone.warning,
+                  label: job.paymentLabel,
+                  tone: job.isPaid
+                      ? StatusTone.success
+                      : job.isUnpaid
+                          ? StatusTone.warning
+                          : StatusTone.neutral,
                 ),
               ],
             ),

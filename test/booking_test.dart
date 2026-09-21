@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:skilllink_mobile/features/booking/models/booking_model.dart';
+import 'package:skilllink_mobile/features/booking/views/schedule_picker.dart';
 import 'package:skilllink_mobile/features/marketplace/models/service_model.dart';
+import 'package:skilllink_mobile/features/provider/models/provider_availability_model.dart';
 
 /// A `ClientBooking` payload as `GET /api/client/v1/bookings` returns it.
 Map<String, dynamic> clientPayload([Map<String, dynamic> overrides = const {}]) => {
@@ -190,6 +192,85 @@ void main() {
     test('falls back to one hour when nothing parses', () {
       expect(service('').durationMinutes, 60);
       expect(service('varies').durationMinutes, 60);
+    });
+  });
+
+  group('rescheduling', () {
+    test('a moved request carries its reschedule stamp and timeline entry', () {
+      final booking = BookingModel.fromJson(clientPayload({
+        'status': 'pending',
+        'confirmed_at': null,
+        'rescheduled_at': '2026-09-26T09:00:00+08:00',
+      }));
+
+      expect(booking.rescheduledAt, isNotNull);
+      expect(booking.isRescheduledRequest, isTrue);
+      expect(booking.isReschedulable, isTrue);
+      expect(booking.timeline.map((e) => e.label), ['Requested', 'Rescheduled']);
+      expect(booking.length, const Duration(hours: 2));
+    });
+
+    test('only pending or confirmed bookings can be moved', () {
+      expect(BookingModel.fromJson(clientPayload({'status': 'confirmed'})).isReschedulable, isTrue);
+      for (final status in ['active', 'completed', 'cancelled', 'disputed']) {
+        expect(BookingModel.fromJson(clientPayload({'status': status})).isReschedulable, isFalse,
+            reason: status);
+      }
+      // Never moved: no reschedule marker even while pending.
+      expect(BookingModel.fromJson(clientPayload({'status': 'pending'})).isRescheduledRequest, isFalse);
+    });
+  });
+
+  group('BookingSlots', () {
+    // 2026-10-05 is a Monday (day_of_week 1).
+    final monday = DateTime(2026, 10, 5);
+    const hours = [ProviderAvailabilityModel(dayOfWeek: 1, startTime: '09:00', endTime: '12:00')];
+
+    test('offers half-hour starts that fit the whole booking in the window', () {
+      expect(BookingSlots.options(hours, monday, 120), [9 * 60, 9 * 60 + 30, 10 * 60]);
+    });
+
+    test('offers nothing on a day the provider does not work', () {
+      expect(BookingSlots.closedOn(hours, monday.add(const Duration(days: 1))), isTrue);
+      expect(BookingSlots.options(hours, monday.add(const Duration(days: 1)), 60), isEmpty);
+    });
+
+    test('falls back to the open working day without published hours', () {
+      final slots = BookingSlots.options(const [], monday, 60);
+      expect(slots.first, BookingSlots.openDayStartMinutes);
+      expect(slots.last, BookingSlots.openDayEndMinutes - 60);
+    });
+
+    test('turns a slot into a wall-clock start and a label', () {
+      expect(BookingSlots.at(monday, 14 * 60 + 30), DateTime(2026, 10, 5, 14, 30));
+      expect(BookingSlots.label(14 * 60 + 30), '2:30 PM');
+      expect(BookingSlots.label(0), '12:00 AM');
+    });
+  });
+
+  group('payment settlement', () {
+    test('a recorded payment and refund come through from the API', () {
+      final booking = BookingModel.fromJson(clientPayload({
+        'status': 'completed',
+        'payment_status': 'partially_refunded',
+        'paid_at': '2026-10-01T12:00:00+08:00',
+        'refunded_amount': '500.00',
+        'refund_reason': 'Finished early.',
+      }));
+
+      expect(booking.paidAt, isNotNull);
+      expect(booking.refundedAmount, 500);
+      expect(booking.refundReason, 'Finished early.');
+      expect(booking.paymentLabel, 'Partly refunded');
+      expect(booking.isUnpaid, isFalse);
+      expect(booking.canRecordPayment, isFalse);
+      expect(booking.timeline.map((e) => e.label), contains('Payment recorded'));
+    });
+
+    test('only a completed, unpaid job can be confirmed as paid by the provider', () {
+      expect(BookingModel.fromJson(clientPayload({'status': 'completed', 'payment_status': 'unpaid'})).canRecordPayment, isTrue);
+      expect(BookingModel.fromJson(clientPayload({'status': 'active', 'payment_status': 'unpaid'})).canRecordPayment, isFalse);
+      expect(BookingModel.fromJson(clientPayload({'status': 'completed', 'payment_status': 'paid'})).canRecordPayment, isFalse);
     });
   });
 }

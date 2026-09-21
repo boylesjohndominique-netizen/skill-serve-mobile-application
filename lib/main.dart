@@ -68,7 +68,14 @@ class SkillLinkApp extends StatelessWidget {
           update: (_, auth, discovery) => discovery!
             ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
         ),
-        ChangeNotifierProvider(create: (_) => FavoritesController()),
+        // Favorites live on the server and belong to a customer account.
+        ChangeNotifierProxyProvider<AuthController, FavoritesController>(
+          create: (_) => FavoritesController(),
+          update: (_, auth, favorites) => favorites!
+            ..onAuthChanged(
+              signedInAsClient: auth.status == AuthStatus.authenticated && auth.isClient,
+            ),
+        ),
         ChangeNotifierProvider(create: (_) => BookingController()),
         ChangeNotifierProvider(create: (_) => ProviderBookingController()),
         ChangeNotifierProvider(create: (_) => NotificationController()),

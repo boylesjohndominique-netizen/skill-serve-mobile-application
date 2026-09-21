@@ -9,27 +9,7 @@ first are marked **(needs backend)**.
 
 ## High
 
-### 1. Favorites are lost every time the app closes (needs backend)
-- **Where:** `lib/features/marketplace/controllers/favorites_controller.dart` keeps favorite
-  provider ids in an in-memory `Set` only. There is no favorites endpoint.
-- **Why it matters:** a customer's saved providers disappear on every restart, which looks like a
-  bug.
-- **Fix:** add `GET/POST/DELETE /api/client/v1/favorites` on the backend and a service here. As a
-  stop-gap, persist the set in `SharedPreferences` so it at least survives restarts.
-
-### 2. Payments and earnings always show "Unpaid" (needs backend)
-- **Where:** the screens are correct — `lib/features/payments/` and
-  `lib/features/provider/views/earnings_screen.dart` read each booking's real `payment_status`.
-  The backend never sets it to `paid` (see web item 1).
-- **Fix:** once the backend can record settlement, a provider "Cash received" button on a completed
-  job would fit here, in `booking_details_screen.dart`'s provider actions.
-
-### 3. Session tokens are stored in plain SharedPreferences
-- **Where:** `lib/core/services/token_storage.dart`.
-- **Why it matters:** on a rooted/jailbroken device the access and refresh tokens are readable.
-  Now that sessions persist until sign-out, the refresh token is long-lived.
-- **Fix:** move tokens to `flutter_secure_storage` (Keychain / Android Keystore). Keep the cached
-  account in SharedPreferences — it is not a secret.
+Nothing open.
 
 ---
 
@@ -48,9 +28,6 @@ first are marked **(needs backend)**.
 - **Fix:** filter `_faqs` by question and answer text, as `chat_list_screen.dart` filters
   conversations.
 
-### 6. Booking lifecycle gaps (needs backend)
-- A provider cannot cancel a booking after accepting it; there is no rescheduling.
-
 ### 7. No presence or typing indicators in chat
 - Deliberately not faked. Needs a presence channel on Reverb if wanted.
 
@@ -58,11 +35,35 @@ first are marked **(needs backend)**.
 
 ## Low
 
-Nothing open.
+### 8. Active Jobs offers "Mark as completed" on jobs that have not started
+- **Where:** `lib/features/provider/views/active_jobs_screen.dart` lists `controller.active`
+  (confirmed and in progress) and gives every card "Mark as completed".
+- **Why it matters:** on a confirmed job the API refuses it ("Only a job in progress can be
+  completed"), so the button always fails there.
+- **Fix:** show "Start job" for a confirmed booking and "Mark as completed" only for one in
+  progress, as the Booking Requests tabs already do.
 
 ---
 
 ## Resolved on 2026-09-21
+
+- **Favorites persist.** They are saved on the server (`lib/features/marketplace/services/favorites_service.dart`),
+  loaded when a customer signs in and cleared on sign-out. Hearts flip at once and flip back if the
+  save fails; guests are asked to sign in. The Favorites screen reads the saved list, with loading,
+  error and pull-to-refresh.
+- **Payments can be settled.** A provider taps "Payment received" on a completed, unpaid job in
+  Booking Details (optional reference number); the customer is notified. Payment details and
+  Earnings show paid dates, refunds and the real status (Paid / Unpaid / Refunded / Partly refunded).
+- **Tokens are in secure storage.** `lib/core/services/token_storage.dart` uses
+  `flutter_secure_storage` (Keychain / Android Keystore). Tokens an older build left in
+  SharedPreferences are moved on first launch, so nobody is signed out by the update.
+
+- **Booking lifecycle gaps.** A provider can cancel a job they already accepted, before it starts,
+  from Booking Details ("Cancel job"; a reason is required and reaches the customer). A customer can
+  reschedule a pending or confirmed booking from Booking Details: the new Reschedule screen offers
+  only slots inside the provider's hours that fit the booking's length. A confirmed booking goes
+  back to pending for the provider to accept again, and the provider sees a "Rescheduled" label and
+  banner. The slot rules are shared with the booking form (`views/schedule_picker.dart`).
 
 - **Stay signed in.** Closing and reopening the app no longer signs the user out:
   - the signed-in account is cached and restored at launch, even offline or while the backend is

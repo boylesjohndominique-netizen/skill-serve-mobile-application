@@ -38,6 +38,34 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `GET /api/reports/reasons`
+
+Reason keys moderators can filter by: those the mobile app files, followed by legacy keys older reports still carry.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Report reason keys, e.g. ["service_quality", "no_show", …, "fraud"]
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Unauthorized
+
+Response schema: `see openapi.json`
+
 ## `GET /api/reports/{report}`
 
 GET /api/reports/{report} — single report with its reported item.

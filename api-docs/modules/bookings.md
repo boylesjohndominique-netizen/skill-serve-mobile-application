@@ -284,3 +284,105 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `PATCH /api/bookings/{booking}/mark-paid`
+
+Records that the customer paid off-platform (cash, GCash, …); no payment provider is called. Allowed for an unpaid booking that is confirmed, active, completed or disputed. Audited, and both parties are notified.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `payment_reference` | no | string, maxLength=100 |
+
+Example request body:
+
+```json
+{
+    "payment_reference": "GCASH-0123456789"
+}
+```
+
+### Responses
+
+#### HTTP 200: Booking marked as paid
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Missing the manage-booking-payments permission
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 409: Already paid or refunded
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Booking is pending or cancelled, or validation error
+
+Response schema: `see openapi.json`
+
+## `PATCH /api/bookings/{booking}/refund`
+
+Records money returned to the customer off-platform. Refunding everything that remains makes the booking refunded; less makes it partially_refunded. Audited, and both parties are notified.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `amount` | yes | number, format=float, minimum=0.01 |
+| `reason` | yes | string, minLength=5, maxLength=1000 |
+
+Example request body:
+
+```json
+{
+    "amount": 500,
+    "reason": "Job finished an hour short; partial refund agreed."
+}
+```
+
+### Responses
+
+#### HTTP 200: Refund recorded
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Missing the manage-booking-payments permission
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Not paid, amount above what remains, or validation error
+
+Response schema: `see openapi.json`
+

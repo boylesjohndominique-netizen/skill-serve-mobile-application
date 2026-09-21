@@ -7,6 +7,7 @@
 - [Bookings](modules/bookings.md)
 - [Client Authentication](modules/client-authentication.md)
 - [Client Bookings](modules/client-bookings.md)
+- [Client Favorites](modules/client-favorites.md)
 - [Client Marketplace](modules/client-marketplace.md)
 - [Client Notifications](modules/client-notifications.md)
 - [Client Preferences](modules/client-preferences.md)

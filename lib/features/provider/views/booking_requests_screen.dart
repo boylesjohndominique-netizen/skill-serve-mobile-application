@@ -297,6 +297,20 @@ class _RequestCard extends StatelessWidget {
                   children: [
                     Text(clientName, style: AppTextStyles.titleMedium),
                     Text(booking.serviceTitle, style: AppTextStyles.bodySmall),
+                    // The customer moved this booking, possibly after it was
+                    // accepted, so the time needs a fresh answer.
+                    if (booking.isRescheduledRequest) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.infoBg,
+                          borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                        ),
+                        child: Text('Rescheduled',
+                            style: AppTextStyles.caption.copyWith(color: AppColors.info)),
+                      ),
+                    ],
                   ],
                 ),
               ),

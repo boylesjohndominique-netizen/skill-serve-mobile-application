@@ -2,12 +2,13 @@ import '../../booking/models/booking_model.dart';
 
 /// Where a booking's payment stands, as the customer should read it.
 ///
-/// SkillServe does not process payments yet: the customer chooses how they will
-/// settle with the provider, and the booking records whether it has been paid.
+/// SkillServe does not process payments: the customer settles with the
+/// provider directly, and the provider (or an administrator) records on the
+/// booking that it was paid, and any refund.
 /// There is no separate payments table and no transaction reference, so this
 /// is a view over each booking — never a made-up receipt.
 enum PaymentStatus {
-  /// Settled — an administrator recorded the booking as paid.
+  /// Settled — the provider or an administrator recorded the payment.
   paid,
 
   /// Owed to the provider for a job that is going ahead or has been done.
@@ -37,6 +38,11 @@ class PaymentModel {
   /// When the job is (or was) scheduled — the date the payment relates to.
   final DateTime date;
 
+  /// When the payment was recorded; null while unpaid.
+  final DateTime? paidAt;
+  final double refundedAmount;
+  final String? refundReason;
+
   const PaymentModel({
     required this.bookingId,
     this.bookingNumber = '',
@@ -49,6 +55,9 @@ class PaymentModel {
     required this.status,
     required this.bookingStatus,
     required this.date,
+    this.paidAt,
+    this.refundedAmount = 0,
+    this.refundReason,
   });
 
   /// The status key the shared badge understands.
@@ -80,6 +89,9 @@ class PaymentModel {
         status: statusFor(booking),
         bookingStatus: booking.status,
         date: booking.bookingDate,
+        paidAt: booking.paidAt,
+        refundedAmount: booking.refundedAmount,
+        refundReason: booking.refundReason,
       );
 
   static PaymentStatus statusFor(BookingModel booking) {

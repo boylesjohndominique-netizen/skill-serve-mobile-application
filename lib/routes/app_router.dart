@@ -29,6 +29,7 @@ import '../features/booking/views/booking_form_screen.dart';
 import '../features/booking/views/booking_confirmation_screen.dart';
 import '../features/booking/views/booking_history_screen.dart';
 import '../features/booking/views/booking_details_screen.dart';
+import '../features/booking/views/reschedule_booking_screen.dart';
 
 // Profile
 import '../features/profile/views/edit_profile_screen.dart';
@@ -161,6 +162,11 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/booking-history',
       builder: (context, state) => const BookingHistoryScreen()),
+  GoRoute(
+    path: '/reschedule-booking/:id',
+    builder: (context, state) =>
+        RescheduleBookingScreen(bookingId: state.pathParameters['id']!),
+  ),
   GoRoute(
     path: '/booking-details/:id',
     builder: (context, state) =>
@@ -338,6 +344,7 @@ const _customerOnly = <String>{
   'booking-form',
   'booking-confirmation',
   'booking-history',
+  'reschedule-booking',
   'favorites',
   'payments',
   'payment-details',

@@ -67,6 +67,8 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
           'Payment method: ${p.method}\n'
           'Amount: ${Formatters.peso(p.amount)}\n'
           'Status: ${p.statusLabel}\n'
+          '${p.paidAt != null ? 'Paid on: ${Formatters.dateTime(p.paidAt!)}\n' : ''}'
+          '${p.refundedAmount > 0 ? 'Refunded: ${Formatters.peso(p.refundedAmount)}\n' : ''}'
           'Scheduled: ${Formatters.dateTime(p.date)}',
     ));
     if (mounted) AppSnackbar.success(context, 'Payment summary copied.');
@@ -163,13 +165,20 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                     Divider(height: AppSizes.xl, color: isDark ? AppColors.lineDark : AppColors.line),
                     InfoRow(label: 'Method', value: p.method),
                     InfoRow(label: 'Scheduled', value: Formatters.dateTime(p.date)),
+                    if (p.paidAt != null)
+                      InfoRow(label: 'Paid on', value: Formatters.dateTime(p.paidAt!)),
+                    if (p.refundedAmount > 0) ...[
+                      InfoRow(label: 'Refunded', value: Formatters.peso(p.refundedAmount)),
+                      if (p.refundReason?.isNotEmpty ?? false)
+                        InfoRow(label: 'Refund reason', value: p.refundReason!),
+                    ],
                   ],
                 ),
               ).animate().fadeIn(delay: 150.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
               const SizedBox(height: AppSizes.md),
               Text(
-                'Payment is settled directly with your provider. SkillServe records the '
-                'method you chose and whether the booking has been paid.',
+                'Payment is settled directly with your provider. Your provider confirms '
+                'it here once they are paid, and any refund is recorded too.',
                 style: AppTextStyles.bodySmall,
                 textAlign: TextAlign.center,
               ),

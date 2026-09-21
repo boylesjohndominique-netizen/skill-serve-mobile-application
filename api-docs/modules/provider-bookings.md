@@ -77,6 +77,46 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `PATCH /api/client/v1/provider/bookings/{booking}/cancel`
+
+Only a confirmed booking can be cancelled this way; use decline for a pending request. The customer is notified with the reason.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | yes | string, minLength=5, maxLength=1000 |
+
+### Responses
+
+#### HTTP 200: Booking cancelled. Payment state is unchanged and no external refund is processed.
+
+Response schema: `#/components/schemas/ProviderBookingEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Not placed with this provider
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Reason missing, or the booking is not confirmed
+
+Response schema: `see openapi.json`
+
 ## `PATCH /api/client/v1/provider/bookings/{booking}/complete`
 
 Mark a job in progress as completed
@@ -190,6 +230,50 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 422: Only a pending booking can be declined
+
+Response schema: `see openapi.json`
+
+## `PATCH /api/client/v1/provider/bookings/{booking}/payment-received`
+
+Records an off-platform payment (cash, GCash, …); nothing is charged. Only a completed, unpaid booking. The customer is notified.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `payment_reference` | no | string, maxLength=100 |
+
+### Responses
+
+#### HTTP 200: Payment recorded; payment_status is now paid
+
+Response schema: `#/components/schemas/ProviderBookingEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Not placed with this provider
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 409: Already marked as paid
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: The job is not completed yet
 
 Response schema: `see openapi.json`
 

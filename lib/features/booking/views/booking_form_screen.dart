@@ -18,21 +18,13 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../../marketplace/models/service_model.dart';
-import '../../provider/models/provider_availability_model.dart';
 import '../../../core/utils/api_error.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
+import 'schedule_picker.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
-
-/// Start times are offered every half hour inside the provider's window.
-const _slotStepMinutes = 30;
-
-/// The working day offered when a provider publishes no weekly hours at all —
-/// the API leaves those bookings unrestricted, so any sensible time works.
-const _openDayStartMinutes = 8 * 60;
-const _openDayEndMinutes = 17 * 60;
 
 /// Presentation for the payment methods the API accepts
 /// ({@link BookingModel.paymentMethods}). Selection only: nothing is charged,
@@ -133,41 +125,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     }
   }
 
-  /// The provider's published window for [_date], or null when they do not
-  /// work that weekday. A provider with no published hours at all is
-  /// unrestricted, which the open working day below stands in for.
-  ProviderAvailabilityModel? get _window =>
-      _provider?.availability.isEmpty ?? true
-          // `day_of_week` is 0 = Sunday, while Dart's Sunday is 7.
-          ? null
-          : _provider!.availability
-              .where((w) => w.dayOfWeek == _date.weekday % 7)
-              .firstOrNull;
-
-  bool get _publishesHours => _provider?.availability.isNotEmpty ?? false;
-
-  /// True when the provider publishes hours but none for the chosen day.
-  bool get _closedOnSelectedDay => _publishesHours && _window == null;
-
-  /// Start times that still leave room for the whole service inside the day's
-  /// window — the same rule the API enforces, so a pick cannot be refused.
-  List<int> get _slotOptions {
-    if (_closedOnSelectedDay) return const [];
-
-    final window = _window;
-    final start = window == null ? _openDayStartMinutes : _minutes(window.startTime);
-    final end = window == null ? _openDayEndMinutes : _minutes(window.endTime);
-    final duration = _selectedService?.durationMinutes ?? 60;
-
-    final slots = <int>[];
-    for (var at = start; at + duration <= end; at += _slotStepMinutes) {
-      slots.add(at);
-    }
-    // A window shorter than the service still offers its opening time; the
-    // API decides, and refusing to show anything would look like a bug.
-    if (slots.isEmpty && end > start) slots.add(start);
-    return slots;
-  }
+  /// Start times that fit the chosen service inside the provider's hours
+  /// for [_date] — see [BookingSlots.options].
+  List<int> get _slotOptions => BookingSlots.options(
+        _provider?.availability ?? const [],
+        _date,
+        _selectedService?.durationMinutes ?? 60,
+      );
 
   /// A longer service leaves fewer start times inside the provider's window,
   /// so a slot chosen for a shorter one is re-picked rather than silently
@@ -180,20 +144,6 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   void _selectFirstSlot() {
     final slots = _slotOptions;
     setState(() => _slotMinutes = slots.isEmpty ? null : slots.first);
-  }
-
-  static int _minutes(String hhmm) {
-    final parts = hhmm.split(':');
-    return ((int.tryParse(parts.first) ?? 0) * 60) +
-        (parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0);
-  }
-
-  static String _slotLabel(int minutes) {
-    final hour = minutes ~/ 60;
-    final minute = minutes % 60;
-    final suffix = hour < 12 ? 'AM' : 'PM';
-    final display = hour % 12 == 0 ? 12 : hour % 12;
-    return '$display:${minute.toString().padLeft(2, '0')} $suffix';
   }
 
   bool get _stepValid {
@@ -251,8 +201,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         serviceId: _selectedService!.id,
         // The chosen day and slot are one wall-clock start; the API derives
         // the end from the service duration.
-        scheduledDate: DateTime(_date.year, _date.month, _date.day)
-            .add(Duration(minutes: slot)),
+        scheduledDate: BookingSlots.at(_date, slot),
         notes: _notesController.text.trim(),
         paymentMethod: _paymentMethod,
         serviceAddress: _addressController.text.trim(),
@@ -395,8 +344,6 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   // ── Step 2: schedule ──
   Widget _stepSchedule(BuildContext context, bool isDark) {
-    final slots = _slotOptions;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -404,81 +351,15 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         const SizedBox(height: 4),
         Text('Pick a date and a time slot that works for you.', style: AppTextStyles.bodyMedium),
         const SizedBox(height: AppSizes.lg),
-        Text('Date', style: AppTextStyles.titleMedium),
-        const SizedBox(height: AppSizes.sm),
-        InkWell(
-          onTap: _pickDate,
-          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 14),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            ),
-            child: Row(
-              children: [
-                const AppIcon(AppIcons.calendar_today_rounded, size: 18, color: AppColors.secondary),
-                const SizedBox(width: AppSizes.sm),
-                Text(Formatters.dateShort(_date), style: AppTextStyles.bodyLarge),
-                const Spacer(),
-                const AppIcon(AppIcons.chevron_right_rounded, size: 18, color: AppColors.neutral300),
-              ],
-            ),
-          ),
+        SchedulePicker(
+          availability: _provider!.availability,
+          providerName: _provider!.user.firstName,
+          date: _date,
+          selectedSlot: _slotMinutes,
+          durationMinutes: _selectedService?.durationMinutes ?? 60,
+          onPickDate: _pickDate,
+          onSlotSelected: (slot) => setState(() => _slotMinutes = slot),
         ),
-        const SizedBox(height: AppSizes.xl),
-        Text('Available time slots', style: AppTextStyles.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          _closedOnSelectedDay
-              ? '${_provider!.user.firstName} does not work on ${ProviderAvailabilityModel.dayNames[_date.weekday % 7]}s. Pick another date.'
-              : _window != null
-                  ? 'Published hours: ${_window!.label}.'
-                  : 'This provider has not published weekly hours, so any time in the working day can be requested.',
-          style: AppTextStyles.bodySmall,
-        ),
-        const SizedBox(height: AppSizes.sm),
-        if (slots.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSizes.md),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            ),
-            child: Row(
-              children: [
-                const AppIcon(AppIcons.event_busy_rounded, size: 18, color: AppColors.neutral400),
-                const SizedBox(width: AppSizes.sm),
-                Expanded(
-                  child: Text('No slots on this date — choose another day.',
-                      style: AppTextStyles.bodyMedium),
-                ),
-              ],
-            ),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (var i = 0; i < slots.length; i++)
-                ChoiceChip(
-                  label: Text(_slotLabel(slots[i])),
-                  selected: _slotMinutes == slots[i],
-                  selectedColor: AppColors.secondary,
-                  labelStyle: AppTextStyles.label.copyWith(
-                    color: _slotMinutes == slots[i] ? AppColors.primary : null,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  showCheckmark: false,
-                  onSelected: (_) => setState(() => _slotMinutes = slots[i]),
-                )
-                    .animate()
-                    .fadeIn(delay: Duration(milliseconds: 150 + i.clamp(0, 10) * 40), duration: 300.ms)
-                    .slideX(begin: 0.08, end: 0),
-            ],
-          ),
       ],
     );
   }
@@ -565,7 +446,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
               _summaryRow(AppIcons.design_services_outlined, 'Service', _selectedService!.title),
               _summaryRow(AppIcons.schedule_rounded, 'Duration', _selectedService!.duration),
               _summaryRow(AppIcons.calendar_today_rounded, 'Schedule',
-                  '${Formatters.dateShort(_date)} · ${_slotLabel(_slotMinutes!)}'),
+                  '${Formatters.dateShort(_date)} · ${BookingSlots.label(_slotMinutes!)}'),
               _summaryRow(AppIcons.person_outline_rounded, 'Client', _clientName),
               _summaryRow(AppIcons.phone_outlined, 'Phone', _phoneController.text.trim()),
               _summaryRow(AppIcons.location_on_outlined, 'Address', _addressController.text.trim()),

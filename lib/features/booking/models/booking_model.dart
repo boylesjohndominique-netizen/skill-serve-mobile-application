@@ -39,7 +39,17 @@ class BookingModel {
   final DateTime bookingDate;
   final DateTime? scheduledEndDate;
   final BookingStatus status;
+
+  /// `unpaid`, `paid`, `partially_refunded` or `refunded`. Payment happens
+  /// off-platform; the provider or an administrator records it.
   final String paymentStatus;
+
+  /// When the payment was recorded; null while unpaid.
+  final DateTime? paidAt;
+
+  /// Total refunded so far (0 when none).
+  final double refundedAmount;
+  final String? refundReason;
 
   /// `total_price` — what the customer owes for the job.
   final double amount;
@@ -59,6 +69,9 @@ class BookingModel {
   final DateTime? startedAt;
   final DateTime? completedAt;
   final DateTime? cancelledAt;
+
+  /// When the customer last moved the booking to a new time; null if never.
+  final DateTime? rescheduledAt;
   final DateTime createdAt;
 
   const BookingModel({
@@ -78,6 +91,9 @@ class BookingModel {
     this.scheduledEndDate,
     required this.status,
     this.paymentStatus = 'unpaid',
+    this.paidAt,
+    this.refundedAmount = 0,
+    this.refundReason,
     required this.amount,
     this.platformFee = 0,
     this.currency = 'PHP',
@@ -90,6 +106,7 @@ class BookingModel {
     this.startedAt,
     this.completedAt,
     this.cancelledAt,
+    this.rescheduledAt,
     required this.createdAt,
   });
 
@@ -107,6 +124,16 @@ class BookingModel {
   bool get isCancellable =>
       status == BookingStatus.pending || status == BookingStatus.confirmed;
 
+  /// The customer can move the booking until the provider starts the job.
+  bool get isReschedulable => isCancellable;
+
+  /// A pending request the customer moved — for the provider, a job they
+  /// may have accepted before, now waiting on the new time.
+  bool get isRescheduledRequest => status == BookingStatus.pending && rescheduledAt != null;
+
+  /// Length of the booked window, or null when the API sent no end.
+  Duration? get length => scheduledEndDate?.difference(bookingDate);
+
   bool get canBeReviewed => status == BookingStatus.completed && !isReviewed;
 
   /// What the provider keeps from this job once the platform fee is taken.
@@ -114,9 +141,26 @@ class BookingModel {
 
   bool get isPaid => paymentStatus == 'paid';
 
+  bool get isUnpaid => paymentStatus == 'unpaid';
+
+  /// A finished job the provider can confirm they were paid for.
+  bool get canRecordPayment => status == BookingStatus.completed && isUnpaid;
+
+  /// "Paid", "Unpaid", "Refunded" or "Partly refunded".
+  String get paymentLabel => switch (paymentStatus) {
+        'paid' => 'Paid',
+        'refunded' => 'Refunded',
+        'partially_refunded' => 'Partly refunded',
+        _ => 'Unpaid',
+      };
+
   /// Status history built from the timestamps the API records, oldest first.
   List<BookingTimelineEntry> get timeline => [
         BookingTimelineEntry(label: 'Requested', at: createdAt, status: 'pending'),
+        // A reschedule clears the earlier acceptance, so it always sits
+        // before any "Accepted" entry that follows it.
+        if (rescheduledAt != null)
+          BookingTimelineEntry(label: 'Rescheduled', at: rescheduledAt!, status: 'pending'),
         if (confirmedAt != null)
           BookingTimelineEntry(label: 'Accepted', at: confirmedAt!, status: 'confirmed'),
         if (startedAt != null)
@@ -125,6 +169,8 @@ class BookingModel {
           BookingTimelineEntry(label: 'Completed', at: completedAt!, status: 'completed'),
         if (cancelledAt != null)
           BookingTimelineEntry(label: 'Cancelled', at: cancelledAt!, status: 'cancelled'),
+        if (paidAt != null)
+          BookingTimelineEntry(label: 'Payment recorded', at: paidAt!, status: 'completed'),
       ];
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -154,6 +200,9 @@ class BookingModel {
       scheduledEndDate: _date(json['scheduled_end_date']),
       status: statusFromApi(json['status'] as String?),
       paymentStatus: json['payment_status'] as String? ?? 'unpaid',
+      paidAt: _date(json['paid_at']),
+      refundedAmount: _money(json['refunded_amount']) ?? 0,
+      refundReason: json['refund_reason'] as String?,
       amount: _money(json['total_price']) ?? _money(json['service_price']) ?? 0,
       platformFee: _money(json['platform_fee']) ?? 0,
       currency: json['currency'] as String? ?? 'PHP',
@@ -166,6 +215,7 @@ class BookingModel {
       startedAt: _date(json['started_at']),
       completedAt: _date(json['completed_at']),
       cancelledAt: _date(json['cancelled_at']),
+      rescheduledAt: _date(json['rescheduled_at']),
       createdAt: created ?? scheduled ?? DateTime.now(),
     );
   }

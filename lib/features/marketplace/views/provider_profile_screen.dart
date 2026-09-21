@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../booking/controllers/booking_controller.dart';
 import '../../marketplace/controllers/favorites_controller.dart';
+import 'favorite_toggle.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -119,7 +120,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         title: Text(p.user.fullName),
         actions: [
           IconButton(
-            onPressed: () => favorites.toggle(p.id),
+            onPressed: () => toggleFavorite(context, p),
             icon: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
