@@ -41,6 +41,8 @@ class BackgroundNotifications {
     channelDescription: 'Bookings, messages and account updates while the app is closed',
     importance: Importance.high,
     priority: Priority.high,
+    // White silhouette for the status bar (res/drawable/ic_stat_notification.xml).
+    icon: 'ic_stat_notification',
   );
 
   static final _plugin = FlutterLocalNotificationsPlugin();
@@ -130,7 +132,7 @@ class BackgroundNotifications {
 
   static Future<void> _initPlugin({void Function(String? payload)? onTap}) => _plugin.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: AndroidInitializationSettings('ic_stat_notification'),
         ),
         onDidReceiveNotificationResponse: onTap == null ? null : (response) => onTap(response.payload),
       );

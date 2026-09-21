@@ -20,6 +20,7 @@ import 'features/reports/controllers/report_controller.dart';
 import 'features/reviews/controllers/review_controller.dart';
 import 'features/support/controllers/support_controller.dart';
 import 'features/settings/controllers/preferences_controller.dart';
+import 'features/settings/views/maintenance_gate.dart';
 import 'core/config/app_config.dart';
 import 'core/services/api_client.dart';
 import 'core/services/background_notifications.dart';
@@ -138,7 +139,7 @@ class SkillLinkApp extends StatelessWidget {
                     data: MediaQuery.of(context)
                         .copyWith(disableAnimations: preferences.reduceMotion),
                     child: NotificationPoller(
-                        child: widget ?? const SizedBox.shrink()),
+                        child: MaintenanceGate(child: widget ?? const SizedBox.shrink())),
                   ),
                   breakpoints: const [
                     Breakpoint(start: 0, end: 450, name: MOBILE),

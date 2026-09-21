@@ -10,14 +10,13 @@ import '../../../core/widgets/buttons/outlined_app_button.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
-import '../../../core/widgets/misc/status_badge.dart';
-import '../../../core/widgets/misc/verification_seal.dart';
 import 'package:provider/provider.dart';
-import '../../auth/controllers/auth_controller.dart';
 import '../../marketplace/services/service_service.dart';
 import '../services/provider_service_service.dart';
 import '../../../core/utils/api_error.dart';
-import '../../provider/models/verification_document_model.dart';
+import '../controllers/verification_controller.dart';
+import 'verification_status_screen.dart';
+import 'verification_upload_panel.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
@@ -39,14 +38,27 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
 
   int _step = 0;
   bool _savingProfile = false;
-  final List<VerificationDocumentModel> _docs = [];
+  /// The real verification state and upload (steps 2 and 3).
+  final _verification = VerificationController();
 
-  bool get _verified => _docs.every((d) => d.status == 'approved');
+  bool get _verified => _verification.verification?.isVerified ?? false;
+
+  /// Documents are already with the reviewer (or approved): nothing to upload.
+  bool get _alreadySubmitted =>
+      _verification.verification != null && !_verification.verification!.canSubmit;
 
   @override
   void initState() {
     super.initState();
     _loadCategories();
+    _verification.load();
+  }
+
+  @override
+  void dispose() {
+    _bioController.dispose();
+    _verification.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCategories() async {
@@ -105,6 +117,16 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _verification,
+      child: ListenableBuilder(
+        listenable: _verification,
+        builder: (context, _) => _buildScaffold(context),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Get Verified'),
@@ -136,15 +158,26 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(AppSizes.pageHPad, AppSizes.sm, AppSizes.pageHPad, AppSizes.lg),
-          child: _step < 2
+          child: _step == 0
               ? PrimaryButton(
-                  label: _step == 0 ? 'Save and continue' : 'Submit for review',
+                  label: 'Save and continue',
                   icon: AppIcons.arrow_forward_rounded,
                   isLoading: _savingProfile,
-                  onPressed: _step == 0
-                      ? _saveProfile
-                      : () => setState(() => _step++),
+                  onPressed: _saveProfile,
                 )
+              : _step == 1
+                  ? (_alreadySubmitted
+                      ? PrimaryButton(
+                          label: 'Continue',
+                          icon: AppIcons.arrow_forward_rounded,
+                          onPressed: () => setState(() => _step = 2),
+                        )
+                      // Uploading happens in the panel above; this only leaves.
+                      : OutlinedAppButton(
+                          label: 'Do this later',
+                          icon: AppIcons.home_rounded,
+                          onPressed: _verification.isSubmitting ? null : () => context.go('/provider'),
+                        ))
               : PrimaryButton(
                   label: _verified ? 'Go to dashboard' : 'Continue to dashboard',
                   icon: AppIcons.home_rounded,
@@ -243,158 +276,61 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
 
   // ── Step 2: upload documents ──
   Widget _stepDocuments(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final verification = _verification.verification;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Upload your documents', style: AppTextStyles.titleLarge),
         const SizedBox(height: 4),
-        Text('Submit a government ID, certificate, or supporting document for review.', style: AppTextStyles.bodyMedium),
+        Text(
+          'A government-issued ID is required; add certificates or licenses for your trade if you have them. '
+          'An administrator reviews them before you can list services.',
+          style: AppTextStyles.bodyMedium,
+        ),
         const SizedBox(height: AppSizes.lg),
-        for (var i = 0; i < _docs.length; i++)
-          Container(
-            margin: const EdgeInsets.only(bottom: AppSizes.sm),
-            padding: const EdgeInsets.all(AppSizes.md),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDark : AppColors.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-              border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
-              boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _docs[i].status == 'approved' ? AppColors.successBg : AppColors.secondarySoft,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                  ),
-                  child: AppIcon(
-                    _docs[i].type == 'ID'
-                        ? AppIcons.badge_outlined
-                        : (_docs[i].type == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
-                    size: 17,
-                    color: _docs[i].status == 'approved' ? AppColors.success : AppColors.secondaryDeep,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_docs[i].label, style: AppTextStyles.titleMedium),
-                      Text(_docs[i].type, style: AppTextStyles.bodySmall),
-                    ],
-                  ),
-                ),
-                StatusBadge.fromStatus(_docs[i].status),
-              ],
-            ),
-          )
-              .animate()
-              .fadeIn(delay: Duration(milliseconds: 120 + i * 70), duration: 350.ms)
-              .slideX(begin: 0.05, end: 0),
-        const SizedBox(height: AppSizes.md),
-        OutlinedAppButton(
-          label: 'Add a document',
-          icon: AppIcons.upload_file_rounded,
-          onPressed: _pickDocType,
-        ).animate().fadeIn(delay: 350.ms, duration: 300.ms),
+        if (_verification.isLoading && verification == null)
+          const Center(child: CircularProgressIndicator())
+        else if (verification == null)
+          Text(_verification.errorMessage ?? 'Unable to load your verification status.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error))
+        else if (_alreadySubmitted)
+          VerificationStatusHeader(verification: verification)
+        else
+          VerificationUploadPanel(onSubmitted: () => setState(() => _step = 2)),
       ],
     );
   }
 
-  Future<void> _pickDocType() async {
-    final type = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceDark : AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXl))),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Add a document', style: AppTextStyles.titleLarge),
-              const SizedBox(height: AppSizes.md),
-              for (final t in ['ID', 'Certificate', 'Document'])
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: AppIcon(
-                    t == 'ID' ? AppIcons.badge_outlined : (t == 'Certificate' ? AppIcons.workspace_premium_outlined : AppIcons.description_outlined),
-                    color: AppColors.secondary,
-                  ),
-                  title: Text(t, style: AppTextStyles.bodyLarge),
-                  trailing: const AppIcon(AppIcons.chevron_right_rounded, color: AppColors.neutral300),
-                  onTap: () => Navigator.of(context).pop(t),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (type == null || !mounted) return;
-    setState(() {
-      final auth = context.read<AuthController>();
-      final userId = auth.currentUser?.id ?? '';
-      _docs.add(VerificationDocumentModel(
-        id: 'VD-${DateTime.now().millisecondsSinceEpoch}',
-        providerId: userId,
-        type: type,
-        label: '${type == 'ID' ? 'Government-issued' : type == 'Certificate' ? 'Certificate of' : 'Supporting'} document',
-        status: 'pending',
-        submittedAt: DateTime.now(),
-      ));
-    });
-    AppSnackbar.success(context, 'Document submitted for review.');
-  }
-
   // ── Step 3: status seal ──
   Widget _stepStatus(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          VerificationSeal(
-            status: _verified ? 'verified' : 'pending',
-            size: 84,
-          ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack).fadeIn(),
-          const SizedBox(height: AppSizes.lg),
-          Text(
-            _verified ? 'You\'re verified!' : 'Under review',
-            style: AppTextStyles.headlineLarge,
-          ).animate().fadeIn(delay: 200.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
-          const SizedBox(height: AppSizes.sm),
-          Text(
-            _verified
-                ? 'Your documents are approved. You can now list services and start earning.'
-                : 'Our admin team is reviewing your submitted documents. We\'ll notify you the moment your status changes.',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyLarge,
-          ).animate().fadeIn(delay: 300.ms, duration: 350.ms),
+    final verification = _verification.verification;
+    if (verification == null) return const Center(child: CircularProgressIndicator());
+    return Column(
+      children: [
+        VerificationStatusHeader(verification: verification),
+        if (!_verified) ...[
           const SizedBox(height: AppSizes.xl),
-          if (!_verified)
-            Container(
-              padding: const EdgeInsets.all(AppSizes.md),
-              decoration: BoxDecoration(
-                color: AppColors.secondarySoft,
-                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-              ),
-              child: Row(
-                children: [
-                  const AppIcon(AppIcons.info_outline_rounded, color: AppColors.secondaryDeep, size: 18),
-                  const SizedBox(width: AppSizes.sm),
-                  Expanded(
-                    child: Text(
-                      'You can still explore the app while verification is in progress.',
-                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondaryDeep),
-                    ),
+          Container(
+            padding: const EdgeInsets.all(AppSizes.md),
+            decoration: BoxDecoration(
+              color: AppColors.secondarySoft,
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            ),
+            child: Row(
+              children: [
+                const AppIcon(AppIcons.info_outline_rounded, color: AppColors.secondaryDeep, size: 18),
+                const SizedBox(width: AppSizes.sm),
+                Expanded(
+                  child: Text(
+                    'You can explore the app while your documents are reviewed; follow the status under Verification.',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondaryDeep),
                   ),
-                ],
-              ),
-            ).animate().fadeIn(delay: 400.ms, duration: 350.ms),
+                ),
+              ],
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 }

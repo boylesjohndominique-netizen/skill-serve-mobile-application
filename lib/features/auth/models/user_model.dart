@@ -14,6 +14,12 @@ class UserModel {
   final String status;
   final DateTime createdAt;
 
+  /// Provider accounts only: verification state and an administrator's
+  /// suspension, which applies while the account itself stays active (M 9.6).
+  final String? providerVerificationStatus;
+  final bool providerSuspended;
+  final String? providerSuspensionReason;
+
   const UserModel({
     required this.id,
     required this.role,
@@ -25,6 +31,9 @@ class UserModel {
     this.profilePicture,
     this.status = 'active',
     required this.createdAt,
+    this.providerVerificationStatus,
+    this.providerSuspended = false,
+    this.providerSuspensionReason,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -53,12 +62,16 @@ class UserModel {
             clearProfilePicture ? null : profilePicture ?? this.profilePicture,
         status: status ?? this.status,
         createdAt: createdAt,
+        providerVerificationStatus: providerVerificationStatus,
+        providerSuspended: providerSuspended,
+        providerSuspensionReason: providerSuspensionReason,
       );
 
   /// Maps the `GET /api/client/v1/auth/me` payload, or a session cached by
   /// [toJson].
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final role = roleFromJson(json);
+    final provider = json['provider'] is Map ? Map<String, dynamic>.from(json['provider'] as Map) : null;
     return UserModel(
       id: json['id'].toString(),
       role: role,
@@ -71,6 +84,9 @@ class UserModel {
       status: json['status'] as String? ?? 'active',
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
+      providerVerificationStatus: provider?['verification_status'] as String?,
+      providerSuspended: provider?['suspended'] == true,
+      providerSuspensionReason: provider?['suspension_reason'] as String?,
     );
   }
 
@@ -113,5 +129,11 @@ class UserModel {
         'profile_picture': profilePicture,
         'status': status,
         'created_at': createdAt.toIso8601String(),
+        if (role == UserRole.provider)
+          'provider': {
+            'verification_status': providerVerificationStatus,
+            'suspended': providerSuspended,
+            'suspension_reason': providerSuspensionReason,
+          },
       };
 }

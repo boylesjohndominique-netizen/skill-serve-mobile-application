@@ -159,11 +159,16 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 // Why it was called off — the API records a reason for both
                 // a customer cancellation and a provider decline.
                 if (booking.status == BookingStatus.cancelled &&
-                    (booking.cancellationReason?.isNotEmpty ?? false)) ...[
+                    ((booking.cancellationReason?.isNotEmpty ?? false) || (booking.cancellationFee ?? 0) > 0)) ...[
                   _Banner(
                     icon: AppIcons.cancel_outlined,
-                    title: 'Cancellation reason',
-                    message: booking.cancellationReason!,
+                    title: 'Booking cancelled',
+                    message: ((booking.cancellationReason?.isNotEmpty ?? false)
+                            ? 'Reason: ${booking.cancellationReason}'
+                            : 'No reason was given.') +
+                        ((booking.cancellationFee ?? 0) > 0
+                            ? '\nLate-cancellation fee: ${Formatters.peso(booking.cancellationFee!)}'
+                            : ''),
                   )
                       .animate()
                       .fadeIn(delay: 130.ms, duration: 350.ms)
@@ -430,7 +435,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     final reason = await AppDialog.prompt(
       context,
       title: 'Cancel this job?',
-      message: 'You already accepted this booking. The client will be notified with your reason.',
+      message: 'You already accepted this booking. The client will be notified with your reason.'
+          '${_lateFeeNotice(booking)}',
       fieldLabel: 'Reason',
       hint: 'e.g. I am unwell and cannot make it that day',
       confirmLabel: 'Cancel job',
@@ -538,13 +544,22 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     if (moved == true && mounted) await _loadBooking();
   }
 
+  /// The platform's late-cancellation rule, when cancelling now would cost
+  /// something (System Settings → Booking).
+  String _lateFeeNotice(BookingModel booking) {
+    final policy = booking.cancellationPolicy;
+    if (policy == null || !policy.chargesFee) return '';
+    return '\n\nThis is within ${policy.windowHours} hours of the start, so a late-cancellation fee of '
+        '${Formatters.peso(policy.feeIfCancelledNow)} (${policy.feePercent.toStringAsFixed(0)}%) will be recorded.';
+  }
+
   Future<void> _cancelBooking(BookingModel booking, BookingController controller) async {
     final providerName =
         booking.providerName.isEmpty ? 'the provider' : booking.providerName;
     final reason = await AppDialog.prompt(
       context,
       title: 'Cancel this booking?',
-      message: 'This will notify $providerName that the booking is cancelled.',
+      message: 'This will notify $providerName that the booking is cancelled.${_lateFeeNotice(booking)}',
       fieldLabel: 'Reason (optional)',
       hint: 'Why are you cancelling?',
       confirmLabel: 'Cancel booking',

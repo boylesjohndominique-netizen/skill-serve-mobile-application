@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'policy_screen.dart';
 import 'static_info_screen.dart';
 
 class TermsScreen extends StatelessWidget {
@@ -6,9 +7,10 @@ class TermsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const StaticInfoScreen(
+    return const PolicyScreen(
+      policyKey: 'terms_of_service',
       title: 'Terms & Conditions',
-      sections: [
+      fallback: [
         StaticSection(
           heading: '1. Acceptance of terms',
           body: 'By creating an account or using SkillServe, clients and providers agree to abide by these '

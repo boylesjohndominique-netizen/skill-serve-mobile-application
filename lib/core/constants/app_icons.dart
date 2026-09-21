@@ -156,6 +156,7 @@ abstract final class AppIcons {
   static const AppIconData carpenter_rounded = HugeIcons.strokeRoundedToolbox;
   static const AppIconData storefront_rounded = HugeIcons.strokeRoundedStore01;
   static const AppIconData gavel_rounded = HugeIcons.strokeRoundedJudge;
+  static const AppIconData groups_outlined = HugeIcons.strokeRoundedUserGroup;
   static const AppIconData design_services_outlined = HugeIcons.strokeRoundedPenTool01;
   static const AppIconData design_services_rounded = HugeIcons.strokeRoundedPenTool01;
   static const AppIconData bar_chart_rounded = HugeIcons.strokeRoundedBarChart;

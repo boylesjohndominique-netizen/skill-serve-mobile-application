@@ -273,4 +273,45 @@ void main() {
       expect(BookingModel.fromJson(clientPayload({'status': 'completed', 'payment_status': 'paid'})).canRecordPayment, isFalse);
     });
   });
+
+  group('schedule times sent to the API', () {
+    test('carry their instant in UTC, so the server cannot misread the zone', () {
+      final local = DateTime(2026, 10, 5, 9, 0);
+      final sent = BookingModel.apiDateTime(local);
+
+      expect(sent.endsWith('Z'), isTrue);
+      expect(DateTime.parse(sent).isAtSameMomentAs(local), isTrue);
+    });
+
+    test('a time returned by the API reads back as the local time that was picked', () {
+      final local = DateTime(2026, 10, 5, 9, 0);
+      final booking = BookingModel.fromJson(clientPayload({
+        'scheduled_date': BookingModel.apiDateTime(local).replaceFirst('Z', '+00:00'),
+      }));
+
+      expect(booking.bookingDate, local);
+    });
+  });
+
+  group('cancellation rules', () {
+    test('a late cancellation policy and a recorded fee come through', () {
+      final booking = BookingModel.fromJson(clientPayload({
+        'cancellation_fee': null,
+        'cancellation_policy': {'window_hours': 24, 'fee_percent': 10, 'is_late': true, 'fee_if_cancelled_now': '150.00'},
+      }));
+      expect(booking.cancellationPolicy!.chargesFee, isTrue);
+      expect(booking.cancellationPolicy!.feeIfCancelledNow, 150);
+
+      final cancelled = BookingModel.fromJson(clientPayload({'status': 'cancelled', 'cancellation_fee': '150.00'}));
+      expect(cancelled.cancellationFee, 150);
+      expect(cancelled.cancellationPolicy, isNull);
+    });
+
+    test('an early cancellation carries no fee', () {
+      final booking = BookingModel.fromJson(clientPayload({
+        'cancellation_policy': {'window_hours': 24, 'fee_percent': 10, 'is_late': false, 'fee_if_cancelled_now': '0.00'},
+      }));
+      expect(booking.cancellationPolicy!.chargesFee, isFalse);
+    });
+  });
 }

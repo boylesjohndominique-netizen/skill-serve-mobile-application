@@ -30,8 +30,11 @@ MAIL_FROM_NAME="${APP_NAME}"
 The app requests a Google ID token; the backend validates it against a client ID you must create.
 
 > **GCP project `skillserve-508412` — configured:**
-> - ✅ **Android client**: `505637339796-hrsdio0lk5r7cihvmisg5thvo89a9mha.apps.googleusercontent.com`
->   (package `com.example.skilllink_mobile` + debug SHA-1 — required for device sign-in, but **not** used in code/backend)
+> - ⚠️ **Android client — action needed.** The existing one
+>   (`505637339796-hrsdio0lk5r7cihvmisg5thvo89a9mha…`) is registered for the old package
+>   `com.example.skilllink_mobile`. The app is now **`com.skillserve.mobile`**, so Google sign-in fails
+>   on Android until you create an Android client for the new package (step 3). It is not referenced in
+>   code or on the backend — only the package name + SHA-1 must match.
 > - ✅ **Web client**: `505637339796-b7fi5m130m6amski1r4nckfhh0ge8d4g.apps.googleusercontent.com`
 >   — baked into `lib/core/config/app_config.dart` (`AppConfig.googleWebClientId`, overridable with `--dart-define=GOOGLE_WEB_CLIENT_ID=...`) and used as `GOOGLE_CLIENT_ID` on the backend.
 >
@@ -40,7 +43,12 @@ The app requests a Google ID token; the backend validates it against a client ID
 1. Go to https://console.cloud.google.com → select project **skillserve-508412**.
 2. Configure the OAuth consent screen (**APIs & Services → OAuth consent screen**): External, app name, support email. Add test users if you keep it in "Testing" mode — every Google account that signs in must be listed there, or publish the app.
 3. Create credentials (**APIs & Services → Credentials → Create credentials → OAuth client ID**):
-   - **Android client** — ✅ already created: package `com.example.skilllink_mobile`, debug SHA-1 from `./gradlew signingReport` (needs JDK 17+). Add the release keystore SHA-1 to the same client before publishing.
+   - **Android client** — create one with package name **`com.skillserve.mobile`** and the SHA-1
+     fingerprints of every key that signs the app you install:
+     - debug: `cd android && ./gradlew signingReport` (needs JDK 17+) → `Variant: debug` → `SHA1`;
+     - release: `keytool -list -v -keystore <your-upload-keystore.jks> -alias upload` → `SHA1`
+       (see README → "Building a release").
+     Add both fingerprints to the same client. Nothing in the app or backend changes.
    - **Web client** — ✅ created: `505637339796-b7fi5m130m6amski1r4nckfhh0ge8d4g.apps.googleusercontent.com`. **Its client ID is what the backend checks (`GOOGLE_CLIENT_ID`) and what the app passes as `serverClientId`** — both already set to this value.
 4. Add to **Render environment** (then redeploy):
 

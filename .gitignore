@@ -6,7 +6,6 @@
 .pub/
 build/
 *.iml
-*.lock
 .vscode/
 .idea/
 
@@ -15,3 +14,11 @@ oracleJdk-26/
 lib/oracleJdk-26/
 **/oracleJdk-*/
 
+
+# Release signing — keep the keystore and its passwords out of git (back them up!)
+android/key.properties
+*.jks
+*.keystore
+
+# Flutter crash logs
+*.log

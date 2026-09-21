@@ -22,7 +22,7 @@ depends on one says so (for example "Open: C1").
 | Static analysis | `tool/wsl-flutter.sh analyze` | Lints, types |
 | Flutter tests | `tool/wsl-flutter.sh test` | Models, controllers, route guards, token storage, realtime presence, background checks, layout overflow sweeps |
 | Backend API tests | `docker compose exec backend composer test` (web repo) | Every `/api/client/v1/*` endpoint the app calls |
-| Release build | `flutter build apk --release --dart-define-from-file=env/production.json` | The app compiles and signs for release (Open: H4) |
+| Release build | `flutter build apk --release --dart-define-from-file=env/production.json` | The app compiles and signs for release as `com.skillserve.mobile` |
 
 | Run date | analyze | flutter test | backend tests | release APK |
 |----------|---------|--------------|---------------|-------------|
@@ -58,7 +58,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 1.3 | Logout | Settings → Sign out | `POST /auth/logout` | session_roles_payments_test · ClientAuthenticationTest | Returns to login; reopening the app stays signed out | |
 | M 1.4 | Password management | `/change-password`, `/forgot-password` | `POST /auth/change-password`, `/auth/forgot-password`, `/auth/reset-password` | user_account_profile_test · ClientAuthenticationTest | Change password → other devices signed out; reset link email works | |
 | M 1.5 | Session management | — | `POST /auth/refresh` | session_roles_payments_test · ClientAuthenticationTest | Close and reopen after an hour → still signed in; revoke from another device → returned to login | |
-| M 1.6 | Account status display | — | login/refresh refusal | — | Suspended account sees why (Open: C4) | |
+| M 1.6 | Account status display | — | login/refresh refusal | account_status_test · AccountStatusTest | A suspended or banned account is signed out and the login screen shows the reason and the end date | |
 
 ### 2. User Profile
 
@@ -67,7 +67,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 2.1 | View profile | Profile tab | `GET /auth/me` | user_account_profile_test · ClientProfileTest | Name, email, phone, photo, verification shown | |
 | M 2.2 | Edit profile | `/edit-profile` | `PATCH /auth/me` | user_account_profile_test · ClientProfileTest | Edit phone → saved after restart | |
 | M 2.3 | Profile photo | `/edit-profile` | `POST/DELETE /auth/me/photo` | user_account_profile_test · ClientProfileTest | Add, change, remove photo | |
-| M 2.4 | Account status | Profile | `GET /auth/me` | — | Status shown (Open: C4) | |
+| M 2.4 | Account status | Profile | `GET /auth/me` | account_status_test | Settings shows the account status card | |
 | M 2.5 | Activity history | `/activity-history` | bookings, reviews, reports | security_preferences_test | Recent bookings, reviews and reports listed | |
 
 ### 3. Service Discovery
@@ -96,12 +96,12 @@ backend test classes) · **UAT** steps → expected result.
 
 | ID | Requirement | Screen | API | Tests | UAT → expected | Result |
 |----|-------------|--------|-----|-------|----------------|--------|
-| M 5.1 | Create booking | `/booking-form/:providerId` | `POST /bookings` | booking_test · ClientMarketplaceTest | Only slots inside the provider's hours; double booking refused (Open: C2 for times) | |
+| M 5.1 | Create booking | `/booking-form/:providerId` | `POST /bookings` | booking_test · ClientMarketplaceTest | Only slots inside the provider's hours (Manila time); double booking refused; the saved time matches the time picked | |
 | M 5.2 | Booking details | `/booking-details/:id` | `GET /bookings/{id}` | booking_test | Service, provider, schedule, status, payment | |
 | M 5.3 | My bookings | `/booking-history` | `GET /bookings` | booking_test | Current and past bookings by status | |
 | M 5.4 | Monitor status | booking details | realtime + `GET /bookings/{id}` | booking_test · ProviderBookingTest | Provider accepts on phone 2 → phone 1 updates live | |
 | M 5.5 | Booking history | booking details → timeline | `GET /bookings/{id}` | booking_test · BookingRescheduleTest | Requested, rescheduled, accepted, started, completed, paid in order | |
-| M 5.6 | Cancel booking | booking details | `PATCH /bookings/{id}/cancel`; provider `…/provider/bookings/{id}/cancel`, reschedule `PATCH /bookings/{id}/reschedule` | booking_test · ProviderBookingTest, BookingRescheduleTest | Cancel with reason → provider notified (Open: C3 cancellation window) | |
+| M 5.6 | Cancel booking | booking details | `PATCH /bookings/{id}/cancel`; provider `…/provider/bookings/{id}/cancel`, reschedule `PATCH /bookings/{id}/reschedule` | booking_test · ProviderBookingTest, BookingRescheduleTest, SettingsEnforcementTest | Cancel with reason → provider notified; inside the cancellation window the dialog warns of the fee and the booking records it | |
 | M 5.7 | Report or dispute | booking details | `PATCH /bookings/{id}/dispute` | reports_support_test · BookingDisputeTest | Dispute an active/completed job | |
 
 ### 6. Reviews and Ratings
@@ -141,10 +141,10 @@ backend test classes) · **UAT** steps → expected result.
 |----|-------------|--------|-----|-------|----------------|--------|
 | M 9.1 | Become a provider | `/register` (provider), `/provider-onboarding` | `POST /auth/register-provider` | provider_account_test · ClientProviderRegistrationTest | Provider account created | |
 | M 9.2 | Manage provider profile | provider Settings, `/portfolio`, `/availability` | `GET/PATCH /provider/profile`, portfolio, availability | provider_account_test · ProviderAccountTest | Skills, experience, portfolio, hours saved | |
-| M 9.3 | Submit verification | `/verification-status` | — | — | Upload ID (Open: C1) | |
-| M 9.4 | Verification status | `/verification-status` | `GET /provider/profile` | provider_account_test | Status shown (Open: C1, H1) | |
-| M 9.5 | Respond to info request | `/verification-status` | — | — | Upload requested document (Open: C1) | |
-| M 9.6 | Provider restrictions | — | — | — | Suspension shown (Open: C4) | |
+| M 9.3 | Submit verification | `/verification-status` | `POST /provider/verification` | verification_test · ProviderVerificationTest | Upload an ID photo or PDF → status pending; it appears in the admin review | |
+| M 9.4 | Verification status | `/verification-status` | `GET /provider/verification` | verification_test · provider_account_test | Status, the reviewer's message and the documents sent are shown; a decision arrives as a notification | |
+| M 9.5 | Respond to info request | `/verification-status` | `POST /provider/verification` | verification_test · ProviderVerificationTest | After "request info", upload the requested document → back to pending | |
+| M 9.6 | Provider restrictions | Settings, login | `GET /auth/me` | account_status_test · AccountStatusTest | A provider suspension is shown with its reason | |
 
 ### 10. Service Management for Providers
 
@@ -165,7 +165,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 11.2 | My disputes | `/my-reports` | `GET /disputes` | reports_support_test · BookingDisputeTest | Own disputes with status | |
 | M 11.3 | Dispute details | dispute card | same | reports_support_test | Statement, evidence, status | |
 | M 11.4 | Submit evidence | dispute card → Add photo | `POST /bookings/{id}/dispute/evidence` | reports_support_test · BookingDisputeTest | Up to 5 photos; admin can open them | |
-| M 11.5 | Dispute updates | dispute card, notifications | same | BookingDisputeTest | Status changes shown (Open: H1 notifications) | |
+| M 11.5 | Dispute updates | dispute card, notifications | same | BookingDisputeTest · AdminDecisionNotificationTest | Status changes shown; both parties are notified | |
 
 ### 12. Support
 
@@ -195,7 +195,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 14.1 | Notification preferences | `/notification-preferences` | `GET/PUT /preferences` | preferences_controller_test · ClientPreferencesTest | Muting bookings stops booking notifications | |
 | M 14.2 | Privacy settings | `/privacy-settings` | same | security_preferences_test · ClientPreferencesTest | Private profile hides a provider from discovery | |
 | M 14.3 | Application preferences | `/application-preferences` | same | preferences_controller_test | Theme and reduce-motion apply at once | |
-| M 14.4 | Platform policies | `/terms`, `/privacy`, `/help-center` | — | — | Terms, privacy, guidelines shown (Open: H2 — admin text not used yet) | |
+| M 14.4 | Platform policies | `/terms`, `/privacy`, `/community-guidelines`, `/help-center` | `GET /platform` | platform_test | The admin's policy texts are shown, with the bundled text when offline | |
 
 ### 15. Data and Account Control
 
@@ -204,7 +204,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 15.1 | View account data | `/account-data` | `GET /auth/me/data-export` | security_preferences_test · AccountDataTest | Profile, bookings, reviews, reports, tickets, favorites; no password | |
 | M 15.2 | Request deactivation | — | — | — | Design decision: covered by restorable deletion (see above) | |
 | M 15.3 | Request deletion | `/account-deletion` | `DELETE /auth/me` | security_preferences_test · AccountDataTest | Refused with open bookings; otherwise signed out and gone | |
-| M 15.4 | Restriction information | — | — | — | Open: C4 | |
+| M 15.4 | Restriction information | login, Settings | `meta.account` | account_status_test | The reason and end date of a restriction are shown | |
 
 ### 16. Mobile Security
 
@@ -213,7 +213,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 16.1 | Secure authentication | — | Sanctum + refresh tokens | session_roles_payments_test (secure storage) · ClientAuthenticationTest, ClientAuthRateLimitTest | Tokens in secure storage; brute force rate-limited | |
 | M 16.2 | Session expiration | — | `POST /auth/refresh` | session_roles_payments_test | Password changed elsewhere → returned to login | |
 | M 16.3 | Unauthorized access | route guards | policies | session_roles_payments_test · BackgroundNotificationTest | Customer cannot open provider screens and vice versa; other users' bookings return 403 | |
-| M 16.4 | Security notifications | `/security-activity` | session state | security_preferences_test | Shows the current session and whether the server ended the last one (password changed, suspended); restriction details: Open C4 | |
+| M 16.4 | Security notifications | `/security-activity` | session state | security_preferences_test | Shows the current session and whether the server ended the last one (password changed, suspended); restriction details come from `meta.account` | |
 
 ### 17. Logout
 

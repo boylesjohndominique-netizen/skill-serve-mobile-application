@@ -46,6 +46,8 @@ class StatusBadge extends StatelessWidget {
         return const StatusBadge(label: 'Resubmission Requested', tone: StatusTone.warning, icon: AppIcons.rotate_left_rounded);
       case 'resubmit':
         return const StatusBadge(label: 'Resubmit', tone: StatusTone.warning, icon: AppIcons.rotate_left_rounded);
+      case 'additional_info_required':
+        return const StatusBadge(label: 'More info needed', tone: StatusTone.warning, icon: AppIcons.rotate_left_rounded);
       // Blue — in progress / investigating
       case 'in_progress':
       case 'inprogress':
@@ -80,6 +82,10 @@ class StatusBadge extends StatelessWidget {
         return const StatusBadge(label: 'Closed', tone: StatusTone.neutral, icon: AppIcons.close_rounded);
       case 'archived':
         return const StatusBadge(label: 'Archived', tone: StatusTone.neutral, icon: AppIcons.inbox_outlined);
+      case 'unverified':
+        return const StatusBadge(label: 'Unverified', tone: StatusTone.neutral, icon: AppIcons.info_outline_rounded);
+      case 'banned':
+        return const StatusBadge(label: 'Banned', tone: StatusTone.error, icon: AppIcons.block_rounded);
       default:
         return StatusBadge(label: _labelize(s), tone: StatusTone.neutral);
     }

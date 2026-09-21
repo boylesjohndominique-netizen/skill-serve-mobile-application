@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
+import '../models/account_restriction.dart';
+import 'maintenance_state.dart';
 import 'token_storage.dart';
 
 /// Thin Dio wrapper for the Laravel REST API.
@@ -35,6 +37,22 @@ class ApiClient {
         debugPrint('[API ERROR] URL: ${error.requestOptions.uri}');
         debugPrint('[API ERROR] Status: ${error.response?.statusCode}');
 
+        // Maintenance mode: the whole mobile API is closed for a while.
+        final body = error.response?.data;
+        if (error.response?.statusCode == 503 && body is Map && body['meta'] is Map && body['meta']['maintenance'] == true) {
+          MaintenanceState.active.value = true;
+        }
+
+        // A restricted account (suspended or banned while signed in): the
+        // server says why in meta.account. End the session so the login
+        // screen can show it, instead of failing request after request.
+        final restriction = AccountRestriction.fromError(error);
+        if (restriction != null && !_isAuthEndpoint(error.requestOptions)) {
+          await _endSession(restriction);
+          handler.next(error);
+          return;
+        }
+
         if (!_shouldRenew(error)) {
           handler.next(error);
           return;
@@ -61,8 +79,9 @@ class ApiClient {
   Dio get dio => _dio;
 
   /// Called once the server has definitively ended the session, so the app
-  /// can return to the login screen. Network failures never trigger it.
-  static VoidCallback? onSessionRevoked;
+  /// can return to the login screen — with the reason when the account was
+  /// suspended or banned. Network failures never trigger it.
+  static void Function(AccountRestriction? restriction)? onSessionRevoked;
 
   /// The refresh in flight, shared by every request that hit a 401 meanwhile.
   ///
@@ -96,8 +115,11 @@ class ApiClient {
     final options = error.requestOptions;
     // One renewal per request: a replay that still gets a 401 is final.
     if (options.extra['renewed'] == true) return false;
-    return !_authEndpoints.any((path) => options.path.contains(path));
+    return !_isAuthEndpoint(options);
   }
+
+  bool _isAuthEndpoint(RequestOptions options) =>
+      _authEndpoints.any((path) => options.path.contains(path));
 
   Future<bool> _renewAccessToken() {
     return _renewal ??= _refresh().whenComplete(() => _renewal = null);
@@ -126,7 +148,7 @@ class ApiClient {
       // Only a refusal from the server ends the session. A timeout or an
       // offline device keeps it, so the next request can try again.
       final status = e.response?.statusCode;
-      if (status == 401 || status == 403) await _endSession();
+      if (status == 401 || status == 403) await _endSession(AccountRestriction.fromError(e));
       return false;
     }
   }
@@ -138,9 +160,9 @@ class ApiClient {
     return _dio.fetch<dynamic>(options);
   }
 
-  Future<void> _endSession() async {
+  Future<void> _endSession([AccountRestriction? restriction]) async {
     await TokenStorage.clear();
-    onSessionRevoked?.call();
+    onSessionRevoked?.call(restriction);
   }
 
   /// Fire-and-forget request made at app startup to wake the free-tier

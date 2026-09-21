@@ -130,6 +130,15 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
     // Still on screen: keep the background check from repeating this one.
     if (_foreground) BackgroundNotifications.setForeground(true);
 
+    // An administrator changed the account (verification, provider
+    // suspension): refresh it so status cards and guards are current.
+    final rawType = (notification.data['type'] ?? '').toString();
+    if (notification.type == NotificationType.verification ||
+        rawType == 'provider_status' ||
+        rawType == 'account_status') {
+      _auth.refreshCurrentUser();
+    }
+
     // Service moderation (approved, rejected, …) changes the provider's list.
     if (notification.type == NotificationType.service) {
       context.read<ProviderServicesController>().load();

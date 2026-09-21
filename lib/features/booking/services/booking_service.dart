@@ -57,8 +57,8 @@ class BookingService {
       _clientBase,
       data: {
         'service_id': int.parse(serviceId),
-        'scheduled_date': scheduledDate.toIso8601String(),
-        if (scheduledEndDate != null) 'scheduled_end_date': scheduledEndDate.toIso8601String(),
+        'scheduled_date': BookingModel.apiDateTime(scheduledDate),
+        if (scheduledEndDate != null) 'scheduled_end_date': BookingModel.apiDateTime(scheduledEndDate),
         if (notes != null && notes.isNotEmpty) 'client_notes': notes,
         if (paymentMethod != null) 'payment_method': paymentMethod,
         if (serviceAddress != null && serviceAddress.isNotEmpty) 'service_address': serviceAddress,
@@ -87,8 +87,8 @@ class BookingService {
     final response = await ApiClient.instance.dio.patch(
       '$_clientBase/$id/reschedule',
       data: {
-        'scheduled_date': scheduledDate.toIso8601String(),
-        if (scheduledEndDate != null) 'scheduled_end_date': scheduledEndDate.toIso8601String(),
+        'scheduled_date': BookingModel.apiDateTime(scheduledDate),
+        if (scheduledEndDate != null) 'scheduled_end_date': BookingModel.apiDateTime(scheduledEndDate),
       },
     );
     return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);

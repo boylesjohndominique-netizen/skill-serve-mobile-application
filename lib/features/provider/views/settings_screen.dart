@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../profile/views/account_status_card.dart';
+
 import '../../settings/controllers/preferences_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
@@ -81,6 +83,10 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                   .animate()
                   .fadeIn(delay: 80.ms, duration: 350.ms)
                   .slideY(begin: 0.06, end: 0),
+            if (user != null) ...[
+              const SizedBox(height: AppSizes.md),
+              AccountStatusCard(user: user),
+            ],
             const SizedBox(height: AppSizes.xl),
             stagger(const _SectionLabel('Business')),
             stagger(_Tile(
@@ -218,6 +224,11 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                 icon: AppIcons.privacy_tip_outlined,
                 label: 'Privacy Policy',
                 onTap: () => context.push('/privacy'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.groups_outlined,
+                label: 'Community Guidelines',
+                onTap: () => context.push('/community-guidelines'),
                 isDark: isDark)),
             const SizedBox(height: AppSizes.xl),
             stagger(_Tile(

@@ -83,6 +83,7 @@ import '../features/settings/views/about_screen.dart';
 import '../features/settings/views/contact_screen.dart';
 import '../features/settings/views/terms_screen.dart';
 import '../features/settings/views/privacy_screen.dart';
+import '../features/settings/views/community_guidelines_screen.dart';
 import '../features/settings/views/help_center_screen.dart';
 import '../features/settings/views/activity_history_screen.dart';
 import '../features/notifications/views/preferences_screens.dart';
@@ -131,6 +132,7 @@ final List<RouteBase> appRoutes = [
   GoRoute(path: '/contact', builder: (context, state) => const ContactScreen()),
   GoRoute(path: '/terms', builder: (context, state) => const TermsScreen()),
   GoRoute(path: '/privacy', builder: (context, state) => const PrivacyScreen()),
+  GoRoute(path: '/community-guidelines', builder: (context, state) => const CommunityGuidelinesScreen()),
 
   // Client shell (bottom-nav: Home / Search / Bookings / Chat / Profile)
   GoRoute(path: '/client', builder: (context, state) => const ClientShell()),

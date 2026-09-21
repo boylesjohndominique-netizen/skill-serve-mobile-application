@@ -198,12 +198,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: () => _signInWithGoogle(auth),
                 ).animate().fadeIn(delay: 620.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.md),
-                Center(
-                  child: Text(
-                    'By continuing, you agree to our Terms & Privacy Policy.',
-                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
-                    textAlign: TextAlign.center,
-                  ),
+                // The policies administrators publish (M 14.4).
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('By continuing, you agree to our ',
+                        style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+                    for (final (label, route) in const [
+                      ('Terms', '/terms'),
+                      ('Privacy Policy', '/privacy'),
+                      ('Community Guidelines', '/community-guidelines'),
+                    ])
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: const Size(0, 32),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () => context.push(route),
+                        child: Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.secondary)),
+                      ),
+                  ],
                 ).animate().fadeIn(delay: 640.ms, duration: 300.ms),
                 const SizedBox(height: AppSizes.md),
                 Center(

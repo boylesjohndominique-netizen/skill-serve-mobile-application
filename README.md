@@ -115,9 +115,29 @@ IBM Plex Mono (IDs, prices, timestamps). Statuses render through `StatusBadge`; 
 
 ## Building a release
 
-See `PENDING_FIXES.md` → H4 for the remaining release setup (application ID, signing key,
-launcher icon). Then:
+The app ID is `com.skillserve.mobile` and the launcher name is **SkillServe** (icon source:
+`branding/app_icon.png`).
 
-```bash
-flutter build apk --release --dart-define-from-file=env/production.json
-```
+1. **Create the upload keystore** once, and back it up with its passwords — a lost key means you
+   can never update the installed app:
+   ```bash
+   keytool -genkey -v -keystore ~/skillserve-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+2. **Point Gradle at it** with `android/key.properties` (gitignored; never commit it):
+   ```properties
+   storePassword=<store password>
+   keyPassword=<key password>
+   keyAlias=upload
+   storeFile=C:/Users/<you>/skillserve-upload.jks
+   ```
+   Without this file, release builds are signed with the debug key and Gradle prints a warning.
+3. **Google sign-in:** add the keystore's SHA-1 to the Android OAuth client for
+   `com.skillserve.mobile` (`SETUP_CREDENTIALS.md`, section 2).
+4. **Build** against production:
+   ```bash
+   flutter build apk --release --dart-define-from-file=env/production.json
+   ```
+   Add `--dart-define=REVERB_APP_KEY=<key>` if the backend's `REVERB_APP_KEY` is not `skillserve`.
+   Output: `build/app/outputs/flutter-apk/app-release.apk`.
+5. **Check on a clean phone:** name and icon, email and Google sign-in, realtime chat, and a
+   closed-app notification showing the SkillServe status-bar icon.

@@ -9,66 +9,21 @@ Laravel API. The master list — including backend, admin web and deployment —
 
 ## Critical
 
-### C1. Verification upload is fake (needs backend)
-- **Requirement:** M 9.3, M 9.4, M 9.5.
-- **Where:** `lib/features/provider/views/verification_status_screen.dart` (`_uploadDoc`,
-  `_resubmit`) and step 2 of `provider_onboarding_screen.dart` only add a local
-  `VerificationDocumentModel` and show "Document submitted for review"; nothing reaches the server.
-  A new provider therefore never gets verified and can never create a service.
-- **Fix:** once `GET/POST /api/client/v1/provider/verification` exist, add a
-  `VerificationService` + controller; pick files with `image_picker` (camera/gallery) and
-  `file_picker` (PDF); upload multipart with progress; show the real status, the admin's rejection
-  reason or requested information, and a "Submit more documents" action for `info_requested`.
-  Tests for the model/controller.
-
-### C2. Booking times are sent without a timezone (needs backend)
-- **Where:** `lib/features/booking/services/booking_service.dart` sends
-  `scheduledDate.toIso8601String()` for create and reschedule — a local time with no offset. The
-  server reads it as UTC, so times come back shifted by 8 hours.
-- **Fix:** send the offset (`2026-10-05T09:00:00+08:00`) or UTC (`toUtc().toIso8601String()`),
-  together with the backend timezone change; add a model test that a sent time round-trips.
-
-### C3. Show and respect the admin's booking rules (needs backend)
-- **Requirement:** M 5.6 "cancel according to the platform's configured cancellation rules".
-- **Fix:** when the API exposes the cancellation window and "bookings enabled", explain the rule in
-  the cancel dialog and disable Cancel inside the window; show the API's message when booking is
-  switched off; show a maintenance screen on a 503 from maintenance mode.
-
-### C4. No account status / restriction screen (needs backend)
-- **Requirement:** M 1.6, M 2.4, M 9.6, M 15.4, M 16.4.
-- **Where:** a suspended or banned user sees only "Your account is not active."; a refused refresh
-  in `lib/core/services/api_client.dart` just ends the session.
-- **Fix:** read `errors.account {status, reason, until}` from login/refresh refusals and show an
-  "Account restricted" screen with the reason, the end date and "Contact support"; show the
-  account status (and provider verification/suspension) on the profile/settings screen from
-  `/auth/me`.
+Nothing open.
 
 ---
 
 ## High
 
-### H1. Notifications for admin decisions (needs backend)
-- Verification decisions, suspensions, report outcomes and dispute updates will arrive as
-  notifications once the backend sends them. Make sure `NotificationModel.destination` routes them:
-  verification → `/verification-status`, report → `/my-reports`, dispute → the booking.
+Nothing open.
 
-### H2. Policies come from the admin (needs backend)
-- **Requirement:** M 14.4.
-- **Where:** `lib/features/settings/views/terms_screen.dart` and `privacy_screen.dart` are static;
-  there is no Community Guidelines screen.
-- **Fix:** read `GET /api/client/v1/platform`; one policy screen for Terms, Privacy and Community
-  Guidelines (bundled text as offline fallback); link them from registration.
-
-### H4. Release readiness
-- `android/app/build.gradle.kts`: `applicationId = "com.example.skilllink_mobile"` and release
-  builds signed with the debug key; `AndroidManifest.xml` label `skilllink_mobile`; default icon.
-- **Fix:** label "SkillServe"; a real `applicationId` plus a new Google OAuth Android client with
-  the release SHA-1 (`SETUP_CREDENTIALS.md`), or Google sign-in breaks; release keystore via a
-  gitignored `key.properties`; launcher icon and splash; a monochrome notification icon
-  (`@drawable/ic_stat_notification`, used in `background_notifications.dart`); bump `version`;
-  delete the committed `flutter_01.log` and ignore `*.log`. Build with
-  `flutter build apk --release --dart-define-from-file=env/production.json` and test on a clean
-  phone.
+### Before the release build is handed out
+1. Create the upload keystore and `android/key.properties` (`README.md` → "Building a release").
+   Back up both.
+2. Register the Android OAuth client for `com.skillserve.mobile` with the debug and release SHA-1
+   fingerprints (`SETUP_CREDENTIALS.md`, section 2). Google sign-in fails until this is done.
+3. Build with `flutter build apk --release --dart-define-from-file=env/production.json` and run the
+   `TEST_PLAN.md` checks on a clean phone against the deployed backend.
 
 ---
 
@@ -85,6 +40,44 @@ Nothing open.
 ---
 
 ## Resolved on 2026-09-21
+
+**Critical and High from the full audit:**
+- **C1 — Verification upload.**
+  - `VerificationService` sends multipart `POST /provider/verification`: up to 5 documents (JPG,
+    PNG, PDF, 10 MB each) with a type and an optional note, with upload progress.
+  - `VerificationUploadPanel` offers camera, gallery and PDF, and is used on Verification Status
+    and in onboarding step 2.
+  - The status screen shows the reviewer's reason or request and the documents sent; resubmitting
+    is allowed when rejected or when more information is requested.
+  - Tests: `test/verification_test.dart`.
+- **C2 — Times.** `BookingModel.apiDateTime` sends UTC ISO-8601 for create and reschedule. The
+  API reads provider hours in Asia/Manila.
+- **C3 — Booking rules.** Before the client or provider confirms a cancellation, the cancel
+  dialogs show the late-cancellation fee from `cancellation_policy`. A cancelled booking shows the
+  reason and any fee recorded.
+  - Maintenance mode shows a full-screen "under maintenance" notice (`MaintenanceGate`) that
+    rechecks until the API is back.
+- **C4 — Account status.**
+  - A 403 carrying `meta.account` ends the session (`ApiClient.onSessionRevoked`).
+  - The login screen explains the suspension or ban (`AccountRestrictionCard`); the reason and
+    the end date appear when set.
+  - Settings shows an account status card for both roles, including a provider suspension.
+  - Tests: `test/account_status_test.dart`.
+- **H1 — Admin decisions.**
+  - Verification, provider-status, account-status, report-outcome and dispute notifications open
+    the matching screen.
+  - Account and verification changes refresh the signed-in user straight away.
+- **H2 — Policies.** Terms, Privacy and the new Community Guidelines screen render the admin's text
+  from `GET /platform`, falling back to the bundled text. Registration links all three.
+  Tests: `test/platform_test.dart`.
+- **H4 — Release readiness.**
+  - `com.skillserve.mobile` and the "SkillServe" label.
+  - Launcher icon and branded splash (light and dark), plus `ic_stat_notification` for system
+    notifications.
+  - `key.properties` release signing (debug key plus a warning when absent).
+  - `pubspec.lock` is tracked, `*.log` is ignored, and the committed log was removed. Version
+    stays `1.0.0+1` for the first release.
+  - The release APK builds.
 
 **Medium and Low from the full audit:**
 - **M2 — Account deactivation decision.** Documented in `TEST_PLAN.md` ("Design decisions to defend")

@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+
+import '../../../core/models/account_restriction.dart';
 import 'package:dio/dio.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -51,6 +53,10 @@ class AuthController extends ChangeNotifier {
   /// True when the server ended the session (not when the user signed out),
   /// so the login screen can explain why they are there.
   bool sessionExpired = false;
+
+  /// Set when the server refused the account (suspended or banned) — at
+  /// sign-in or mid-session — so the login screen can explain why.
+  AccountRestriction? restriction;
 
   static const _sessionUserKey = 'skillserve.session.user';
 
@@ -138,6 +144,13 @@ class AuthController extends ChangeNotifier {
   /// Reloads the signed-in account from the API. A network failure keeps the
   /// cached session; a 401 has already been handled by [ApiClient], which
   /// tried the refresh token first and only then called [_onSessionRevoked].
+  /// Re-reads the account from the server — after a notification says an
+  /// administrator changed it (verification, provider suspension).
+  Future<void> refreshCurrentUser() {
+    if (status != AuthStatus.authenticated) return Future.value();
+    return _refreshCurrentUser();
+  }
+
   Future<void> _refreshCurrentUser() async {
     try {
       final user = await _authService.getCurrentUser();
@@ -151,8 +164,12 @@ class AuthController extends ChangeNotifier {
   }
 
   /// The server ended the session. Clears it locally and returns to login.
-  Future<void> _onSessionRevoked() async {
-    if (status != AuthStatus.authenticated && currentUser == null) return;
+  Future<void> _onSessionRevoked(AccountRestriction? restriction) async {
+    if (restriction != null) this.restriction = restriction;
+    if (status != AuthStatus.authenticated && currentUser == null) {
+      if (restriction != null) notifyListeners();
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     await _clearSession(prefs);
     _clearPendingRegistration();
@@ -171,6 +188,7 @@ class AuthController extends ChangeNotifier {
       await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
+      restriction = null;
       _clearPendingRegistration();
       await _persistSession();
       notifyListeners();
@@ -186,6 +204,7 @@ class AuthController extends ChangeNotifier {
         _pendingEmail = pendingEmail;
         _pendingPassword = password;
       }
+      restriction = AccountRestriction.fromError(e);
       errorMessage = _extractApiError(e, 'Unable to sign in. Please try again.');
       notifyListeners();
       return false;
@@ -250,6 +269,7 @@ class AuthController extends ChangeNotifier {
       currentUser = null;
       status = AuthStatus.unauthenticated;
       sessionExpired = false;
+      restriction = null;
       await TokenStorage.clear();
       notifyListeners();
       return true;
@@ -285,6 +305,7 @@ class AuthController extends ChangeNotifier {
       _clearPendingRegistration();
       status = AuthStatus.authenticated;
       sessionExpired = false;
+      restriction = null;
       await _persistSession();
       notifyListeners();
       return true;
@@ -383,12 +404,14 @@ class AuthController extends ChangeNotifier {
       await _saveApiTokens();
       status = AuthStatus.authenticated;
       sessionExpired = false;
+      restriction = null;
       _clearPendingRegistration();
       await _persistSession();
       notifyListeners();
       return GoogleAuthOutcome.signedIn;
     } catch (e) {
       status = AuthStatus.unauthenticated;
+      restriction = AccountRestriction.fromError(e);
       errorMessage = _describeGoogleError(e);
       notifyListeners();
       return GoogleAuthOutcome.failed;
@@ -436,6 +459,7 @@ class AuthController extends ChangeNotifier {
       googleDraft = null;
       status = AuthStatus.authenticated;
       sessionExpired = false;
+      restriction = null;
       _clearPendingRegistration();
       await _persistSession();
       notifyListeners();

@@ -96,6 +96,35 @@ void main() {
         expect(notification.destination, '/edit-service/7');
       });
 
+      test('a verification decision opens the verification screen', () {
+        final notification = NotificationModel.fromJson(notificationPayload({
+          'type': 'provider_verification',
+          'data': {'type': 'provider_verification', 'action': 'rejected', 'reason': 'Blurry photo.'},
+        }));
+
+        expect(notification.type, NotificationType.verification);
+        expect(notification.destination, '/verification-status');
+      });
+
+      test('a report outcome opens My Reports', () {
+        final notification = NotificationModel.fromJson(notificationPayload({
+          'type': 'report_update',
+          'data': {'type': 'report_update', 'report_id': 12},
+        }));
+
+        expect(notification.destination, '/my-reports');
+      });
+
+      test('a dispute update is a booking notice that opens the booking', () {
+        final notification = NotificationModel.fromJson(notificationPayload({
+          'type': 'dispute_update',
+          'data': {'type': 'dispute_update', 'booking_id': 42},
+        }));
+
+        expect(notification.type, NotificationType.booking);
+        expect(notification.destination, '/booking-details/42');
+      });
+
       test('an announcement has nowhere to go, and says so', () {
         final notification = NotificationModel.fromJson(notificationPayload({
           'type': 'announcement',

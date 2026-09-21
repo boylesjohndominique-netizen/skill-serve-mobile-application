@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'widgets/account_restriction_card.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -99,7 +101,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     .animate()
                     .fadeIn(delay: 150.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xxl),
-                if (auth.sessionExpired) ...[
+                if (auth.restriction != null) ...[
+                  AccountRestrictionCard(restriction: auth.restriction!),
+                  const SizedBox(height: AppSizes.lg),
+                ] else if (auth.sessionExpired) ...[
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSizes.md),

@@ -57,6 +57,10 @@ class NotificationModel {
       return '/chat-conversation/$bookingId';
     }
     if (bookingId != null) return '/booking-details/$bookingId';
+    // A decision on the provider's verification opens where they can act on it.
+    if (_rawType == 'provider_verification') return '/verification-status';
+    // The outcome of something the user reported.
+    if (_rawType == 'report_update' || data['report_id'] != null) return '/my-reports';
     if (ticketId != null) return '/support/tickets/$ticketId';
     // A provider's own service, which is the only service screen a tap can open.
     if (type == NotificationType.service && serviceId != null) {
@@ -64,6 +68,9 @@ class NotificationModel {
     }
     return null;
   }
+
+  /// The API's own `type` (e.g. `provider_verification`), kept in [data].
+  String get _rawType => (data['type'] ?? '').toString();
 
   String? _id(String key) {
     final value = data[key];
@@ -102,7 +109,7 @@ class NotificationModel {
     if (value.contains('message') || value.startsWith('support_ticket')) {
       return NotificationType.message;
     }
-    if (value.contains('booking')) return NotificationType.booking;
+    if (value.contains('booking') || value.contains('dispute')) return NotificationType.booking;
     if (value.contains('verification')) return NotificationType.verification;
     return NotificationType.system;
   }

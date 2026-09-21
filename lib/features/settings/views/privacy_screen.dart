@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'policy_screen.dart';
 import 'static_info_screen.dart';
 
 class PrivacyScreen extends StatelessWidget {
@@ -6,9 +7,10 @@ class PrivacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const StaticInfoScreen(
+    return const PolicyScreen(
+      policyKey: 'privacy_policy',
       title: 'Privacy Policy',
-      sections: [
+      fallback: [
         StaticSection(
           heading: 'Information we collect',
           body: 'SkillServe collects only the information required to match clients with providers and process '

@@ -1,4 +1,4 @@
-package com.example.skilllink_mobile
+package com.skillserve.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

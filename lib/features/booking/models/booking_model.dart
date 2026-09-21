@@ -62,6 +62,12 @@ class BookingModel {
   final String? notes;
   final String? cancellationReason;
 
+  /// A late-cancellation fee recorded when the booking was cancelled.
+  final double? cancellationFee;
+
+  /// The cancellation rule and its cost right now, while cancelling is possible.
+  final CancellationPolicy? cancellationPolicy;
+
   /// API enum value (`cash`, `gcash`, …); null when none was chosen.
   final String? paymentMethodCode;
   final bool isReviewed;
@@ -100,6 +106,8 @@ class BookingModel {
     this.address = '',
     this.notes,
     this.cancellationReason,
+    this.cancellationFee,
+    this.cancellationPolicy,
     this.paymentMethodCode,
     this.isReviewed = false,
     this.confirmedAt,
@@ -209,6 +217,10 @@ class BookingModel {
       address: json['service_address'] as String? ?? '',
       notes: json['client_notes'] as String?,
       cancellationReason: json['cancellation_reason'] as String?,
+      cancellationFee: _money(json['cancellation_fee']),
+      cancellationPolicy: json['cancellation_policy'] is Map
+          ? CancellationPolicy.fromJson(Map<String, dynamic>.from(json['cancellation_policy'] as Map))
+          : null,
       paymentMethodCode: json['payment_method'] as String?,
       isReviewed: json['is_reviewed'] == true,
       confirmedAt: _date(json['confirmed_at']),
@@ -255,6 +267,10 @@ class BookingModel {
     return status == BookingStatus.inProgress ? 'active' : status.name;
   }
 
+  /// How a picked schedule time is sent: the same instant in UTC with a
+  /// `Z` suffix. A bare local time would be read as the server's zone.
+  static String apiDateTime(DateTime value) => value.toUtc().toIso8601String();
+
   static DateTime? _date(Object? value) =>
       value is String ? DateTime.tryParse(value)?.toLocal() : null;
 
@@ -264,4 +280,30 @@ class BookingModel {
         String s => double.tryParse(s),
         _ => null,
       };
+}
+
+/// The platform's cancellation rule as it applies to this booking now
+/// (System Settings → Booking): cancelling a confirmed booking less than
+/// [windowHours] before it starts is late and records [feeIfCancelledNow].
+class CancellationPolicy {
+  final int windowHours;
+  final double feePercent;
+  final bool isLate;
+  final double feeIfCancelledNow;
+
+  const CancellationPolicy({
+    required this.windowHours,
+    required this.feePercent,
+    required this.isLate,
+    required this.feeIfCancelledNow,
+  });
+
+  bool get chargesFee => isLate && feeIfCancelledNow > 0;
+
+  factory CancellationPolicy.fromJson(Map<String, dynamic> json) => CancellationPolicy(
+        windowHours: (json['window_hours'] as num?)?.toInt() ?? 0,
+        feePercent: (json['fee_percent'] as num?)?.toDouble() ?? 0,
+        isLate: json['is_late'] == true,
+        feeIfCancelledNow: double.tryParse('${json['fee_if_cancelled_now'] ?? 0}') ?? 0,
+      );
 }

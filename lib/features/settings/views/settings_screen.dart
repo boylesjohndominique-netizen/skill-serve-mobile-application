@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../profile/views/account_status_card.dart';
+
 import '../controllers/preferences_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
@@ -44,6 +46,10 @@ class SettingsScreen extends StatelessWidget {
                   .slideY(begin: 0.06, end: 0)
             else
               const _GuestCard(),
+            if (user != null) ...[
+              const SizedBox(height: AppSizes.md),
+              AccountStatusCard(user: user),
+            ],
             const SizedBox(height: AppSizes.xl),
             const _SectionLabel('Account')
                 .animate()
@@ -210,6 +216,14 @@ class SettingsScreen extends StatelessWidget {
                     isDark: isDark)
                 .animate()
                 .fadeIn(delay: 620.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            _Tile(
+                    icon: AppIcons.groups_outlined,
+                    label: 'Community Guidelines',
+                    onTap: () => context.push('/community-guidelines'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 660.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             const SizedBox(height: AppSizes.xl),
             if (user != null)
