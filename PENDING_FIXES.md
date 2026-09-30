@@ -19,8 +19,12 @@ Nothing open.
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
 
 ### Before the release build is handed out
-1. Create the upload keystore and `android/key.properties` (`README.md` → "Building a release").
-   Back up both.
+1. ~~Create the upload keystore and `android/key.properties`~~ — **done 2026-09-30**:
+   `C:/Users/earlf/skillserve-upload.jks` (alias `upload`, PKCS12, RSA 2048, valid to 2054) with a
+   random password stored only in the gitignored `android/key.properties`.
+   **Owner action: back up both files** (password manager or offline drive, not OneDrive/GitHub) —
+   losing them means the installed app can never be updated.
+   Release SHA-1 (public, for item 2): `20:30:88:71:1E:64:1B:EE:90:9B:E5:0C:7E:FE:E1:9D:75:E3:36:1A`
 2. Register the Android OAuth client for `com.skillserve.mobile` with the debug and release SHA-1
    fingerprints (`SETUP_CREDENTIALS.md`, section 2). Google sign-in fails until this is done.
 3. Build with `flutter build apk --release --dart-define-from-file=env/production.json` and run the
