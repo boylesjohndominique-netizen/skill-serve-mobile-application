@@ -41,7 +41,11 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/bookings`
 
-Create a booking from a published service
+Requires a verified National ID once System Settings → Identity turns the requirement on for this account; otherwise 403 with `errors.identity`. Call `/transaction-eligibility` to find out in advance.
+
+**Payment methods changed.** SkillServe now supports `on_hand` and `gcash` only. `cash` is a DEPRECATED alias for `on_hand` and is stored as `on_hand`. `credit_card`, `debit_card`, `bank_transfer` and `paypal` were removed and are now rejected with 422 — clients offering them must be updated.
+
+The commission is included in the advertised price, so `total_price` is what the customer pays and is unchanged by it.
 
 **Authentication:** Bearer token
 
@@ -59,7 +63,7 @@ Create a booking from a published service
 | `scheduled_date` | yes | string, format=date-time |
 | `scheduled_end_date` | no | string, format=date-time |
 | `client_notes` | no | string, maxLength=2000 |
-| `payment_method` | no | string, one of: `cash`, `credit_card`, `debit_card`, `bank_transfer`, `gcash`, `paypal` |
+| `payment_method` | no | string, one of: `on_hand`, `gcash`, `cash` |
 
 ### Responses
 

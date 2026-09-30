@@ -105,6 +105,58 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `GET /api/client/v1/provider/commission-preview`
+
+SkillServe's commission is included in the price the provider advertises: the customer pays `amount`, the platform takes `commission_amount` out of it, and the provider receives `net_amount`. Call this while the provider is choosing a price so the split is visible before publishing.
+
+Indicative only — the rate that binds a booking is snapshotted when the booking is made. `source` explains the rate: `tier` (a configured band matched), `gap` (the bands leave this amount uncovered, so nothing is charged) or `fallback` (no bands configured; the legacy flat rate applies).
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `amount` | query | yes | number |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Commission breakdown
+
+```json
+{
+    "success": true,
+    "message": "Commission preview calculated.",
+    "data": {
+        "amount": "200.00",
+        "commission_rate": "10.00",
+        "commission_amount": "20.00",
+        "net_amount": "180.00",
+        "currency": "PHP",
+        "tier_name": "Standard",
+        "source": "tier"
+    },
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, email-verified provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Missing or invalid amount
+
+Response schema: `see openapi.json`
+
 ## `GET /api/client/v1/provider/portfolio`
 
 List the authenticated provider's own work samples

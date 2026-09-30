@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `GET /api/dashboard`
 
-Get dashboard summaries and analytics
+commission_summary is included only when the viewer holds view commissions or manage commissions. Amounts are Philippine pesos; collected_rate is settled commission as a percentage of the settled bookings' value.
 
 **Authentication:** Bearer token
 
@@ -58,6 +58,24 @@ No JSON request body.
             "rejected": 0
         },
         "recent_activities": [],
+        "commission_summary": {
+            "collected": "12450.00",
+            "collected_booking_value": "129700.00",
+            "collected_rate": "9.60",
+            "outstanding": "1200.00",
+            "waived": "0.00",
+            "rate_source": "tiers",
+            "fallback_rate": "10.00",
+            "tiers": [
+                {
+                    "id": 1,
+                    "name": "Under \u20b1200",
+                    "min_amount": "0.00",
+                    "max_amount": "199.99",
+                    "percentage": "5.00"
+                }
+            ]
+        },
         "analytics": {
             "monthly_activity": [],
             "booking_statuses": [],
