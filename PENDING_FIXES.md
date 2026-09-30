@@ -43,6 +43,16 @@ Nothing open.
 
 ---
 
+## Resolved on 2026-09-30
+
+- **M10** — the 2026-09-26 catch-up (identity verification, provider Commissions and GCash details
+  screens, two-method booking form, payment recording) verified with `flutter analyze` (clean) and
+  `flutter test`, then committed (`d79e1a6`).
+- **L2** — the service form shows SkillServe's share and what the provider keeps as the price is
+  typed; My Services shows each service's earnings (`0434a02`). 275 tests pass.
+- Commission settlement now sends the provider a `booking_commission` notification (backend L1); the
+  app already opens the booking from it, so no app change was needed.
+
 ## Resolved on 2026-09-26
 
 - **H6 — the app had fallen behind the API.**
