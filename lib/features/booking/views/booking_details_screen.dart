@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -253,6 +254,19 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     .animate()
                     .fadeIn(delay: 250.ms, duration: 350.ms)
                     .slideY(begin: 0.06, end: 0),
+                // How to pay — the customer's own unpaid GCash booking only.
+                // The API decides when to send these details; the app never
+                // guesses at a provider's payment number.
+                if (booking.paymentInstructions != null) ...[
+                  const SizedBox(height: AppSizes.lg),
+                  _PaymentInstructionsCard(
+                    instructions: booking.paymentInstructions!,
+                    isDark: isDark,
+                  )
+                      .animate()
+                      .fadeIn(delay: 300.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                ],
                 if (booking.notes != null && booking.notes!.isNotEmpty) ...[
                   const SizedBox(height: AppSizes.lg),
                   _SectionCard(title: 'Notes', isDark: isDark, children: [
@@ -662,6 +676,62 @@ class _SectionCard extends StatelessWidget {
           ...children,
         ],
       ),
+    );
+  }
+}
+
+/// Where to send the money on an unpaid GCash booking.
+///
+/// SkillServe never holds the payment: the customer sends it to the
+/// provider's own GCash number and the provider confirms it afterwards. When
+/// the provider has not saved their details, the API says so in [note] and
+/// there is nothing to copy.
+class _PaymentInstructionsCard extends StatelessWidget {
+  const _PaymentInstructionsCard({required this.instructions, required this.isDark});
+
+  final PaymentInstructions instructions;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'How to pay',
+      isDark: isDark,
+      children: [
+        const SizedBox(height: AppSizes.sm),
+        if (instructions.isPayable) ...[
+          InfoRow(
+              icon: AppIcons.account_balance_wallet_rounded,
+              label: 'GCash number',
+              value: instructions.gcashNumber!),
+          InfoRow(
+              icon: AppIcons.person_outline_rounded,
+              label: 'Account name',
+              value: (instructions.gcashName ?? '').isEmpty ? '—' : instructions.gcashName!),
+          InfoRow(
+              icon: AppIcons.payments_outlined,
+              label: 'Amount',
+              value: '₱${instructions.amount}'),
+          InfoRow(
+              icon: AppIcons.receipt_long_outlined,
+              label: 'Reference',
+              value: instructions.reference.isEmpty ? '—' : instructions.reference),
+        ],
+        const SizedBox(height: AppSizes.sm),
+        Text(instructions.note, style: AppTextStyles.bodyMedium),
+        if (instructions.isPayable) ...[
+          const SizedBox(height: AppSizes.md),
+          OutlinedAppButton(
+            label: 'Copy GCash number',
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: instructions.gcashNumber!));
+              if (context.mounted) {
+                AppSnackbar.success(context, 'GCash number copied.');
+              }
+            },
+          ),
+        ],
+      ],
     );
   }
 }

@@ -17,6 +17,8 @@ import '../../../core/widgets/misc/stat_card.dart';
 import '../../booking/models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../identity/controllers/identity_controller.dart';
+import '../../identity/views/eligibility_banner.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../services/provider_service_service.dart';
 
@@ -52,6 +54,15 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     if (mounted) setState(() => _providerProfile = profile);
   }
 
+  /// Pulling down also re-asks whether this provider may take work: an
+  /// administrator may have approved their National ID or recorded a
+  /// remittance while the app was open.
+  Future<void> _refresh(ProviderBookingController bookings) async {
+    await bookings.loadProviderBookings();
+    if (!mounted) return;
+    await context.read<IdentityController>().refreshEligibility();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
@@ -71,7 +82,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.secondary,
-          onRefresh: () => bookings.loadProviderBookings(),
+          onRefresh: () => _refresh(bookings),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad, vertical: AppSizes.lg),
             children: [
@@ -103,6 +114,11 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 ],
               ),
               const SizedBox(height: AppSizes.lg),
+
+              // ── Why this provider cannot take work, if anything ──
+              // Identity first, then an unremitted commission: both stop new
+              // work, and both have a screen that does something about it.
+              const EligibilityBanner(),
 
               // ── Verification banner ──
               if (providerProfile != null)

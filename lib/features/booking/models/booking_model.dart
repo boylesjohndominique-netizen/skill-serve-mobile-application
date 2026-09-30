@@ -13,6 +13,50 @@ class BookingTimelineEntry {
   const BookingTimelineEntry({required this.label, required this.at, required this.status});
 }
 
+/// Where the customer sends the money for an unpaid GCash booking.
+///
+/// SkillServe is never in the payment path: the customer pays the provider
+/// directly and the provider then remits SkillServe's commission (ADR-021).
+/// So this carries the *provider's own* GCash details, which the API returns
+/// only on the customer's own unpaid GCash booking.
+///
+/// [gcashNumber] is null when the provider has not saved their details yet;
+/// [note] then explains what to do instead, so it is always worth showing.
+class PaymentInstructions {
+  final String method;
+  final String? gcashNumber;
+  final String? gcashName;
+
+  /// The amount to send, as the API formatted it (e.g. "200.00").
+  final String amount;
+
+  /// The booking number, to put in the GCash message so the provider can
+  /// match the payment to the job.
+  final String reference;
+  final String note;
+
+  const PaymentInstructions({
+    this.method = 'gcash',
+    this.gcashNumber,
+    this.gcashName,
+    this.amount = '0.00',
+    this.reference = '',
+    required this.note,
+  });
+
+  /// Whether there is a number to send money to.
+  bool get isPayable => (gcashNumber ?? '').isNotEmpty;
+
+  factory PaymentInstructions.fromJson(Map<String, dynamic> json) => PaymentInstructions(
+        method: json['method'] as String? ?? 'gcash',
+        gcashNumber: json['gcash_number'] as String?,
+        gcashName: json['gcash_name'] as String?,
+        amount: json['amount']?.toString() ?? '0.00',
+        reference: json['reference'] as String? ?? '',
+        note: json['note'] as String? ?? '',
+      );
+}
+
 /// A booking as the client API returns it.
 ///
 /// Parses both client payloads (`ClientBooking`, which carries the
@@ -68,8 +112,13 @@ class BookingModel {
   /// The cancellation rule and its cost right now, while cancelling is possible.
   final CancellationPolicy? cancellationPolicy;
 
-  /// API enum value (`cash`, `gcash`, …); null when none was chosen.
+  /// API enum value (`on_hand`, `gcash`, or a legacy code on an old
+  /// booking); null when none was chosen.
   final String? paymentMethodCode;
+
+  /// How to pay the provider, on the customer's own unpaid GCash booking.
+  /// Absent on every other booking, and on the provider's payload.
+  final PaymentInstructions? paymentInstructions;
   final bool isReviewed;
   final DateTime? confirmedAt;
   final DateTime? startedAt;
@@ -109,6 +158,7 @@ class BookingModel {
     this.cancellationFee,
     this.cancellationPolicy,
     this.paymentMethodCode,
+    this.paymentInstructions,
     this.isReviewed = false,
     this.confirmedAt,
     this.startedAt,
@@ -222,6 +272,10 @@ class BookingModel {
           ? CancellationPolicy.fromJson(Map<String, dynamic>.from(json['cancellation_policy'] as Map))
           : null,
       paymentMethodCode: json['payment_method'] as String?,
+      paymentInstructions: json['payment_instructions'] is Map
+          ? PaymentInstructions.fromJson(
+              Map<String, dynamic>.from(json['payment_instructions'] as Map))
+          : null,
       isReviewed: json['is_reviewed'] == true,
       confirmedAt: _date(json['confirmed_at']),
       startedAt: _date(json['started_at']),
@@ -234,19 +288,32 @@ class BookingModel {
 
   /// Payment methods the API accepts, as (code, label) pairs in the order the
   /// booking form offers them.
+  ///
+  /// There are exactly two, matching `PaymentMethod` on the backend. Card,
+  /// bank transfer and PayPal were never collected by SkillServe and are now
+  /// refused with a 422, so offering them only produced failed bookings.
   static const paymentMethods = <(String, String)>[
-    ('cash', 'Cash on hand'),
+    ('on_hand', 'On-hand payment'),
     ('gcash', 'GCash'),
-    ('credit_card', 'Credit card'),
-    ('debit_card', 'Debit card'),
-    ('bank_transfer', 'Bank transfer'),
-    ('paypal', 'PayPal'),
   ];
+
+  /// Methods that older builds sent, kept for display only: bookings made
+  /// before the methods were trimmed still carry these codes, and the API
+  /// deliberately does not rewrite them.
+  static const _legacyPaymentMethods = <String, String>{
+    'cash': 'On-hand payment',
+    'credit_card': 'Credit card',
+    'debit_card': 'Debit card',
+    'bank_transfer': 'Bank transfer',
+    'paypal': 'PayPal',
+  };
 
   static String paymentMethodLabel(String? code) {
     for (final method in paymentMethods) {
       if (method.$1 == code) return method.$2;
     }
+    final legacy = _legacyPaymentMethods[code];
+    if (legacy != null) return legacy;
     return code == null || code.isEmpty ? 'Not selected' : code;
   }
 

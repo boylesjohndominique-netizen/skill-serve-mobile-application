@@ -45,6 +45,13 @@ class ProviderModel {
   final List<ServiceModel> services;
   final List<ReviewModel> reviews;
 
+  /// Where a customer sends a GCash payment, and the name GCash will show
+  /// them. Present only on the provider's own profile
+  /// (`GET /api/client/v1/provider/profile`) — the public catalog never
+  /// carries someone's personal payment details.
+  final String? gcashNumber;
+  final String? gcashName;
+
   const ProviderModel({
     required this.id,
     required this.user,
@@ -66,7 +73,12 @@ class ProviderModel {
     this.startingPrice,
     this.services = const [],
     this.reviews = const [],
+    this.gcashNumber,
+    this.gcashName,
   });
+
+  /// Whether a customer choosing GCash can actually be told where to pay.
+  bool get canReceiveGcash => (gcashNumber ?? '').isNotEmpty;
 
   bool get isVerified => verificationStatus == 'verified';
 
@@ -131,6 +143,8 @@ class ProviderModel {
         for (final item in (json['reviews'] as List? ?? const []))
           ReviewModel.fromJson(item as Map<String, dynamic>),
       ],
+      gcashNumber: json['gcash_number'] as String?,
+      gcashName: json['gcash_name'] as String?,
     );
   }
 

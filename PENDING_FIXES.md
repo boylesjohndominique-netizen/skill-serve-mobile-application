@@ -1,5 +1,6 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
+Last updated: 2026-09-26 (H6 — the app caught up with the September API work).
 Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
 Laravel API. The master list — including backend, admin web and deployment — is
 `web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
@@ -15,7 +16,7 @@ Nothing open.
 
 ## High
 
-Nothing open.
+Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
 
 ### Before the release build is handed out
 1. Create the upload keystore and `android/key.properties` (`README.md` → "Building a release").
@@ -24,6 +25,9 @@ Nothing open.
    fingerprints (`SETUP_CREDENTIALS.md`, section 2). Google sign-in fails until this is done.
 3. Build with `flutter build apk --release --dart-define-from-file=env/production.json` and run the
    `TEST_PLAN.md` checks on a clean phone against the deployed backend.
+4. The National ID requirement ships **off** (master `PENDING_FIXES.md` → **H8**). Until an
+   administrator turns it on in System Settings → Identity, the app's eligibility banner stays
+   hidden and identity capture is optional — which is the intended state, not a gap.
 
 ---
 
@@ -36,6 +40,42 @@ Nothing open.
 ## Low
 
 Nothing open.
+
+---
+
+## Resolved on 2026-09-26
+
+- **H6 — the app had fallen behind the API.**
+  - **Payment methods trimmed to two.** The booking form offered six and defaulted to `cash`; Card,
+    Bank transfer and PayPal had been returning **422** since the API trimmed them. It now offers
+    `on_hand` ("On-hand payment") and `gcash`, and `on_hand` is the default. A booking made by an
+    older build still displays whatever method it was stored with, because the API deliberately does
+    not rewrite them (`BookingModel.paymentMethods`).
+  - **National ID capture is reachable.** `lib/features/identity/` now has a route:
+    `/identity-verification`, on the Profile tab for both roles and where a new account lands after
+    sign-up — **both** ways in: after the OTP for an email sign-up, and after "Finish signing up" for
+    a Google one, which has no OTP step because Google verifies the address. A provider carries on to
+    `/provider-onboarding` afterwards (`?next=`). "I'll do this later" appears only while the
+    platform does not require verification of that account. The card number is held in the form,
+    sent once and never written to storage.
+  - **A blocked account is told why, before it is stopped.** `EligibilityBanner` on the customer home
+    and the provider dashboard renders `GET /transaction-eligibility` as a prompt that opens the
+    screen which fixes it, and draws nothing at all when the account is eligible. Previously the
+    first sign of a block was a bare 403 at the moment of booking.
+  - **A provider can see what they owe.** `/commissions` lists each unremitted booking with its
+    commission and rate, the outstanding total, and what the block stops them doing. There is
+    nothing to pay in the app — SkillServe is never in the payment path — so it explains the
+    remittance and links to support.
+  - **A provider can be paid.** `/gcash-details` saves `gcash_number` and `gcash_name`, which is what
+    makes the customer's payment instructions useful.
+  - **A customer can see where to pay.** A "How to pay" card on an unpaid GCash booking shows the
+    provider's number, the name GCash will display, the amount and the booking reference, with a
+    copy button — straight from the booking's `payment_instructions`.
+  - **There is no "Pay now" button, and there should not be one.** Under ADR-021 both methods are
+    settled directly between the customer and the provider, so `POST /bookings/{booking}/pay`
+    refuses every booking with a 422.
+  - Tests: `test/identity_test.dart` (new), plus payment-method and `payment_instructions` cases in
+    `test/booking_test.dart`. 270 tests pass; `flutter analyze` is clean.
 
 ---
 

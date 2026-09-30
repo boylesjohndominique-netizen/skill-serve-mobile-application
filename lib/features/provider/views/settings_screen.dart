@@ -127,6 +127,16 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                 onTap: () => context.push('/earnings'),
                 isDark: isDark)),
             stagger(_Tile(
+                icon: AppIcons.receipt_long_outlined,
+                label: 'Commission',
+                onTap: () => context.push('/commissions'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.account_balance_wallet_rounded,
+                label: 'GCash details',
+                onTap: () => context.push('/gcash-details'),
+                isDark: isDark)),
+            stagger(_Tile(
                 icon: AppIcons.verified_user_outlined,
                 label: 'Verification Status',
                 onTap: () => context.push('/verification-status'),
@@ -149,6 +159,11 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                 icon: AppIcons.person_outline_rounded,
                 label: 'Edit profile',
                 onTap: () => context.push('/edit-profile'),
+                isDark: isDark)),
+            stagger(_Tile(
+                icon: AppIcons.badge_outlined,
+                label: 'Identity verification',
+                onTap: () => context.push('/identity-verification'),
                 isDark: isDark)),
             stagger(_Tile(
                 icon: AppIcons.lock_outline_rounded,

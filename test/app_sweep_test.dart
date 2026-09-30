@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
 import 'package:skilllink_mobile/features/booking/controllers/booking_controller.dart';
 import 'package:skilllink_mobile/features/messaging/controllers/chat_controller.dart';
+import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
 import 'package:skilllink_mobile/features/marketplace/controllers/favorites_controller.dart';
 import 'package:skilllink_mobile/features/marketplace/controllers/discovery_controller.dart';
 import 'package:skilllink_mobile/features/marketplace/controllers/marketplace_controller.dart';
@@ -50,6 +51,7 @@ final _routes = <String>[
   '/application-preferences',
   '/security-activity',
   '/file-report',
+  '/identity-verification',
   // Provider
   '/provider',
   '/statistics',
@@ -61,6 +63,8 @@ final _routes = <String>[
   '/active-jobs',
   '/completed-jobs',
   '/earnings',
+  '/commissions',
+  '/gcash-details',
   '/withdrawal-history',
   '/verification-status',
   '/provider-badges',
@@ -77,6 +81,7 @@ Widget _app(String route) {
       ChangeNotifierProvider(create: (_) => MarketplaceController()),
       ChangeNotifierProvider(create: (_) => DiscoveryController()),
       ChangeNotifierProvider(create: (_) => FavoritesController()),
+      ChangeNotifierProvider(create: (_) => IdentityController()),
       ChangeNotifierProvider(create: (_) => BookingController()),
       ChangeNotifierProvider(create: (_) => ProviderBookingController()),
       ChangeNotifierProvider(create: (_) => NotificationController()),

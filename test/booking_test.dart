@@ -162,14 +162,20 @@ void main() {
   });
 
   group('payment methods', () {
-    test('every offered method is an API enum value with a label', () {
-      expect(
-        BookingModel.paymentMethods.map((m) => m.$1),
-        ['cash', 'gcash', 'credit_card', 'debit_card', 'bank_transfer', 'paypal'],
-      );
+    test('only the two methods the API accepts are offered', () {
+      expect(BookingModel.paymentMethods.map((m) => m.$1), ['on_hand', 'gcash']);
       for (final method in BookingModel.paymentMethods) {
         expect(BookingModel.paymentMethodLabel(method.$1), method.$2);
       }
+    });
+
+    test('a booking made by an older build still reads as something', () {
+      // `cash` was the old default and is canonicalised to `on_hand` by the
+      // API; card, bank transfer and PayPal are history on old bookings.
+      expect(BookingModel.paymentMethodLabel('cash'), 'On-hand payment');
+      expect(BookingModel.paymentMethodLabel('credit_card'), 'Credit card');
+      expect(BookingModel.paymentMethodLabel('paypal'), 'PayPal');
+      expect(BookingModel.paymentMethodLabel(''), 'Not selected');
     });
   });
 
@@ -312,6 +318,50 @@ void main() {
         'cancellation_policy': {'window_hours': 24, 'fee_percent': 10, 'is_late': false, 'fee_if_cancelled_now': '0.00'},
       }));
       expect(booking.cancellationPolicy!.chargesFee, isFalse);
+    });
+  });
+
+  group('payment instructions', () {
+    test('an unpaid GCash booking carries where to send the money', () {
+      final booking = BookingModel.fromJson(clientPayload({
+        'payment_instructions': {
+          'method': 'gcash',
+          'gcash_number': '09171234567',
+          'gcash_name': 'Juan Dela Cruz',
+          'amount': '1500.00',
+          'reference': 'BK-ABC123',
+          'note': 'Send this amount to the provider in GCash, then ask them to confirm it.',
+        },
+      }));
+
+      final instructions = booking.paymentInstructions!;
+      expect(instructions.isPayable, isTrue);
+      expect(instructions.gcashNumber, '09171234567');
+      expect(instructions.gcashName, 'Juan Dela Cruz');
+      expect(instructions.amount, '1500.00');
+      expect(instructions.reference, 'BK-ABC123');
+    });
+
+    test('a provider with no GCash details gives a note and nothing to copy', () {
+      final booking = BookingModel.fromJson(clientPayload({
+        'payment_instructions': {
+          'method': 'gcash',
+          'gcash_number': null,
+          'gcash_name': null,
+          'amount': '1500.00',
+          'reference': 'BK-ABC123',
+          'note': 'This provider has not added their GCash details yet. '
+              'Message them to arrange payment.',
+        },
+      }));
+
+      expect(booking.paymentInstructions!.isPayable, isFalse);
+      expect(booking.paymentInstructions!.note, contains('Message them'));
+    });
+
+    test('no instructions at all on a booking the API does not send them for', () {
+      // On-hand, already paid, cancelled, and the provider's own payload.
+      expect(BookingModel.fromJson(clientPayload()).paymentInstructions, isNull);
     });
   });
 }

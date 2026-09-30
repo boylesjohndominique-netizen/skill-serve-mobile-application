@@ -63,6 +63,14 @@ class SettingsScreen extends StatelessWidget {
                 .fadeIn(delay: 220.ms, duration: 300.ms)
                 .slideX(begin: 0.04, end: 0),
             _Tile(
+                    icon: AppIcons.badge_outlined,
+                    label: 'Identity verification',
+                    onTap: () => context.push('/identity-verification'),
+                    isDark: isDark)
+                .animate()
+                .fadeIn(delay: 240.ms, duration: 300.ms)
+                .slideX(begin: 0.04, end: 0),
+            _Tile(
                     icon: AppIcons.lock_outline_rounded,
                     label: 'Change password',
                     onTap: () => context.push('/change-password'),

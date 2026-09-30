@@ -19,6 +19,8 @@ import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/section_header.dart';
 import '../../../core/widgets/misc/verification_seal.dart';
 import '../../booking/models/booking_model.dart';
+import '../../identity/controllers/identity_controller.dart';
+import '../../identity/views/eligibility_banner.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../../booking/services/booking_service.dart';
 import '../../marketplace/services/service_service.dart';
@@ -86,9 +88,14 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
   Future<void> _refresh() async {
     final marketplace = context.read<MarketplaceController>();
+    // Also re-ask whether this account may transact: an administrator may have
+    // approved the National ID while the app was open, and the banner would
+    // otherwise keep saying it is blocked.
+    final identity = context.read<IdentityController>();
     await marketplace.loadInitial();
     await _loadFeatured();
     await _loadUpcoming();
+    await identity.refreshEligibility();
   }
 
   @override
@@ -137,6 +144,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 ],
               ),
               const SizedBox(height: AppSizes.lg),
+
+              // ── Why this account cannot book yet, if anything ──
+              // Above the hero, because there is no point inviting someone to
+              // browse for a provider they cannot book yet. Draws nothing at
+              // all while the account is eligible.
+              const EligibilityBanner(),
 
               // ── Hero card ──
               const _DiscoverHero().animate().fadeIn(delay: 120.ms, duration: 450.ms).slideY(begin: 0.08, end: 0),

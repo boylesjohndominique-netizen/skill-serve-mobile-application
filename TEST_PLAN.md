@@ -103,6 +103,8 @@ backend test classes) · **UAT** steps → expected result.
 | M 5.5 | Booking history | booking details → timeline | `GET /bookings/{id}` | booking_test · BookingRescheduleTest | Requested, rescheduled, accepted, started, completed, paid in order | |
 | M 5.6 | Cancel booking | booking details | `PATCH /bookings/{id}/cancel`; provider `…/provider/bookings/{id}/cancel`, reschedule `PATCH /bookings/{id}/reschedule` | booking_test · ProviderBookingTest, BookingRescheduleTest, SettingsEnforcementTest | Cancel with reason → provider notified; inside the cancellation window the dialog warns of the fee and the booking records it | |
 | M 5.7 | Report or dispute | booking details | `PATCH /bookings/{id}/dispute` | reports_support_test · BookingDisputeTest | Dispute an active/completed job | |
+| (extra) | Choose how to pay | `/booking-form/:providerId` step 3 | `POST /bookings` (`payment_method`) | booking_test · ClientMarketplaceTest | Exactly two methods are offered, On-hand and GCash; nothing is charged | |
+| (extra) | Where to send a GCash payment | booking details → "How to pay" | `GET /bookings/{id}` (`payment_instructions`) | booking_test · DirectPaymentTest | On an unpaid GCash booking: the provider's GCash number and account name, the amount and the booking number, with a copy button. A provider who saved none → a note to message them instead. Nothing shown once paid or cancelled | |
 
 ### 6. Reviews and Ratings
 
@@ -145,6 +147,8 @@ backend test classes) · **UAT** steps → expected result.
 | M 9.4 | Verification status | `/verification-status` | `GET /provider/verification` | verification_test · provider_account_test | Status, the reviewer's message and the documents sent are shown; a decision arrives as a notification | |
 | M 9.5 | Respond to info request | `/verification-status` | `POST /provider/verification` | verification_test · ProviderVerificationTest | After "request info", upload the requested document → back to pending | |
 | M 9.6 | Provider restrictions | Settings, login | `GET /auth/me` | account_status_test · AccountStatusTest | A provider suspension is shown with its reason | |
+| (extra) | Outstanding commission | `/commissions` | `GET /provider/commissions` | identity_test · CommissionLedgerTest | Each unremitted booking with its commission and rate, the total, and that new work is paused. Nothing to pay in the app | |
+| (extra) | GCash details | `/gcash-details` | `PATCH /provider/profile` | DirectPaymentTest | Saving 09XX XXX XXXX (or +63…) stores 11 digits; the customer's booking then shows them | |
 
 ### 10. Service Management for Providers
 
@@ -187,6 +191,17 @@ backend test classes) · **UAT** steps → expected result.
 | M 13.4 | Featured providers | home | `GET /providers?featured=1` | discovery_test · ClientMarketplaceTest | Admin-featured providers | |
 | M 13.5 | Top-rated providers | home | `GET /providers?sort=average_rating` | discovery_test | Highest rated first | |
 | — | Favorites | heart, `/favorites` | `GET/PUT/DELETE /favorites` | favorites_test · FavoriteProviderTest | Saved providers survive reinstall and sign-in on another phone | |
+
+### 13b. Identity Verification (both roles)
+
+| ID | Requirement | Screen | API | Tests | UAT → expected | Result |
+|----|-------------|--------|-----|-------|----------------|--------|
+| (extra) | Submit the National ID | `/identity-verification` | `POST /identity-verification` | identity_test · IdentityVerificationTest | 16-digit number, name, birthdate and both sides of the card → status pending; it appears in the admin review queue | |
+| (extra) | See where it stands | `/identity-verification` | `GET /identity-verification` | identity_test | Under review, or approved, with the card's last four digits; a rejection shows the reviewer's reason and allows resubmission | |
+| (extra) | Asked for at registration (email) | OTP → `/identity-verification` | — | — | A new customer lands on the ID screen; a provider continues to `/provider-onboarding` after it | |
+| (extra) | Asked for at registration (Google) | `/google-register` → `/identity-verification` | — | google_registration_screen_test | Same landing as the email path. Google verifies the address, so there is no OTP screen — the ID prompt must not be skippable by signing up with Google | |
+| (extra) | Know why an account is blocked | customer home, provider dashboard | `GET /transaction-eligibility` | identity_test · IdentityEnforcementTest | With the requirement on: an unverified account sees a banner that opens the ID screen; a provider owing commission sees one that opens `/commissions`; a verified account sees nothing | |
+| (extra) | Skipping while not required | `/identity-verification` | `GET /transaction-eligibility` | identity_test | With the requirement off (or the account grandfathered), "I'll do this later" is offered; with it on, it is not | |
 
 ### 14. User Settings and Preferences
 

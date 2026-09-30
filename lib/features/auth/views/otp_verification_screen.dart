@@ -96,9 +96,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       // The account now exists and the response carried a real session, so
       // the router's requiresEmailVerification pin is released here.
       AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
-      context.go(auth.currentUser?.role == UserRole.provider
-          ? '/provider-onboarding'
-          : '/client');
+      // The National ID comes next, so an account is asked for it up front
+      // rather than being stopped at its first booking. A provider carries on
+      // to their business onboarding afterwards; the screen lets them skip
+      // when the platform does not require verification of them yet.
+      final isProvider = auth.currentUser?.role == UserRole.provider;
+      context.go(isProvider
+          ? '/identity-verification?next=${Uri.encodeComponent('/provider-onboarding')}'
+          : '/identity-verification');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Verification failed.');
       _controller.clear();

@@ -10,6 +10,7 @@ import 'features/booking/controllers/booking_controller.dart';
 import 'features/booking/controllers/provider_booking_controller.dart';
 import 'features/marketplace/controllers/favorites_controller.dart';
 import 'features/marketplace/controllers/discovery_controller.dart';
+import 'features/identity/controllers/identity_controller.dart';
 import 'features/marketplace/controllers/marketplace_controller.dart';
 import 'features/notifications/controllers/notification_controller.dart';
 import 'features/messaging/controllers/chat_controller.dart';
@@ -98,6 +99,14 @@ class SkillLinkApp extends StatelessWidget {
             ..onAuthChanged(
               signedInAsClient: auth.status == AuthStatus.authenticated && auth.isClient,
             ),
+        ),
+        // National ID state and transaction eligibility belong to the signed-in
+        // account, so the controller is reset when the session changes rather
+        // than carrying one account's verification into the next.
+        ChangeNotifierProxyProvider<AuthController, IdentityController>(
+          create: (_) => IdentityController(),
+          update: (_, auth, identity) => identity!
+            ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
         ),
         ChangeNotifierProvider(create: (_) => BookingController()),
         ChangeNotifierProvider(create: (_) => ProviderBookingController()),

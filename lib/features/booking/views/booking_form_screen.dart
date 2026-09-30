@@ -26,25 +26,17 @@ import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 
-/// Presentation for the payment methods the API accepts
-/// ({@link BookingModel.paymentMethods}). Selection only: nothing is charged,
-/// because no payment provider is called yet.
+/// Presentation for the two payment methods the API accepts
+/// ({@link BookingModel.paymentMethods}). Selection only: nothing is charged
+/// here, because the customer pays the provider directly.
 const _paymentIcons = <String, AppIconData>{
-  'cash': AppIcons.payments_outlined,
+  'on_hand': AppIcons.payments_outlined,
   'gcash': AppIcons.account_balance_wallet_rounded,
-  'credit_card': AppIcons.credit_card_rounded,
-  'debit_card': AppIcons.credit_card_rounded,
-  'bank_transfer': AppIcons.account_balance_wallet_outlined,
-  'paypal': AppIcons.account_balance_wallet_outlined,
 };
 
 const _paymentBlurbs = <String, String>{
-  'cash': 'Pay in cash when the job is done',
-  'gcash': 'Settle with the provider through GCash',
-  'credit_card': 'Arrange card payment with the provider',
-  'debit_card': 'Arrange card payment with the provider',
-  'bank_transfer': 'Transfer to the provider\'s bank account',
-  'paypal': 'Settle with the provider through PayPal',
+  'on_hand': 'Hand the payment to the provider when the job is done',
+  'gcash': 'Send it to the provider\'s own GCash number',
 };
 
 /// SkillServe 4-step booking wizard —
@@ -399,8 +391,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         Text('Payment method', style: AppTextStyles.titleLarge),
         const SizedBox(height: 4),
         Text(
-          'Choose how you want to settle this booking. Nothing is charged here — '
-          'you arrange payment with the provider.',
+          'Choose how you want to pay the provider. Nothing is charged here — '
+          'SkillServe never holds your money, so you pay the provider directly '
+          'and they confirm it.',
           style: AppTextStyles.bodyMedium,
         ),
         const SizedBox(height: AppSizes.md),

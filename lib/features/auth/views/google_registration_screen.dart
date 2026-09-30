@@ -87,7 +87,13 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
     if (!mounted) return;
     if (created) {
       AppSnackbar.success(context, 'Welcome to SkillServe!');
-      context.go(auth.isProvider ? '/provider-onboarding' : '/client');
+      // Same next step as an email sign-up: the National ID is asked for up
+      // front rather than at the first booking. Google verifies the address,
+      // so this path has no OTP screen to hand off from — without this, a
+      // Google account would be the one way to skip the ID prompt entirely.
+      context.go(auth.isProvider
+          ? '/identity-verification?next=${Uri.encodeComponent('/provider-onboarding')}'
+          : '/identity-verification');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Could not finish signing up.');
     }

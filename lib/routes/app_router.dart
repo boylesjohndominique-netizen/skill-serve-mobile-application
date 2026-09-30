@@ -74,8 +74,13 @@ import '../features/provider/views/booking_requests_screen.dart';
 import '../features/provider/views/active_jobs_screen.dart';
 import '../features/provider/views/completed_jobs_screen.dart';
 
+// Identity
+import '../features/identity/views/identity_verification_screen.dart';
+
 // Provider earnings
+import '../features/provider/views/commissions_screen.dart';
 import '../features/provider/views/earnings_screen.dart';
+import '../features/provider/views/gcash_details_screen.dart';
 import '../features/provider/views/verification_status_screen.dart';
 
 // Settings
@@ -286,6 +291,12 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/earnings', builder: (context, state) => const EarningsScreen()),
   GoRoute(
+      path: '/commissions',
+      builder: (context, state) => const CommissionsScreen()),
+  GoRoute(
+      path: '/gcash-details',
+      builder: (context, state) => const GcashDetailsScreen()),
+  GoRoute(
       path: '/verification-status',
       builder: (context, state) => const VerificationStatusScreen()),
   GoRoute(
@@ -301,6 +312,14 @@ final List<RouteBase> appRoutes = [
       builder: (context, state) => const BadgesScreen()),
 
   // Shared across personas
+  GoRoute(
+    // Identity is identity: customers and providers submit the same National
+    // ID through the same screen. `next` is where registration sends them
+    // afterwards.
+    path: '/identity-verification',
+    builder: (context, state) =>
+        IdentityVerificationScreen(next: state.uri.queryParameters['next']),
+  ),
   GoRoute(
       path: '/notifications',
       builder: (context, state) => const NotificationsScreen()),
@@ -318,6 +337,7 @@ final GoRouter appRouter =
 /// Screens either role may use once signed in.
 const _sharedSignedIn = <String>{
   'notifications',
+  'identity-verification',
   'chat-conversation',
   'booking-details',
   'file-report',
@@ -362,6 +382,8 @@ const _providerOnly = <String>{
   'completed-jobs',
   'calendar',
   'earnings',
+  'commissions',
+  'gcash-details',
   'my-services',
   'add-service',
   'edit-service',
