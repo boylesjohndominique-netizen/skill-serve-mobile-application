@@ -182,6 +182,13 @@ class _ServiceCard extends StatelessWidget {
                   Text(service.title, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
                   Text(details, style: AppTextStyles.monoSm.copyWith(color: AppColors.neutral300), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  if (service.earnings case final earnings?)
+                    Text(
+                      'You keep ₱${earnings.netAmount} after ${earnings.rateLabel} commission',
+                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutral300),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: AppSizes.sm,

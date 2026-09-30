@@ -1,3 +1,5 @@
+import 'commission_model.dart';
+
 /// A provider's own service as returned by
 /// `GET /api/client/v1/provider/services`, including its moderation state.
 class ProviderServiceModel {
@@ -18,6 +20,10 @@ class ProviderServiceModel {
   final bool isHidden;
   final bool isFeatured;
 
+  /// SkillServe's share of [price] and what the provider keeps, when the API
+  /// sent it.
+  final CommissionSplit? earnings;
+
   const ProviderServiceModel({
     required this.id,
     required this.title,
@@ -35,6 +41,7 @@ class ProviderServiceModel {
     this.rejectionReason,
     this.isHidden = false,
     this.isFeatured = false,
+    this.earnings,
   });
 
   bool get isPending => approvalStatus == 'pending';
@@ -65,6 +72,9 @@ class ProviderServiceModel {
       rejectionReason: json['rejection_reason'] as String?,
       isHidden: json['is_hidden'] == true,
       isFeatured: json['is_featured'] == true,
+      earnings: json['earnings'] is Map
+          ? CommissionSplit.fromJson(Map<String, dynamic>.from(json['earnings'] as Map))
+          : null,
     );
   }
 }

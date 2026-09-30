@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
@@ -10,7 +12,9 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../models/commission_model.dart';
 import '../models/provider_service_model.dart';
+import '../services/commission_service.dart';
 import '../services/provider_service_service.dart';
 
 const _priceTypes = {'fixed': 'Fixed price', 'hourly': 'Per hour', 'custom': 'Custom quote'};
@@ -43,16 +47,25 @@ class _ServiceFormState extends State<ServiceForm> {
   String? _subcategoryId;
   late String _priceType = widget.existing?.priceType ?? 'fixed';
 
+  /// SkillServe's share of the typed price, so the provider sees what they
+  /// keep before submitting. Null while the price is empty or invalid.
+  CommissionSplit? _split;
+  Timer? _previewTimer;
+  int _previewRequest = 0;
+
   @override
   void initState() {
     super.initState();
     _categoryId = widget.existing?.categoryId;
     _subcategoryId = widget.existing?.subcategoryId;
     _loadCategories();
+    _price.addListener(_schedulePreview);
+    _schedulePreview();
   }
 
   @override
   void dispose() {
+    _previewTimer?.cancel();
     for (final controller in [_title, _description, _price, _duration, _location]) {
       controller.dispose();
     }
@@ -80,6 +93,31 @@ class _ServiceFormState extends State<ServiceForm> {
     } finally {
       if (mounted) setState(() => _loadingCategories = false);
     }
+  }
+
+  /// Asks for the split once typing pauses. A newer request supersedes an
+  /// older one, so a slow reply can never overwrite the current price's split.
+  void _schedulePreview() {
+    _previewTimer?.cancel();
+    final amount = double.tryParse(_price.text.trim());
+    if (amount == null || amount < 0) {
+      _previewRequest++;
+      if (_split != null) setState(() => _split = null);
+      return;
+    }
+    _previewTimer = Timer(const Duration(milliseconds: 400), () => _loadPreview(amount));
+  }
+
+  Future<void> _loadPreview(double amount) async {
+    final request = ++_previewRequest;
+    CommissionSplit? split;
+    try {
+      split = await CommissionService().preview(amount);
+    } catch (_) {
+      // The split is advisory: without it the form still works, so a failed
+      // preview simply shows nothing rather than an error.
+    }
+    if (mounted && request == _previewRequest) setState(() => _split = split);
   }
 
   List<ServiceSubcategoryOption> get _subcategories =>
@@ -207,6 +245,10 @@ class _ServiceFormState extends State<ServiceForm> {
               ),
             ],
           ),
+          if (_split != null) ...[
+            const SizedBox(height: AppSizes.sm),
+            _CommissionSplitNote(split: _split!, perHour: _priceType == 'hourly'),
+          ],
           const SizedBox(height: AppSizes.lg),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,6 +273,35 @@ class _ServiceFormState extends State<ServiceForm> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "SkillServe 15% · ₱75.00 · you keep ₱425.00" under the price field.
+class _CommissionSplitNote extends StatelessWidget {
+  final CommissionSplit split;
+  final bool perHour;
+
+  const _CommissionSplitNote({required this.split, required this.perHour});
+
+  @override
+  Widget build(BuildContext context) {
+    final unit = perHour ? ' per hour' : '';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const AppIcon(AppIcons.info_outline_rounded, color: AppColors.neutral300, size: 16),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            // Exact amounts, as the Commissions screen shows them: rounding
+            // to whole pesos could make the two shares not add up.
+            'SkillServe ${split.rateLabel} · ₱${split.commissionAmount} · '
+            'you keep ₱${split.netAmount}$unit',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutral300),
+          ),
+        ),
+      ],
     );
   }
 }

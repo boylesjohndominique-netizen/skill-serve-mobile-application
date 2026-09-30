@@ -81,3 +81,39 @@ class OutstandingCommission {
             : null,
       );
 }
+
+/// How a price splits between SkillServe and the provider: from
+/// `GET /api/client/v1/provider/commission-preview` while a price is being
+/// typed, or the `earnings` block on each of the provider's services.
+///
+/// The commission comes out of the advertised price, so [netAmount] is what
+/// the provider keeps. Indicative only: a booking snapshots the rate in force
+/// when it is made. Amounts stay as the API formatted them.
+class CommissionSplit {
+  final String amount;
+  final String commissionRate;
+  final String commissionAmount;
+  final String netAmount;
+
+  const CommissionSplit({
+    this.amount = '0.00',
+    this.commissionRate = '0.00',
+    this.commissionAmount = '0.00',
+    this.netAmount = '0.00',
+  });
+
+  /// The rate without trailing zeros: `15.00` → `15%`, `12.50` → `12.5%`.
+  String get rateLabel {
+    final rate = double.tryParse(commissionRate) ?? 0;
+    final text = rate.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+    return '$text%';
+  }
+
+  factory CommissionSplit.fromJson(Map<String, dynamic> json) => CommissionSplit(
+        // The preview names the base `amount`; a service's earnings name it `price`.
+        amount: (json['amount'] ?? json['price'])?.toString() ?? '0.00',
+        commissionRate: json['commission_rate']?.toString() ?? '0.00',
+        commissionAmount: json['commission_amount']?.toString() ?? '0.00',
+        netAmount: json['net_amount']?.toString() ?? '0.00',
+      );
+}
