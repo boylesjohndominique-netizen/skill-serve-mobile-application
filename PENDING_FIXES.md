@@ -25,8 +25,10 @@ Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see b
    **Owner action: back up both files** (password manager or offline drive, not OneDrive/GitHub) —
    losing them means the installed app can never be updated.
    Release SHA-1 (public, for item 2): `20:30:88:71:1E:64:1B:EE:90:9B:E5:0C:7E:FE:E1:9D:75:E3:36:1A`
-2. Register the Android OAuth client for `com.skillserve.mobile` with the debug and release SHA-1
-   fingerprints (`SETUP_CREDENTIALS.md`, section 2). Google sign-in fails until this is done.
+2. Register the Android OAuth clients for `com.skillserve.mobile` — **one client per SHA-1**
+   (release `20:30:88:…:36:1A`, debug `68:68:EE:…:B8:57`; full values in `SETUP_CREDENTIALS.md`
+   section 2). Google sign-in fails with `PlatformException … ApiException: 10` until this is done —
+   confirmed on the first release install, 2026-09-30.
 3. Build with `flutter build apk --release --dart-define-from-file=env/production.json` and run the
    `TEST_PLAN.md` checks on a clean phone against the deployed backend.
 4. The National ID requirement ships **off** (master `PENDING_FIXES.md` → **H8**). Until an

@@ -48,7 +48,15 @@ The app requests a Google ID token; the backend validates it against a client ID
      - debug: `cd android && ./gradlew signingReport` (needs JDK 17+) → `Variant: debug` → `SHA1`;
      - release: `keytool -list -v -keystore <your-upload-keystore.jks> -alias upload` → `SHA1`
        (see README → "Building a release").
-     Add both fingerprints to the same client. Nothing in the app or backend changes.
+     Google Cloud accepts **one SHA-1 per Android client**, so create **two** Android clients with
+     the same package name — one per fingerprint. Nothing in the app or backend changes.
+     Fingerprints on the owner's machine (public, not secrets):
+     - release (`C:/Users/earlf/skillserve-upload.jks`, alias `upload`):
+       `20:30:88:71:1E:64:1B:EE:90:9B:E5:0C:7E:FE:E1:9D:75:E3:36:1A`
+     - debug (`C:/Users/earlf/.android/debug.keystore`):
+       `68:68:EE:E0:71:8A:F1:F5:38:F8:85:67:58:20:D9:91:86:01:B8:57`
+     New clients can take minutes to hours to take effect; until then sign-in fails with
+     `ApiException: 10`.
    - **Web client** — ✅ created: `505637339796-b7fi5m130m6amski1r4nckfhh0ge8d4g.apps.googleusercontent.com`. **Its client ID is what the backend checks (`GOOGLE_CLIENT_ID`) and what the app passes as `serverClientId`** — both already set to this value.
 4. Add to **Render environment** (then redeploy):
 
