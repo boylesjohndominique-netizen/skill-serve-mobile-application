@@ -63,6 +63,9 @@ The commission is included in the advertised price, so `total_price` is what the
 | `scheduled_date` | yes | string, format=date-time |
 | `scheduled_end_date` | no | string, format=date-time |
 | `client_notes` | no | string, maxLength=2000 |
+| `service_address` | no | string, maxLength=255 |
+| `service_address_details` | no | object |
+| `contact_phone` | no | string, maxLength=32 |
 | `payment_method` | no | string, one of: `on_hand`, `gcash`, `cash` |
 
 ### Responses
