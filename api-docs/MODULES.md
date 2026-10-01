@@ -24,6 +24,7 @@
 - [Disputes](modules/disputes.md)
 - [Identity Verification](modules/identity-verification.md)
 - [Identity Verifications](modules/identity-verifications.md)
+- [Locations](modules/locations.md)
 - [Notifications](modules/notifications.md)
 - [Payment Webhooks](modules/payment-webhooks.md)
 - [Permissions](modules/permissions.md)

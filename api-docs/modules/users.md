@@ -44,6 +44,7 @@ No JSON request body.
             "phone": "+1 555 0100",
             "status": "active",
             "verification": "verified",
+            "identity_status": "pending",
             "last_login_at": null,
             "created_by": null,
             "created_at": "2026-08-07T08:00:00+00:00"
