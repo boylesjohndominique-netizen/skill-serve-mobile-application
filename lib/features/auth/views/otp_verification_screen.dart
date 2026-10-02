@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
+import '../../identity/controllers/identity_controller.dart';
+import '../../identity/views/sign_up_identity_fields.dart';
 import '../models/user_model.dart';
 import '../../../core/constants/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
@@ -89,22 +91,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     setState(() => _submitting = true);
     final auth = context.read<AuthController>();
     final email = _email;
+    final identity = context.read<IdentityController>();
     final ok = await auth.verifyOtp(email, code);
     if (!mounted) return;
-    setState(() => _submitting = false);
     if (ok) {
       // The account now exists and the response carried a real session, so
       // the router's requiresEmailVerification pin is released here.
       AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
-      // The National ID comes next, so an account is asked for it up front
-      // rather than being stopped at its first booking. A provider carries on
-      // to their business onboarding afterwards; the screen lets them skip
-      // when the platform does not require verification of them yet.
+      // The National ID scanned at the start of sign-up goes for review now;
+      // the screen stays locked while it uploads. Without a complete scan the
+      // National ID screen opens instead, pre-filled. A provider carries on
+      // to their business onboarding either way.
       final isProvider = auth.currentUser?.role == UserRole.provider;
-      context.go(isProvider
-          ? '/identity-verification?next=${Uri.encodeComponent('/provider-onboarding')}'
-          : '/identity-verification');
+      final next = await submitScannedIdAndRoute(identity, isProvider: isProvider);
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      context.go(next);
     } else {
+      setState(() => _submitting = false);
       AppSnackbar.error(context, auth.errorMessage ?? 'Verification failed.');
       _controller.clear();
     }

@@ -7,14 +7,20 @@ import 'package:provider/provider.dart';
 import 'package:skilllink_mobile/core/theme/app_theme.dart';
 import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
 import 'package:skilllink_mobile/features/auth/models/auth_results.dart';
+import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
 import 'package:skilllink_mobile/routes/app_router.dart';
+
+import 'support/scanned_identity.dart';
 
 /// The screen a brand-new Google account lands on. The account is created
 /// only when this form is submitted, so the tests cover what it collects
 /// and what it does when there is nothing to finish.
-Widget _app(AuthController auth, {String route = '/google-register'}) {
-  return ChangeNotifierProvider<AuthController>.value(
-    value: auth,
+Widget _app(AuthController auth, {String route = '/google-register', IdentityController? identity}) {
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider<AuthController>.value(value: auth),
+      ChangeNotifierProvider<IdentityController>.value(value: identity ?? scannedIdentity()),
+    ],
     child: ScreenUtilInit(
       designSize: const Size(390, 844),
       minTextAdapt: true,
@@ -38,16 +44,27 @@ AuthController _authWithDraft() {
 }
 
 void main() {
-  testWidgets('prefills the name Google supplied and shows the address',
+  testWidgets('fills the form from the National ID, not the Google profile',
       (tester) async {
-    await tester.pumpWidget(_app(_authWithDraft()));
+    await tester.pumpWidget(_app(_authWithDraft(), identity: scannedIdentity(givenNames: 'Juana', lastName: 'Reyes')));
     await tester.pumpAndSettle();
 
     expect(find.text('Finish signing up'), findsOneWidget);
     expect(find.text('juan@gmail.com'), findsOneWidget);
-    // The hints are different names, so these can only be the prefill.
-    expect(find.text('Maria'), findsOneWidget);
-    expect(find.text('Santos'), findsOneWidget);
+    // The ID is what gets reviewed, so its name wins over Google's "Maria".
+    expect(find.text('Juana'), findsOneWidget);
+    expect(find.text('Reyes'), findsOneWidget);
+    expect(find.text('Maria'), findsNothing);
+    expect(find.text('9876-5432-1098-7654'), findsOneWidget);
+  });
+
+  testWidgets('without a scan the National ID comes first', (tester) async {
+    await tester.pumpWidget(_app(_authWithDraft(), identity: IdentityController()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Front of your National ID'), findsOneWidget);
+    expect(find.text('Take photo of the front'), findsOneWidget);
+    expect(find.text('Create my account'), findsNothing);
   });
 
   testWidgets('asks providers for their professional details', (tester) async {

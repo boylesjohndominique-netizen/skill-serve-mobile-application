@@ -43,6 +43,14 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
   @override
   void initState() {
     super.initState();
+    // Opened after sign-up when the scanned card could not be sent: start
+    // from what was read and confirmed, not from blank fields.
+    final scanned = context.read<IdentityController>().scanned;
+    if (scanned != null) {
+      _idNumber.text = scanned.formattedCardNumber ?? '';
+      _fullName.text = scanned.fullName;
+      _birthdate = scanned.birthdate;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<IdentityController>().load();
     });

@@ -3,6 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
+import '../../identity/views/sign_up_identity_fields.dart';
+import '../../identity/views/national_id_scan_flow.dart';
+import '../../identity/models/scanned_national_id.dart';
+import '../../identity/models/identity_verification_model.dart';
+import '../../identity/controllers/identity_controller.dart';
 import 'widgets/auth_role_toggle.dart';
 import 'widgets/provider_details_fields.dart';
 import '../../../core/constants/app_colors.dart';
@@ -25,8 +30,12 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstName = TextEditingController();
-  final _lastName = TextEditingController();
+  final _identityForm = SignUpIdentityForm();
+
+  /// Sign-up starts with the National ID: the form appears once both sides
+  /// are photographed and read.
+  bool _scanned = false;
+  bool _preparing = false;
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
@@ -37,9 +46,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
   UserRole _role = UserRole.client;
 
   @override
+  void initState() {
+    super.initState();
+    // Back from Google sign-up, or the screen rebuilt: reuse the scan.
+    final identity = context.read<IdentityController>();
+    final scanned = identity.scanned;
+    if (scanned != null && identity.hasFront && identity.hasBack) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onScanned(scanned));
+    }
+  }
+
+  Future<void> _onScanned(ScannedNationalId id) async {
+    setState(() => _preparing = true);
+    await _identityForm.fillFromScan(id);
+    if (!mounted) return;
+    setState(() {
+      _preparing = false;
+      _scanned = true;
+    });
+  }
+
+  void _rescan() {
+    context.read<IdentityController>()
+      ..remove(PendingIdentityDocument.frontType)
+      ..remove(PendingIdentityDocument.backType)
+      ..scanned = null;
+    setState(() => _scanned = false);
+  }
+
+  @override
   void dispose() {
-    _firstName.dispose();
-    _lastName.dispose();
+    _identityForm.dispose();
     _email.dispose();
     _password.dispose();
     _confirm.dispose();
@@ -53,9 +90,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit(AuthController auth) async {
     if (!_formKey.currentState!.validate()) return;
     final isProvider = _role == UserRole.provider;
+    // What the user confirmed is what goes for review after the email code.
+    context.read<IdentityController>().setScanned(_identityForm.confirmed);
     final success = await auth.register(
-      firstName: _firstName.text.trim(),
-      lastName: _lastName.text.trim(),
+      firstName: _identityForm.givenNames.text.trim(),
+      lastName: _identityForm.lastName.text.trim(),
+      signUpDetails: _identityForm.signUpDetails,
       email: _email.text.trim(),
       password: _password.text,
       role: _role,
@@ -103,6 +143,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = context.watch<AuthController>();
     // Everything locks while the sign-up request is in flight.
     final isBusy = auth.status == AuthStatus.authenticating;
+    if (!_scanned) {
+      return Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSizes.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
+                    icon: const AppIcon(AppIcons.arrow_back_rounded),
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
+                const SizedBox(height: AppSizes.md),
+                Text('Create your account', style: AppTextStyles.displayMedium),
+                const SizedBox(height: 6),
+                Text('Start with your National ID — your details are filled in from it.', style: AppTextStyles.bodyLarge),
+                const SizedBox(height: AppSizes.xl),
+                if (_preparing)
+                  const Padding(
+                    padding: EdgeInsets.all(AppSizes.xl),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else
+                  NationalIdScanFlow(onComplete: _onScanned),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -135,17 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     .animate().fadeIn(delay: 220.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.xl),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppTextField(label: 'First name', hint: 'Juan', controller: _firstName, validator: Validators.required, enabled: !isBusy),
-                    ),
-                    const SizedBox(width: AppSizes.md),
-                    Expanded(
-                      child: AppTextField(label: 'Last name', hint: 'Dela Cruz', controller: _lastName, validator: Validators.required, enabled: !isBusy),
-                    ),
-                  ],
-                ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
+                SignUpIdentityFields(form: _identityForm, onRescan: _rescan, enabled: !isBusy),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Email address',

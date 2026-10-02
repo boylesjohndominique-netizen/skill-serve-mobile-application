@@ -43,6 +43,7 @@ class AuthService {
     required String lastName,
     required String email,
     required String password,
+    Map<String, dynamic> signUpDetails = const {},
   }) async {
     final response =
         await ApiClient.instance.dio.post('/client/v1/auth/register', data: {
@@ -51,6 +52,7 @@ class AuthService {
       'email': email,
       'password': password,
       'password_confirmation': password,
+      ...signUpDetails,
     });
     return PendingRegistration.fromJson(
         response.data['data'] as Map<String, dynamic>);
@@ -67,9 +69,11 @@ class AuthService {
     required String specialization,
     int experienceYears = 0,
     String? bio,
+    Map<String, dynamic> signUpDetails = const {},
   }) async {
     final response = await ApiClient.instance.dio
         .post('/client/v1/auth/register-provider', data: {
+      ...signUpDetails,
       'first_name': firstName,
       'last_name': lastName,
       'email': email,
@@ -146,10 +150,12 @@ class AuthService {
     String specialization = '',
     int experienceYears = 0,
     String? bio,
+    Map<String, dynamic> signUpDetails = const {},
   }) async {
     final isProvider = role == UserRole.provider;
     final response = await ApiClient.instance.dio
         .post('/client/v1/auth/google/register', data: {
+      ...signUpDetails,
       'id_token': idToken,
       'first_name': firstName,
       'last_name': lastName,

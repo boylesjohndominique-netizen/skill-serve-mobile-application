@@ -4,6 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
+import '../../identity/views/sign_up_identity_fields.dart';
+import '../../identity/views/national_id_scan_flow.dart';
+import '../../identity/models/scanned_national_id.dart';
+import '../../identity/models/identity_verification_model.dart';
+import '../../identity/controllers/identity_controller.dart';
 import '../models/user_model.dart';
 import 'widgets/auth_role_toggle.dart';
 import 'widgets/provider_details_fields.dart';
@@ -11,10 +16,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/utils/validators.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
-import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 
 /// Shown when "Continue with Google" picks an account that has no
@@ -35,33 +38,52 @@ class GoogleRegistrationScreen extends StatefulWidget {
 
 class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstName = TextEditingController();
-  final _lastName = TextEditingController();
+  final _identityForm = SignUpIdentityForm();
+  bool _scanned = false;
+  bool _preparing = false;
   final _businessName = TextEditingController();
   final _specialization = TextEditingController();
   final _experienceYears = TextEditingController();
   final _bio = TextEditingController();
   UserRole _role = UserRole.client;
-  bool _prefilled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Scanned already on the register screen before choosing Google.
+    final identity = context.read<IdentityController>();
+    final scanned = identity.scanned;
+    if (scanned != null && identity.hasFront && identity.hasBack) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onScanned(scanned));
+    }
+  }
+
+  Future<void> _onScanned(ScannedNationalId id) async {
+    setState(() => _preparing = true);
+    await _identityForm.fillFromScan(id);
+    if (!mounted) return;
+    setState(() {
+      _preparing = false;
+      _scanned = true;
+    });
+  }
+
+  void _rescan() {
+    context.read<IdentityController>()
+      ..remove(PendingIdentityDocument.frontType)
+      ..remove(PendingIdentityDocument.backType)
+      ..scanned = null;
+    setState(() => _scanned = false);
+  }
 
   @override
   void dispose() {
-    _firstName.dispose();
-    _lastName.dispose();
+    _identityForm.dispose();
     _businessName.dispose();
     _specialization.dispose();
     _experienceYears.dispose();
     _bio.dispose();
     super.dispose();
-  }
-
-  void _prefillOnce(AuthController auth) {
-    if (_prefilled) return;
-    final draft = auth.googleDraft;
-    if (draft == null) return;
-    _firstName.text = draft.firstName;
-    _lastName.text = draft.lastName;
-    _prefilled = true;
   }
 
   Future<void> _cancel(AuthController auth) async {
@@ -73,9 +95,13 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
   Future<void> _submit(AuthController auth) async {
     if (!_formKey.currentState!.validate()) return;
     final isProvider = _role == UserRole.provider;
+    final identity = context.read<IdentityController>()..setScanned(_identityForm.confirmed);
+    // The name on the National ID, not Google's display name: the ID is what
+    // gets reviewed.
     final created = await auth.completeGoogleRegistration(
-      firstName: _firstName.text.trim(),
-      lastName: _lastName.text.trim(),
+      firstName: _identityForm.givenNames.text.trim(),
+      lastName: _identityForm.lastName.text.trim(),
+      signUpDetails: _identityForm.signUpDetails,
       role: _role,
       businessName: isProvider ? _businessName.text.trim() : null,
       specialization: isProvider ? _specialization.text.trim() : '',
@@ -87,13 +113,11 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
     if (!mounted) return;
     if (created) {
       AppSnackbar.success(context, 'Welcome to SkillServe!');
-      // Same next step as an email sign-up: the National ID is asked for up
-      // front rather than at the first booking. Google verifies the address,
-      // so this path has no OTP screen to hand off from — without this, a
-      // Google account would be the one way to skip the ID prompt entirely.
-      context.go(auth.isProvider
-          ? '/identity-verification?next=${Uri.encodeComponent('/provider-onboarding')}'
-          : '/identity-verification');
+      // Same next step as an email sign-up: the National ID scanned before
+      // the form is sent for review now that the account exists.
+      final next = await submitScannedIdAndRoute(identity, isProvider: auth.isProvider);
+      if (!mounted) return;
+      context.go(next);
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Could not finish signing up.');
     }
@@ -133,9 +157,52 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
       );
     }
 
-    _prefillOnce(auth);
     final isProvider = _role == UserRole.provider;
     final isBusy = auth.status == AuthStatus.authenticating;
+
+    if (!_scanned) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _cancel(auth);
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () => _cancel(auth),
+                      icon: const AppIcon(AppIcons.arrow_back_rounded),
+                      tooltip: 'Cancel sign-up',
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.md),
+                  Text('Finish signing up', style: AppTextStyles.displayMedium),
+                  const SizedBox(height: 6),
+                  Text('Scan your National ID — your details are filled in from it.', style: AppTextStyles.bodyLarge),
+                  const SizedBox(height: AppSizes.lg),
+                  _GoogleAccountChip(email: draft.email),
+                  const SizedBox(height: AppSizes.xl),
+                  if (_preparing)
+                    const Padding(
+                      padding: EdgeInsets.all(AppSizes.xl),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    NationalIdScanFlow(onComplete: _onScanned),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return PopScope(
       canPop: false,
@@ -164,7 +231,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
                       .slideY(begin: 0.1, end: 0),
                   const SizedBox(height: 6),
                   Text(
-                    'We got your email from Google. Tell us your name and how you will use SkillServe.',
+                    'We got your email from Google. Check the details from your ID and tell us how you will use SkillServe.',
                     style: AppTextStyles.bodyLarge,
                   ).animate().fadeIn(delay: 150.ms, duration: 350.ms),
                   const SizedBox(height: AppSizes.lg),
@@ -181,34 +248,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
                       .fadeIn(delay: 240.ms, duration: 350.ms)
                       .slideY(begin: 0.08, end: 0),
                   const SizedBox(height: AppSizes.xl),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppTextField(
-                          label: 'First name',
-                          hint: 'Juan',
-                          controller: _firstName,
-                          validator: (v) =>
-                              Validators.required(v, field: 'First name'),
-                          enabled: !isBusy,
-                        ),
-                      ),
-                      const SizedBox(width: AppSizes.md),
-                      Expanded(
-                        child: AppTextField(
-                          label: 'Last name',
-                          hint: 'Dela Cruz',
-                          controller: _lastName,
-                          validator: (v) =>
-                              Validators.required(v, field: 'Last name'),
-                          enabled: !isBusy,
-                        ),
-                      ),
-                    ],
-                  )
-                      .animate()
-                      .fadeIn(delay: 300.ms, duration: 350.ms)
-                      .slideY(begin: 0.08, end: 0),
+                  SignUpIdentityFields(form: _identityForm, onRescan: _rescan, enabled: !isBusy),
                   if (isProvider) ...[
                     const SizedBox(height: AppSizes.xl),
                     ProviderDetailsFields(

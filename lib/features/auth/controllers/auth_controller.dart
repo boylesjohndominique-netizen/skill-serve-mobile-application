@@ -229,6 +229,9 @@ class AuthController extends ChangeNotifier {
   /// Starts a sign-up. The backend parks it and emails a 6-digit code —
   /// no account and no session exist until [verifyOtp] confirms it, so
   /// backing out here leaves the email free to use again.
+  ///
+  /// [signUpDetails] carries what was read off the National ID: `birthday`
+  /// and the structured `address_details`.
   Future<bool> register({
     required String firstName,
     required String lastName,
@@ -239,6 +242,7 @@ class AuthController extends ChangeNotifier {
     String specialization = '',
     int experienceYears = 0,
     String? bio,
+    Map<String, dynamic> signUpDetails = const {},
   }) async {
     status = AuthStatus.authenticating;
     errorMessage = null;
@@ -254,12 +258,14 @@ class AuthController extends ChangeNotifier {
               specialization: specialization.isEmpty ? 'General Services' : specialization,
               experienceYears: experienceYears,
               bio: bio,
+              signUpDetails: signUpDetails,
             )
           : await _authService.register(
               firstName: firstName,
               lastName: lastName,
               email: email,
               password: password,
+              signUpDetails: signUpDetails,
             );
       _pendingEmailVerification = true;
       _pendingEmail = pending.email;
@@ -433,6 +439,7 @@ class AuthController extends ChangeNotifier {
     String specialization = '',
     int experienceYears = 0,
     String? bio,
+    Map<String, dynamic> signUpDetails = const {},
   }) async {
     final draft = googleDraft;
     if (draft == null) {
@@ -454,6 +461,7 @@ class AuthController extends ChangeNotifier {
         specialization: specialization,
         experienceYears: experienceYears,
         bio: bio,
+        signUpDetails: signUpDetails,
       );
       await _saveApiTokens();
       googleDraft = null;

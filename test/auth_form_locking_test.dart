@@ -6,13 +6,21 @@ import 'package:provider/provider.dart';
 
 import 'package:skilllink_mobile/core/theme/app_theme.dart';
 import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
+import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
 import 'package:skilllink_mobile/routes/app_router.dart';
+
+import 'support/scanned_identity.dart';
 
 /// While a request is in flight the auth forms must be read-only: the value
 /// being submitted cannot change underneath the request.
 Widget _app(AuthController auth, String route) {
-  return ChangeNotifierProvider<AuthController>.value(
-    value: auth,
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider<AuthController>.value(value: auth),
+      // Sign-up starts with the National ID; a scan already made opens the
+      // register form directly.
+      ChangeNotifierProvider<IdentityController>(create: (_) => scannedIdentity()),
+    ],
     child: ScreenUtilInit(
       designSize: const Size(390, 844),
       minTextAdapt: true,

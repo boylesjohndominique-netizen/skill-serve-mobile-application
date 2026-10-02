@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/api_error.dart';
 import '../models/identity_verification_model.dart';
+import '../models/scanned_national_id.dart';
 import '../services/identity_service.dart';
 
 /// Drives the National ID screens: the current status, the two card photos
@@ -25,6 +26,10 @@ class IdentityController extends ChangeNotifier {
   bool isSubmitting = false;
   double progress = 0;
   String? errorMessage;
+
+  /// What sign-up read off the card, as the user confirmed it. Submitted with
+  /// the two photos once the account exists, then dropped. Memory only.
+  ScannedNationalId? scanned;
 
   bool get hasFront => captured.containsKey(PendingIdentityDocument.frontType);
   bool get hasBack => captured.containsKey(PendingIdentityDocument.backType);
@@ -54,6 +59,7 @@ class IdentityController extends ChangeNotifier {
     verification = null;
     eligibility = TransactionEligibility.unknown;
     captured.clear();
+    scanned = null;
     errorMessage = null;
     notifyListeners();
   }
@@ -105,6 +111,28 @@ class IdentityController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     return null;
+  }
+
+  /// Keeps what sign-up read off the card (as corrected in the form).
+  void setScanned(ScannedNationalId value) {
+    scanned = value;
+    notifyListeners();
+  }
+
+  /// Whether sign-up left a card ready to send: both photos plus a card
+  /// number and birthdate, which the review requires.
+  bool get hasScannedSubmission =>
+      hasFront && hasBack && scanned?.cardNumber != null && scanned?.birthdate != null && (scanned?.fullName.isNotEmpty ?? false);
+
+  /// Sends the card scanned at sign-up for review, right after the account
+  /// is created. Returns false when there is nothing complete to send or the
+  /// API refused it; the National ID screen then takes over, pre-filled.
+  Future<bool> submitScanned() async {
+    final card = scanned;
+    if (!hasScannedSubmission || card == null) return false;
+    final ok = await submit(idNumber: card.cardNumber!, fullName: card.fullName, birthdate: card.birthdate!);
+    if (ok) scanned = null;
+    return ok;
   }
 
   void remove(String type) {
