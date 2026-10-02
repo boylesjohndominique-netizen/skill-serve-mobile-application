@@ -30,7 +30,13 @@ Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see b
    section 2). Google sign-in fails with `PlatformException … ApiException: 10` until this is done —
    confirmed on the first release install, 2026-09-30.
 3. Build with `flutter build apk --release --dart-define-from-file=env/production.json` and run the
-   `TEST_PLAN.md` checks on a clean phone against the deployed backend.
+   `TEST_PLAN.md` checks on a clean phone against the deployed backend. This is the **first release
+   build with Google ML Kit** (the National ID scan, 2026-10-02): if R8 reports missing ML Kit
+   classes, the rules belong in `android/app/proguard-rules.pro`.
+5. **Scan a real National ID** at sign-up — a plastic PhilSys card and a printed ePhilID — and check
+   the form fills in (name, card number, birthday, address) and the ID reaches the admin review
+   queue. The reader was tuned on the printed layout, not on photos of real cards; report any field
+   it misreads so the parser can be adjusted.
 4. The National ID requirement ships **off** (master `PENDING_FIXES.md` → **H8**). Until an
    administrator turns it on in System Settings → Identity, the app's eligibility banner stays
    hidden and identity capture is optional — which is the intended state, not a gap.
