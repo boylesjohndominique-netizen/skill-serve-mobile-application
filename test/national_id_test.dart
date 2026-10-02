@@ -66,6 +66,26 @@ void main() {
       expect(id.address, 'PUROK 3, BALIBAGO, CITY OF STA. ROSA, LAGUNA');
     });
 
+    test('labels the camera misread on blurry print are still recognised', () {
+      final id = NationalIdParser.parseFront(
+        'Apelyldo/Lasl Name\nDELA CRUZ\nMga Pangalon/Given Nomes\nJUAN\nGitnang Apelyid0/Midle Name\nSANTOS\nPetsa ng Kapanganakan/Date of Blrth\nJANUARY 01, 1990\nTirahan/Adress\nQUEZON CITY',
+      );
+
+      expect(id.lastName, 'Dela Cruz');
+      expect(id.givenNames, 'Juan');
+      expect(id.middleName, 'Santos');
+      expect(id.birthdate, DateTime(1990, 1, 1));
+      expect(id.address, 'QUEZON CITY');
+    });
+
+    test('a value in capitals is never mistaken for a misread label', () {
+      // "ADDRESS" alone, in capitals, is a value here, not the label.
+      final id = NationalIdParser.parseFront('Apelyido/Last Name\nADRESS\nMga Pangalan/Given Names\nJUAN');
+
+      expect(id.lastName, 'Adress');
+      expect(id.givenNames, 'Juan');
+    });
+
     test('unreadable text gives an empty reading rather than guesses', () {
       final id = NationalIdParser.parseFront('blurry\n### ###\n');
 

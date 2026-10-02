@@ -48,7 +48,7 @@ class NationalIdParser {
 
       // "Last Name: DELA CRUZ" on one line, or the label alone with the
       // value on the next.
-      final sameLine = _withoutLabels(lines[i]);
+      final sameLine = _valueBesideLabel(lines[i]);
       final value = _hasContent(sameLine)
           ? sameLine
           : field == _Field.address
@@ -146,11 +146,71 @@ class NationalIdParser {
 
   static int? _month(String name) => _months[name.toLowerCase().substring(0, 3)];
 
+  /// Label words as letters only, for recognising a label the camera
+  /// misread ("Apelyldo", "Lasl Name"). Same order as [_labels].
+  static const List<(_Field, List<String>)> _fuzzyLabels = [
+    (_Field.ignored, ['lugarngkapanganakan', 'placeofbirth']),
+    (_Field.middleName, ['gitnangapelyido', 'middlename']),
+    (_Field.givenNames, ['mgapangalan', 'givennames']),
+    (_Field.lastName, ['apelyido', 'lastname']),
+    (_Field.birthdate, ['petsangkapanganakan', 'dateofbirth']),
+    (_Field.address, ['tirahan', 'address']),
+    (_Field.sex, ['kasarian']),
+  ];
+
   static _Field? _labelOf(String line) {
     for (final (field, pattern) in _labels) {
       if (pattern.hasMatch(line)) return field;
     }
+    // Blurry print: a label with a letter or two misread still counts. Only
+    // lines with lower-case letters are tried — labels are printed in mixed
+    // case, values in capitals, so a value is never taken for a label.
+    if (!RegExp(r'[a-z]').hasMatch(line)) return null;
+    final letters = line.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+    for (final (field, words) in _fuzzyLabels) {
+      for (final word in words) {
+        if (_containsApprox(letters, word, word.length >= 10 ? 2 : 1)) return field;
+      }
+    }
     return null;
+  }
+
+  /// Whether [text] holds [word] with at most [allowed] wrong letters.
+  static bool _containsApprox(String text, String word, int allowed) {
+    if (text.length < word.length - allowed) return false;
+    for (var start = 0; start + word.length - allowed <= text.length; start++) {
+      for (var length = word.length - allowed; length <= word.length + allowed; length++) {
+        if (start + length > text.length) break;
+        if (_distance(text.substring(start, start + length), word) <= allowed) return true;
+      }
+    }
+    return false;
+  }
+
+  static int _distance(String a, String b) {
+    var previous = List<int>.generate(b.length + 1, (i) => i);
+    for (var i = 1; i <= a.length; i++) {
+      final current = List<int>.filled(b.length + 1, 0)..[0] = i;
+      for (var j = 1; j <= b.length; j++) {
+        final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+        current[j] = [previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost].reduce((x, y) => x < y ? x : y);
+      }
+      previous = current;
+    }
+    return previous[b.length];
+  }
+
+  /// A value printed on the label's own line ("Last Name: DELA CRUZ"). The
+  /// card prints values in capitals and labels in mixed case, so only the
+  /// trailing words without lower-case letters count — leftover words of a
+  /// misread label ("Apelyldo Lasl Name") are not taken for a value.
+  static String _valueBesideLabel(String line) {
+    final words = _withoutLabels(line).split(' ');
+    var start = words.length;
+    while (start > 0 && !RegExp(r'[a-z]').hasMatch(words[start - 1])) {
+      start--;
+    }
+    return words.sublist(start).join(' ').trim();
   }
 
   static String _withoutLabels(String line) {

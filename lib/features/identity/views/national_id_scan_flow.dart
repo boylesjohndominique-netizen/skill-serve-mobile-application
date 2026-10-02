@@ -1,5 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -8,24 +10,30 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../controllers/identity_controller.dart';
 import '../models/identity_verification_model.dart';
 import '../models/scanned_national_id.dart';
+import '../services/national_id_camera.dart';
 import '../services/national_id_parser.dart';
 import '../services/national_id_reader.dart';
 
-/// Takes a photo of the camera, or null when the user backs out.
-typedef TakePhoto = Future<XFile?> Function();
-
-/// Sign-up's first step: photograph the front of the National ID, then —
-/// without being asked — the back, and read both on the phone.
+/// Sign-up's first step: scan the front of the National ID, then — without
+/// being asked — the back, and read both on the phone.
 ///
-/// The two photos are kept in [IdentityController] so they can be submitted
+/// The camera is ML Kit's Document Scanner ([captureNationalIdPhoto]), which
+/// finds and captures the card by itself. Reading never blocks: a side that
+/// cannot be read is still kept, and only when nothing at all was read is the
+/// user offered a retake or typing the details.
+///
+/// The two images are kept in [IdentityController] so they can be submitted
 /// for review once the account exists; what was read is handed to
 /// [onComplete] to fill the sign-up form, where the user confirms it.
 class NationalIdScanFlow extends StatefulWidget {
-  const NationalIdScanFlow({super.key, required this.onComplete, this.reader, this.takePhoto});
+  const NationalIdScanFlow({super.key, required this.onComplete, this.reader, this.capturePhoto, this.readFile});
 
   final ValueChanged<ScannedNationalId> onComplete;
   final NationalIdReader? reader;
-  final TakePhoto? takePhoto;
+  final CaptureIdPhoto? capturePhoto;
+
+  /// Reads a captured image; the file system unless a test supplies bytes.
+  final Future<Uint8List> Function(String path)? readFile;
 
   @override
   State<NationalIdScanFlow> createState() => _NationalIdScanFlowState();
@@ -37,7 +45,15 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
   late final NationalIdReader _reader = widget.reader ?? MlKitNationalIdReader();
   _Side _side = _Side.front;
   bool _reading = false;
+
+  /// What the front said, and any QR printed on it (the paper ePhilID has
+  /// its QR on the front).
   ScannedNationalId _front = ScannedNationalId.empty;
+  List<String> _frontQr = const [];
+
+  /// Why the last read failed, shown if nothing could be read so the user
+  /// can report it.
+  String? _lastError;
 
   @override
   void dispose() {
@@ -45,27 +61,25 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
     super.dispose();
   }
 
-  Future<XFile?> _photo() => widget.takePhoto != null
-      ? widget.takePhoto!()
-      : ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 85, maxWidth: 2400);
-
   Future<void> _capture() async {
     final identity = context.read<IdentityController>();
-    XFile? file;
+    final side = _side;
+
+    String? path;
     try {
-      file = await _photo();
-    } catch (_) {
-      if (mounted) AppSnackbar.error(context, 'The camera could not be opened.');
+      path = await (widget.capturePhoto ?? captureNationalIdPhoto)();
+    } catch (e) {
+      if (mounted) AppSnackbar.error(context, 'The camera could not be opened. (${_describe(e)})');
       return;
     }
-    if (file == null || !mounted) return;
+    if (path == null || !mounted) return;
 
-    final bytes = await file.readAsBytes();
+    final bytes = await (widget.readFile ?? (String p) => File(p).readAsBytes())(path);
     if (!mounted) return;
-    final name = file.name.contains('.') ? file.name : '${file.name}.jpg';
+    final base = path.split(RegExp(r'[/\\]')).last;
     final error = identity.capture(PendingIdentityDocument(
-      type: _side == _Side.front ? PendingIdentityDocument.frontType : PendingIdentityDocument.backType,
-      fileName: name,
+      type: side == _Side.front ? PendingIdentityDocument.frontType : PendingIdentityDocument.backType,
+      fileName: base.contains('.') ? base : '$base.jpg',
       bytes: bytes,
     ));
     if (error != null) {
@@ -74,42 +88,64 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
     }
 
     setState(() => _reading = true);
+    var text = ScannedNationalId.empty;
+    var qr = const <String>[];
     try {
-      if (_side == _Side.front) {
-        _front = NationalIdParser.parseFront(await _reader.readText(file.path));
-        if (!mounted) return;
-        // Straight on to the back: the user never has to ask for it.
+      text = NationalIdParser.parseFront(await _reader.readText(path));
+      qr = await _reader.readQrCodes(path);
+    } catch (e, stack) {
+      // A side that cannot be read is not the end: the image is kept and the
+      // flow carries on.
+      debugPrint('[NationalId] reading the ${side.name} failed: $e\n$stack');
+      _lastError = _describe(e);
+    }
+    if (!mounted) return;
+
+    if (side == _Side.front) {
+      _front = text;
+      _frontQr = qr;
+      setState(() {
+        _side = _Side.back;
+        _reading = false;
+      });
+      _openBackScanner();
+      return;
+    }
+
+    // The front's text outranks what is printed on the back; the QR code,
+    // being machine-written, outranks both. The address is only on the front.
+    var scanned = text.overriddenBy(_front);
+    for (final code in [..._frontQr, ...qr]) {
+      scanned = scanned.overriddenBy(NationalIdParser.parseQr(code));
+    }
+    setState(() => _reading = false);
+
+    if (scanned.isEmpty) {
+      final retake = await _askToRetake();
+      if (!mounted) return;
+      if (retake) {
         setState(() {
-          _side = _Side.back;
-          _reading = false;
+          _side = _Side.front;
+          _lastError = null;
         });
         return;
       }
-
-      // The QR code is machine-written, so what it says corrects what the
-      // camera read off the front; the address is only on the front.
-      var scanned = _front;
-      for (final code in await _reader.readQrCodes(file.path)) {
-        scanned = scanned.overriddenBy(NationalIdParser.parseQr(code));
-      }
-      if (!mounted) return;
-      setState(() => _reading = false);
-
-      if (scanned.isEmpty) {
-        final retake = await _askToRetake();
-        if (!mounted) return;
-        if (retake) {
-          setState(() => _side = _Side.front);
-          return;
-        }
-      }
-      identity.setScanned(scanned);
-      widget.onComplete(scanned);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _reading = false);
-      AppSnackbar.error(context, 'Your ID could not be read. Try again with the whole card in frame.');
     }
+    identity.setScanned(scanned);
+    widget.onComplete(scanned);
+  }
+
+  /// Opens the scanner for the back by itself, a moment after the front is
+  /// read, so the user only has to turn the card over.
+  void _openBackScanner() {
+    Future<void>.delayed(const Duration(milliseconds: 900), () {
+      if (mounted && _side == _Side.back && !_reading) _capture();
+    });
+  }
+
+  static String _describe(Object error) {
+    final text = error is PlatformException ? '${error.code}: ${error.message ?? ''}' : '$error';
+    return text.length > 140 ? '${text.substring(0, 140)}…' : text;
   }
 
   Future<bool> _askToRetake() async {
@@ -117,8 +153,9 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('We could not read your ID'),
-        content: const Text(
-          'Retake the photos in good light with the whole card in frame, or continue and type your details.',
+        content: Text(
+          'Retake them in good light, or continue and type your details.'
+          '${_lastError == null ? '' : '\n\nDetails: $_lastError'}',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Type them instead')),
@@ -146,8 +183,8 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
         const SizedBox(height: 8),
         Text(
           front
-              ? 'Your PhilSys card or printed ePhilID. Your name, birthday and address are filled in from it.'
-              : 'Turn the card over. Keep the QR code sharp and fully in frame.',
+              ? 'Your PhilSys card or printed ePhilID. Hold it inside the frame — it is found and captured automatically. Your name, birthday and address are filled in from it.'
+              : 'Turn the card over. The scanner opens by itself; keep the QR code in view.',
           style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
         ),
         const SizedBox(height: 20),
@@ -172,14 +209,14 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
         const _Tips(),
         const SizedBox(height: 20),
         PrimaryButton(
-          label: front ? 'Take photo of the front' : 'Take photo of the back',
+          label: front ? 'Scan the front' : 'Scan the back',
           isLoading: _reading,
           onPressed: _reading ? null : _capture,
         ),
         if (!front && !_reading)
           TextButton(
             onPressed: () => setState(() => _side = _Side.front),
-            child: const Text('Retake the front'),
+            child: const Text('Scan the front again'),
           ),
       ],
     );

@@ -63,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Front of your National ID'), findsOneWidget);
-    expect(find.text('Take photo of the front'), findsOneWidget);
+    expect(find.text('Scan the front'), findsOneWidget);
     expect(find.text('Create my account'), findsNothing);
   });
 
