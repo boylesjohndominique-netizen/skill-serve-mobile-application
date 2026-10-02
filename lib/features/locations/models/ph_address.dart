@@ -105,6 +105,19 @@ class PhAddress {
     );
   }
 
+  /// The same shape [fromJson] reads, for caching a stored address.
+  Map<String, dynamic> toJson() {
+    Map<String, String>? place(PhPlace? p) => p == null ? null : {'code': p.code, 'name': p.name};
+    return {
+      'region': place(region),
+      'province': place(province),
+      'city': place(city),
+      'barangay': place(barangay),
+      'street': street.isEmpty ? null : street,
+      'postal_code': postalCode.isEmpty ? null : postalCode,
+    };
+  }
+
   PhAddress copyWith({String? street, String? postalCode}) => PhAddress(
         region: region,
         province: province,

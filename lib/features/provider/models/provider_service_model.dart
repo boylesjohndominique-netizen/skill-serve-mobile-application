@@ -1,3 +1,4 @@
+import '../../locations/models/ph_address.dart';
 import 'commission_model.dart';
 
 /// A provider's own service as returned by
@@ -14,6 +15,10 @@ class ProviderServiceModel {
   final String priceType; // fixed | hourly | custom
   final String duration;
   final String location;
+
+  /// [location] as a city or municipality (and optionally a barangay), to
+  /// pre-fill the picker; null when only free text was ever entered.
+  final PhAddress? locationDetails;
   final String status; // draft | published | archived
   final String approvalStatus; // pending | approved | rejected
   final String? rejectionReason;
@@ -36,6 +41,7 @@ class ProviderServiceModel {
     required this.priceType,
     required this.duration,
     required this.location,
+    this.locationDetails,
     required this.status,
     required this.approvalStatus,
     this.rejectionReason,
@@ -67,6 +73,7 @@ class ProviderServiceModel {
       priceType: json['price_type'] as String? ?? 'fixed',
       duration: json['duration'] as String? ?? '',
       location: json['location'] as String? ?? '',
+      locationDetails: PhAddress.fromJson(json['location_details']),
       status: json['status'] as String? ?? 'draft',
       approvalStatus: json['approval_status'] as String? ?? 'pending',
       rejectionReason: json['rejection_reason'] as String?,

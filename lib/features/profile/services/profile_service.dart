@@ -32,6 +32,7 @@ class ProfileService {
     String? lastName,
     String? phone,
     String? address,
+    Map<String, dynamic>? addressDetails,
     String? profilePicture,
     bool clearProfilePicture = false,
   }) async {
@@ -40,7 +41,9 @@ class ProfileService {
       if (firstName != null) 'first_name': firstName,
       if (lastName != null) 'last_name': lastName,
       if (phone != null) 'phone': phone,
-      if (address != null) 'address': address,
+      // The structured address replaces the free text, which the API then
+      // writes from it.
+      if (addressDetails != null) 'address_details': addressDetails else if (address != null) 'address': address,
     });
     var user = UserModel.fromJson(response.data['data'] as Map<String, dynamic>);
 

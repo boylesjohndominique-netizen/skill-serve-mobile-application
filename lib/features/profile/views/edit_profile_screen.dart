@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../locations/models/ph_address.dart';
+import '../../locations/widgets/ph_address_picker.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
@@ -29,7 +32,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
   late final TextEditingController _phone;
-  late final TextEditingController _address;
+  late PhAddress _address;
+
+  /// A free-text address saved before the picker existed, shown so the user
+  /// knows what to pick.
+  String? _legacyAddress;
   bool _saving = false;
   String? _selectedPhoto;
   bool _removePhoto = false;
@@ -41,7 +48,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _firstName = TextEditingController(text: user?.firstName);
     _lastName = TextEditingController(text: user?.lastName);
     _phone = TextEditingController(text: user?.phone);
-    _address = TextEditingController(text: user?.address);
+    _address = user?.addressDetails ?? PhAddress.empty;
+    final text = user?.address.trim() ?? '';
+    _legacyAddress = user?.addressDetails == null && text.isNotEmpty ? text : null;
+  }
+
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    _phone.dispose();
+    super.dispose();
   }
 
   Future<void> _save() async {
@@ -56,7 +73,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         firstName: _firstName.text.trim(),
         lastName: _lastName.text.trim(),
         phone: _phone.text.trim(),
-        address: _address.text.trim(),
+        addressDetails: _address.toDoorJson(),
         profilePicture: _selectedPhoto,
         clearProfilePicture: _removePhoto,
       );
@@ -167,16 +184,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     .fadeIn(delay: 180.ms, duration: 350.ms)
                     .slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
-                AppTextField(
-                  label: 'Address',
-                  controller: _address,
-                  prefixIcon: AppIcons.location_on_outlined,
-                  validator: Validators.required,
-                  enabled: !_saving,
-                )
+                Text('Address', style: AppTextStyles.titleMedium)
                     .animate()
-                    .fadeIn(delay: 260.ms, duration: 350.ms)
-                    .slideY(begin: 0.06, end: 0),
+                    .fadeIn(delay: 260.ms, duration: 350.ms),
+                if (_legacyAddress != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Saved before: $_legacyAddress. Choose it below so bookings and providers can find you.',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                  ),
+                ],
+                const SizedBox(height: AppSizes.md),
+                PhAddressPicker(
+                  initial: _address,
+                  enabled: !_saving,
+                  onChanged: (address) => _address = address,
+                ).animate().fadeIn(delay: 260.ms, duration: 350.ms),
                 const SizedBox(height: AppSizes.xxl),
                 PrimaryButton(
                         label: 'Save changes',

@@ -1,3 +1,4 @@
+import '../../locations/models/ph_address.dart';
 /// Mirrors the `users` table. Shared by both Client and Provider accounts;
 /// [UserRole] narrows behavior across the app.
 enum UserRole { guest, client, provider, admin }
@@ -10,6 +11,10 @@ class UserModel {
   final String email;
   final String phone;
   final String address;
+
+  /// [address] as Region → Province → City → Barangay, to pre-fill the
+  /// picker; null when only free text was ever entered.
+  final PhAddress? addressDetails;
   final String? profilePicture;
   final String status;
   final DateTime createdAt;
@@ -28,6 +33,7 @@ class UserModel {
     required this.email,
     this.phone = '',
     this.address = '',
+    this.addressDetails,
     this.profilePicture,
     this.status = 'active',
     required this.createdAt,
@@ -46,6 +52,8 @@ class UserModel {
     String? lastName,
     String? phone,
     String? address,
+    PhAddress? addressDetails,
+    bool clearAddressDetails = false,
     String? profilePicture,
     bool clearProfilePicture = false,
     String? status,
@@ -58,6 +66,7 @@ class UserModel {
         email: email,
         phone: phone ?? this.phone,
         address: address ?? this.address,
+        addressDetails: clearAddressDetails ? null : addressDetails ?? this.addressDetails,
         profilePicture:
             clearProfilePicture ? null : profilePicture ?? this.profilePicture,
         status: status ?? this.status,
@@ -80,6 +89,7 @@ class UserModel {
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
       address: json['address'] as String? ?? '',
+      addressDetails: PhAddress.fromJson(json['address_details']),
       profilePicture: json['profile_picture'] as String?,
       status: json['status'] as String? ?? 'active',
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
@@ -126,6 +136,7 @@ class UserModel {
         'email': email,
         'phone': phone,
         'address': address,
+        'address_details': addressDetails?.toJson(),
         'profile_picture': profilePicture,
         'status': status,
         'created_at': createdAt.toIso8601String(),

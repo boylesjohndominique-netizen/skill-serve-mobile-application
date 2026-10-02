@@ -12,6 +12,8 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../locations/models/ph_address.dart';
+import '../../locations/widgets/ph_address_picker.dart';
 import '../models/commission_model.dart';
 import '../models/provider_service_model.dart';
 import '../services/commission_service.dart';
@@ -38,7 +40,7 @@ class _ServiceFormState extends State<ServiceForm> {
   late final _description = TextEditingController(text: widget.existing?.description);
   late final _price = TextEditingController(text: widget.existing?.price.toStringAsFixed(0));
   late final _duration = TextEditingController(text: widget.existing?.duration);
-  late final _location = TextEditingController(text: widget.existing?.location);
+  late PhAddress _area = widget.existing?.locationDetails ?? PhAddress.empty;
 
   List<ServiceCategoryOption> _categories = [];
   bool _loadingCategories = true;
@@ -66,7 +68,7 @@ class _ServiceFormState extends State<ServiceForm> {
   @override
   void dispose() {
     _previewTimer?.cancel();
-    for (final controller in [_title, _description, _price, _duration, _location]) {
+    for (final controller in [_title, _description, _price, _duration]) {
       controller.dispose();
     }
     super.dispose();
@@ -141,7 +143,8 @@ class _ServiceFormState extends State<ServiceForm> {
       'price': double.parse(_price.text.trim()),
       'price_type': _priceType,
       'duration': _duration.text.trim().isEmpty ? null : _duration.text.trim(),
-      'location': _location.text.trim().isEmpty ? null : _location.text.trim(),
+      // The area as codes; the API writes the readable `location` from it.
+      'location_details': _area.toAreaJson(),
     });
   }
 
@@ -250,13 +253,21 @@ class _ServiceFormState extends State<ServiceForm> {
             _CommissionSplitNote(split: _split!, perHour: _priceType == 'hourly'),
           ],
           const SizedBox(height: AppSizes.lg),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: AppTextField(label: 'Duration', hint: 'e.g. 2 hours', controller: _duration)),
-              const SizedBox(width: AppSizes.md),
-              Expanded(child: AppTextField(label: 'Location', hint: 'e.g. Quezon City', controller: _location)),
-            ],
+          AppTextField(label: 'Duration', hint: 'e.g. 2 hours', controller: _duration),
+          const SizedBox(height: AppSizes.lg),
+          Text('Where you offer this service', style: labelStyle),
+          const SizedBox(height: 6),
+          if (widget.existing != null && widget.existing!.locationDetails == null && widget.existing!.location.isNotEmpty) ...[
+            Text(
+              'Saved before: ${widget.existing!.location}. Choose it below.',
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutral300),
+            ),
+            const SizedBox(height: 6),
+          ],
+          PhAddressPicker(
+            initial: _area,
+            door: false,
+            onChanged: (area) => _area = area,
           ),
           const SizedBox(height: AppSizes.lg),
           AppTextField(

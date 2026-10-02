@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../locations/models/ph_address.dart';
+import '../../locations/widgets/ph_address_picker.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -52,7 +54,8 @@ class BookingFormScreen extends StatefulWidget {
 class _BookingFormScreenState extends State<BookingFormScreen> {
   final _bookingService = BookingService();
   late final TextEditingController _phoneController;
-  late final TextEditingController _addressController;
+  /// Where the provider should go: starts from the customer's saved address.
+  late PhAddress _address;
   final _notesController = TextEditingController();
 
   /// The signed-in customer's name, shown on the review step. It is not sent:
@@ -84,14 +87,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     final user = auth.currentUser;
     _clientName = user?.fullName ?? '';
     _phoneController = TextEditingController(text: user?.phone ?? '');
-    _addressController = TextEditingController(text: user?.address ?? '');
+    _address = user?.addressDetails ?? PhAddress.empty;
     _load();
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _addressController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -145,8 +147,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       case 1:
         return _slotMinutes != null;
       case 2:
-        return Validators.phone(_phoneController.text) == null &&
-            _addressController.text.trim().isNotEmpty;
+        return Validators.phone(_phoneController.text) == null && _address.hasBarangay;
       default:
         return true;
     }
@@ -196,7 +197,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         scheduledDate: BookingSlots.at(_date, slot),
         notes: _notesController.text.trim(),
         paymentMethod: _paymentMethod,
-        serviceAddress: _addressController.text.trim(),
+        serviceAddressDetails: _address.toDoorJson(),
         contactPhone: _phoneController.text.trim(),
         idempotencyKey: _idempotencyKey,
       );
@@ -374,11 +375,11 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           validator: Validators.phone,
         ),
         const SizedBox(height: AppSizes.lg),
-        AppTextField(
-          label: 'Service address',
-          hint: 'Where should the provider go?',
-          controller: _addressController,
-          prefixIcon: AppIcons.location_on_outlined,
+        Text('Service address', style: AppTextStyles.titleMedium),
+        const SizedBox(height: AppSizes.md),
+        PhAddressPicker(
+          initial: _address,
+          onChanged: (address) => setState(() => _address = address),
         ),
         const SizedBox(height: AppSizes.lg),
         AppTextField(
@@ -442,7 +443,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
                   '${Formatters.dateShort(_date)} · ${BookingSlots.label(_slotMinutes!)}'),
               _summaryRow(AppIcons.person_outline_rounded, 'Client', _clientName),
               _summaryRow(AppIcons.phone_outlined, 'Phone', _phoneController.text.trim()),
-              _summaryRow(AppIcons.location_on_outlined, 'Address', _addressController.text.trim()),
+              _summaryRow(AppIcons.location_on_outlined, 'Address', _address.formatted),
               _summaryRow(AppIcons.account_balance_wallet_rounded, 'Payment',
                   BookingModel.paymentMethodLabel(_paymentMethod)),
             ],

@@ -50,6 +50,7 @@ class BookingService {
     String? notes,
     String? paymentMethod,
     String? serviceAddress,
+    Map<String, dynamic>? serviceAddressDetails,
     String? contactPhone,
     String? idempotencyKey,
   }) async {
@@ -61,7 +62,11 @@ class BookingService {
         if (scheduledEndDate != null) 'scheduled_end_date': BookingModel.apiDateTime(scheduledEndDate),
         if (notes != null && notes.isNotEmpty) 'client_notes': notes,
         if (paymentMethod != null) 'payment_method': paymentMethod,
-        if (serviceAddress != null && serviceAddress.isNotEmpty) 'service_address': serviceAddress,
+        // The structured address; the API writes service_address from it.
+        if (serviceAddressDetails != null)
+          'service_address_details': serviceAddressDetails
+        else if (serviceAddress != null && serviceAddress.isNotEmpty)
+          'service_address': serviceAddress,
         if (contactPhone != null && contactPhone.isNotEmpty) 'contact_phone': contactPhone,
       },
       options: idempotencyKey == null
