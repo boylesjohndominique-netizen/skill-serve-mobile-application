@@ -34,11 +34,19 @@ class AppTheme {
     required Color line,
   }) {
     final isDark = brightness == Brightness.dark;
+    // Lime reads on dark surfaces but not on light ones (1.3:1), so anything
+    // drawn *in* the accent colour — text buttons, focus rings, spinners, the
+    // selected tab — uses the deep olive in light mode. Lime fills behind
+    // charcoal text (buttons, chips) stay lime in both.
+    final accentInk = isDark ? AppColors.secondary : AppColors.secondaryInk;
+    final muted = isDark ? AppColors.textMutedDark : AppColors.textMuted;
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: AppColors.secondary,
-      onPrimary: AppColors.primary,
+      // Material draws `primary` as a foreground in many places (cursor,
+      // focused labels, date pickers, sliders), so it is the readable accent.
+      primary: accentInk,
+      onPrimary: isDark ? AppColors.primary : Colors.white,
       secondary: AppColors.secondary,
       onSecondary: AppColors.primary,
       error: AppColors.error,
@@ -117,9 +125,9 @@ class AppTheme {
       ),
 
       textSelectionTheme: TextSelectionThemeData(
-        cursorColor: AppColors.secondary,
-        selectionColor: AppColors.secondary.withValues(alpha: 0.25),
-        selectionHandleColor: AppColors.secondary,
+        cursorColor: accentInk,
+        selectionColor: AppColors.secondary.withValues(alpha: isDark ? 0.25 : 0.45),
+        selectionHandleColor: accentInk,
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -137,15 +145,20 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.secondary,
+          foregroundColor: accentInk,
+          disabledForegroundColor: muted,
           textStyle: AppTextStyles.button,
         ),
       ),
 
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.secondary,
-        linearTrackColor: AppColors.secondarySoft,
-        circularTrackColor: AppColors.secondarySoft,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accentInk,
+        linearTrackColor: isDark ? AppColors.surfaceAltDark : AppColors.secondarySoft,
+        circularTrackColor: isDark ? AppColors.surfaceAltDark : AppColors.secondarySoft,
+      ),
+
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(foregroundColor: onSurface),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
@@ -153,9 +166,11 @@ class AppTheme {
         fillColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: isDark ? AppColors.textMutedDark : AppColors.textMuted,
-        ),
+        hintStyle: AppTextStyles.bodyMedium.copyWith(color: muted),
+        labelStyle: AppTextStyles.bodyMedium.copyWith(color: muted),
+        floatingLabelStyle: AppTextStyles.bodyMedium.copyWith(color: accentInk),
+        prefixIconColor: muted,
+        suffixIconColor: muted,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
           borderSide: BorderSide.none,
@@ -166,7 +181,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          borderSide: const BorderSide(color: AppColors.secondary, width: 1.6),
+          borderSide: BorderSide(color: accentInk, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -177,8 +192,8 @@ class AppTheme {
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: surface,
-        selectedItemColor: AppColors.secondary,
-        unselectedItemColor: AppColors.neutral300,
+        selectedItemColor: accentInk,
+        unselectedItemColor: muted,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -188,9 +203,9 @@ class AppTheme {
 
       // ── Tab bar theme — rounded pill indicator ──
       tabBarTheme: TabBarThemeData(
-        indicatorColor: AppColors.secondary,
+        indicatorColor: accentInk,
         labelColor: isDark ? Colors.white : AppColors.textPrimary,
-        unselectedLabelColor: AppColors.textMuted,
+        unselectedLabelColor: muted,
         labelStyle: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
         unselectedLabelStyle: AppTextStyles.label,
         indicatorSize: TabBarIndicatorSize.label,
@@ -199,8 +214,8 @@ class AppTheme {
             AppColors.secondary.withValues(alpha: 0.08)),
         indicator: BoxDecoration(
           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-          border: const Border(
-            bottom: BorderSide(color: AppColors.secondary, width: 2.5),
+          border: Border(
+            bottom: BorderSide(color: accentInk, width: 2.5),
           ),
         ),
       ),
@@ -210,7 +225,9 @@ class AppTheme {
             isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
         selectedColor: AppColors.secondary,
         checkmarkColor: AppColors.primary,
-        labelStyle: AppTextStyles.label,
+        // Charcoal on the lime of a selected chip, the theme text otherwise.
+        labelStyle: AppTextStyles.label.copyWith(color: onSurface),
+        secondaryLabelStyle: AppTextStyles.label.copyWith(color: AppColors.primary),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
@@ -221,11 +238,11 @@ class AppTheme {
       // ── Switch theme ──
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return Colors.white;
-          return isDark ? AppColors.neutral300 : AppColors.neutral200;
+          if (states.contains(WidgetState.selected)) return isDark ? AppColors.primary : Colors.white;
+          return AppColors.neutral300;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return AppColors.secondary;
+          if (states.contains(WidgetState.selected)) return accentInk;
           return isDark ? AppColors.surfaceAltDark : AppColors.neutral100;
         }),
         trackOutlineColor: WidgetStateProperty.resolveWith((states) {
@@ -238,27 +255,33 @@ class AppTheme {
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? AppColors.secondary
+              ? accentInk
               : AppColors.neutral300,
         ),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? AppColors.secondary
+              ? accentInk
               : Colors.transparent,
         ),
-        checkColor: const WidgetStatePropertyAll(AppColors.primary),
+        checkColor: WidgetStatePropertyAll(isDark ? AppColors.primary : Colors.white),
         side: const BorderSide(color: AppColors.neutral300, width: 1.6),
       ),
 
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.primary,
+        // Charcoal would vanish into the dark background.
+        backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.primary,
         contentTextStyle: AppTextStyles.onDark(AppTextStyles.bodyMedium),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
         ),
+      ),
+
+      listTileTheme: ListTileThemeData(
+        iconColor: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+        textColor: onSurface,
       ),
 
       bottomSheetTheme: BottomSheetThemeData(

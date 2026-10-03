@@ -28,6 +28,7 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
 import 'widgets/discovery_filter_sheet.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Client's primary landing tab — the SkillServe "Discover" experience:
 /// hero, category chips, featured strip, and a 2-column provider grid.
@@ -109,7 +110,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.secondary,
+          color: context.accentInk,
           onRefresh: _refresh,
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad, vertical: AppSizes.lg),
@@ -187,7 +188,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       ),
                       TextButton(
                         onPressed: () => context.push('/booking-details/${upcoming.first.id}'),
-                        child: Text('View', style: AppTextStyles.button.copyWith(color: AppColors.secondary)),
+                        child: Text('View', style: AppTextStyles.button.copyWith(color: context.accentInk)),
                       ),
                     ],
                   ),
@@ -528,7 +529,7 @@ class _CategoryChipState extends State<_CategoryChip> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppIcon(widget.icon, size: 15, color: widget.selected ? AppColors.primary : AppColors.secondary),
+              AppIcon(widget.icon, size: 15, color: widget.selected ? AppColors.primary : context.accentInk),
               const SizedBox(width: 6),
               Text(
                 widget.label,
@@ -721,9 +722,9 @@ class _GridProviderCard extends StatelessWidget {
                         ),
                       ),
                       if (provider.isVerified)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 3),
-                          child: AppIcon(AppIcons.verified_rounded, size: 14, color: AppColors.secondary),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3),
+                          child: AppIcon(AppIcons.verified_rounded, size: 14, color: context.accentInk),
                         ),
                     ],
                   ),
@@ -731,7 +732,7 @@ class _GridProviderCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const AppIcon(AppIcons.star_rounded, size: 12, color: AppColors.star),
+                      AppIcon(AppIcons.star_rounded, size: 12, color: context.starColor),
                       const SizedBox(width: 2),
                       Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(width: 6),
@@ -748,7 +749,7 @@ class _GridProviderCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'From ${Formatters.peso(provider.startingPrice ?? 0)}',
-                    style: AppTextStyles.monoSm.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.monoSm.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 6),
                   SizedBox(

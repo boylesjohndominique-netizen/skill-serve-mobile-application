@@ -19,6 +19,7 @@ import 'verification_status_screen.dart';
 import 'verification_upload_panel.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// P2 — Provider onboarding & verification gate.
 /// Step 1: professional profile · Step 2: upload documents ·
@@ -229,19 +230,19 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
               IconButton(
                 onPressed: _yearsExperience > 1 ? () => setState(() => _yearsExperience--) : null,
                 icon: const AppIcon(AppIcons.remove_circle_outline_rounded),
-                color: AppColors.secondary,
+                color: context.accentInk,
               ),
               Expanded(
                 child: Text(
                   '$_yearsExperience ${_yearsExperience == 1 ? 'year' : 'years'}',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary),
+                  style: AppTextStyles.monoLg.copyWith(color: context.accentInk),
                 ),
               ),
               IconButton(
                 onPressed: () => setState(() => _yearsExperience++),
                 icon: const AppIcon(AppIcons.add_circle_outline_rounded),
-                color: AppColors.secondary,
+                color: context.accentInk,
               ),
             ],
           ),
@@ -361,7 +362,7 @@ class _OnboardStepper extends StatelessWidget {
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: i <= current ? AppColors.secondary : AppColors.neutral100,
+                    color: i <= current ? context.accentInk : AppColors.neutral100,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -383,7 +384,7 @@ class _OnboardStepper extends StatelessWidget {
                         : Text(
                             '${i + 1}',
                             style: AppTextStyles.label.copyWith(
-                              color: i <= current ? AppColors.primary : AppColors.textMuted,
+                              color: i <= current ? AppColors.primary : context.textMutedColor,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -391,7 +392,7 @@ class _OnboardStepper extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(names[i], style: AppTextStyles.caption.copyWith(
-                  color: i <= current ? AppColors.secondary : AppColors.textMuted,
+                  color: i <= current ? context.accentInk : context.textMutedColor,
                   fontWeight: i == current ? FontWeight.w700 : FontWeight.w500,
                 )),
               ],

@@ -18,6 +18,7 @@ import '../../../core/widgets/misc/status_badge.dart';
 import '../models/report_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Everything the account has escalated: complaints about people, and disputes
 /// about jobs. They are separate cases with separate lifecycles, so the screen
@@ -385,7 +386,7 @@ class _EvidenceStrip extends StatelessWidget {
           TextButton(
             onPressed: submitting ? null : () => _addPhoto(context),
             child: Text(submitting ? 'Uploading…' : 'Add photo',
-                style: AppTextStyles.label.copyWith(color: AppColors.secondary)),
+                style: AppTextStyles.label.copyWith(color: context.accentInk)),
           ),
       ],
     );

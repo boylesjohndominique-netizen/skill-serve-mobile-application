@@ -8,6 +8,7 @@ import '../misc/rating_widget.dart';
 import '../misc/app_avatar.dart';
 import '../misc/app_icon.dart';
 import '../../constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Single review entry used on Provider Profile and the provider's own
 /// Reviews screen. Features soft shadow and dark-mode-aware colors.
@@ -60,7 +61,7 @@ class ReviewCard extends StatelessWidget {
                   tooltip: 'Report review',
                   visualDensity: VisualDensity.compact,
                   onPressed: onReport,
-                  icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
+                  icon: AppIcon(AppIcons.flag_outlined, size: 16, color: context.textMutedColor),
                 ),
             ],
           ),

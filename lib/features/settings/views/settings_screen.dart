@@ -15,6 +15,7 @@ import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Client's Profile / Settings tab. Reused as a template pattern for the
 /// Provider settings screen (see provider/settings_screen.dart).
@@ -359,7 +360,7 @@ class _Tile extends StatelessWidget {
       trailing: danger
           ? null
           : AppIcon(AppIcons.chevron_right_rounded,
-              color: isDark ? AppColors.neutral400 : AppColors.neutral300),
+              color: context.textMutedColor),
       onTap: onTap,
     );
   }

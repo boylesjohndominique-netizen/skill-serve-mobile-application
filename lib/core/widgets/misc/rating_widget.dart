@@ -4,6 +4,7 @@ import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Compact star rating display used across provider cards, reviews, and
 /// booking summaries. Read-only — no interactive rating input needed here.
@@ -20,7 +21,7 @@ class RatingWidget extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppIcon(AppIcons.star_rounded, size: size, color: AppColors.star)
+        AppIcon(AppIcons.star_rounded, size: size, color: context.starColor)
             .animate()
             .shimmer(duration: 800.ms, delay: 200.ms, color: AppColors.secondaryLight.withValues(alpha: 0.5)),
         const SizedBox(width: 3),

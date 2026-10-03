@@ -16,6 +16,7 @@ import '../../../core/widgets/misc/rating_widget.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The reviews this customer has written, each one editable.
 class MyReviewsScreen extends StatefulWidget {
@@ -139,10 +140,10 @@ class _MyReviewCard extends StatelessWidget {
               if (review.bookingId.isNotEmpty)
                 TextButton.icon(
                   onPressed: () => context.push('/write-review/${review.bookingId}'),
-                  icon: const AppIcon(AppIcons.edit_outlined,
-                      size: 15, color: AppColors.secondary),
+                  icon: AppIcon(AppIcons.edit_outlined,
+                      size: 15, color: context.accentInk),
                   label: Text('Edit',
-                      style: AppTextStyles.label.copyWith(color: AppColors.secondary)),
+                      style: AppTextStyles.label.copyWith(color: context.accentInk)),
                 ),
             ],
           ),

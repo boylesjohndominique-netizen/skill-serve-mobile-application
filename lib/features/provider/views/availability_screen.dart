@@ -13,6 +13,7 @@ import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../models/provider_availability_model.dart';
 import '../services/provider_service_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The provider's weekly hours: which days they work, between which times,
 /// and whether they are taking new bookings at all.
@@ -306,7 +307,7 @@ class _TimeButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const AppIcon(AppIcons.schedule_rounded, size: 15, color: AppColors.secondary),
+              AppIcon(AppIcons.schedule_rounded, size: 15, color: context.accentInk),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(

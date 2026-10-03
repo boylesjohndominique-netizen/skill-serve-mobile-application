@@ -14,6 +14,7 @@ import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../notifications/models/notification_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 const Map<NotificationType, AppIconData> _typeIcons = {
   NotificationType.booking: AppIcons.calendar_month_rounded,
@@ -93,7 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             TextButton(
               onPressed: _markAllRead,
               child: Text('Mark all read',
-                  style: AppTextStyles.label.copyWith(color: AppColors.secondary)),
+                  style: AppTextStyles.label.copyWith(color: context.accentInk)),
             ),
         ],
       ),
@@ -243,8 +244,8 @@ class _NotificationRow extends StatelessWidget {
                     .scaleXY(begin: 1.0, end: 1.3, duration: 1200.ms, curve: Curves.easeInOut)
               // A chevron only where there is somewhere to go.
               else if (opens)
-                const AppIcon(AppIcons.chevron_right_rounded,
-                    size: 16, color: AppColors.neutral300),
+                AppIcon(AppIcons.chevron_right_rounded,
+                    size: 16, color: context.textMutedColor),
             ],
           ),
         ),

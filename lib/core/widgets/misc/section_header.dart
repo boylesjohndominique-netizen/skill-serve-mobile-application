@@ -4,6 +4,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// "Section title + optional 'See all' action" header used throughout
 /// the Home dashboard and list screens.
@@ -54,12 +55,12 @@ class SectionHeader extends StatelessWidget {
             children: [
               Text(
                 actionLabel!,
-                style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600),
+                style: AppTextStyles.label.copyWith(color: context.accentInk, fontWeight: FontWeight.w600),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(width: 2),
-              const AppIcon(AppIcons.arrow_forward_ios_rounded, size: 12, color: AppColors.secondary),
+              AppIcon(AppIcons.arrow_forward_ios_rounded, size: 12, color: context.accentInk),
             ],
           ),
         )],

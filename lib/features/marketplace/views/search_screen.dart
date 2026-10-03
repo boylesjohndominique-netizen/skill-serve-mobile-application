@@ -21,6 +21,7 @@ import 'favorite_toggle.dart';
 import '../models/discovery_filters.dart';
 import '../models/provider_model.dart';
 import 'widgets/discovery_filter_sheet.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Explore — one search box over services and providers, with suggestions,
 /// recent searches, and the featured and top-rated rails shown before a
@@ -136,7 +137,7 @@ class _IdleDiscovery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: AppColors.secondary,
+      color: context.accentInk,
       onRefresh: discovery.loadHighlights,
       child: ListView(
         children: [
@@ -159,7 +160,7 @@ class _IdleDiscovery extends StatelessWidget {
                 for (final term in discovery.recentSearches)
                   InputChip(
                     label: Text(term),
-                    avatar: const AppIcon(AppIcons.history_rounded, size: 16, color: AppColors.textMuted),
+                    avatar: AppIcon(AppIcons.history_rounded, size: 16, color: context.textMutedColor),
                     onPressed: () => onSearchTerm(term),
                     onDeleted: () => discovery.removeRecent(term),
                     deleteIcon: const AppIcon(AppIcons.close_rounded, size: 14),
@@ -238,7 +239,7 @@ class _Results extends StatelessWidget {
               for (final suggestion in suggestions)
                 ActionChip(
                   label: Text(suggestion),
-                  avatar: const AppIcon(AppIcons.manage_search_rounded, size: 16, color: AppColors.textMuted),
+                  avatar: AppIcon(AppIcons.manage_search_rounded, size: 16, color: context.textMutedColor),
                   onPressed: () => onSearchTerm(suggestion),
                 ),
             ],

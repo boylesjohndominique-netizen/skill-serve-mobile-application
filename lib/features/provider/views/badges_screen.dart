@@ -13,6 +13,7 @@ import '../../provider/models/badge_model.dart';
 import '../services/provider_service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// P9 — Provider recognition: the badges this provider has earned, and the
 /// ones still available to earn.
@@ -137,7 +138,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
                           value: badges.isEmpty ? 0 : earned.length / badges.length,
                           minHeight: 8,
                           backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.neutral100,
-                          valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                          valueColor: AlwaysStoppedAnimation(context.accentInk),
                         ),
                       ),
                       const SizedBox(height: 6),

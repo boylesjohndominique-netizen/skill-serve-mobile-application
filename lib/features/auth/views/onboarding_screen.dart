@@ -7,6 +7,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class _OnboardSlide {
   final AppIconData icon;
@@ -69,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 padding: const EdgeInsets.all(AppSizes.lg),
                 child: TextButton(
                   onPressed: () => context.go('/welcome'),
-                  child: Text('Skip', style: AppTextStyles.button.copyWith(color: AppColors.textMuted)),
+                  child: Text('Skip', style: AppTextStyles.button.copyWith(color: context.textMutedColor)),
                 ),
               ),
             ).animate().fadeIn(duration: 300.ms),
@@ -112,10 +113,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               width: 160,
                               height: 160,
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceAlt,
+                                color: context.surfaceAltColor,
                                 borderRadius: BorderRadius.circular(40),
                               ),
-                              child: AppIcon(slide.icon, size: 68, color: AppColors.secondary),
+                              child: AppIcon(slide.icon, size: 68, color: context.accentInk),
                             )
                                 .animate(key: ValueKey(i))
                                 .fadeIn(duration: 350.ms)
@@ -152,7 +153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: i == _index ? 24 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: i == _index ? AppColors.secondary : AppColors.neutral200,
+                    color: i == _index ? context.accentInk : AppColors.neutral200,
                     borderRadius: BorderRadius.circular(3),
                     boxShadow: i == _index
                         ? [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 6)]

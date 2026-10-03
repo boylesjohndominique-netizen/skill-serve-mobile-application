@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/api_error.dart';
 import '../models/ph_address.dart';
 import '../services/location_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The Philippine address picker: Region → Province or City → City /
 /// Municipality → Barangay, then street and ZIP — the way a government form
@@ -226,7 +226,7 @@ class _SelectTile extends StatelessWidget {
         ),
         child: Text(
           value ?? 'Select ${label.toLowerCase().replaceAll(' (optional)', '')}',
-          style: TextStyle(color: value == null ? AppColors.textSecondary : null),
+          style: TextStyle(color: value == null ? context.textSecondaryColor : null),
         ),
       ),
     );

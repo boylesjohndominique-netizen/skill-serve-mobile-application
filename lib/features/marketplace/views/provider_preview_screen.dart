@@ -16,6 +16,7 @@ import '../../marketplace/models/provider_model.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Read-only provider profile. For guests any booking action routes to Login
 /// instead of the booking form; for a signed-in provider it is "how customers
@@ -59,7 +60,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
               margin: const EdgeInsets.only(bottom: AppSizes.lg),
               decoration: BoxDecoration(color: AppColors.neutral200, borderRadius: BorderRadius.circular(2)),
             ),
-            const AppIcon(AppIcons.lock_outline_rounded, size: 36, color: AppColors.secondary)
+            AppIcon(AppIcons.lock_outline_rounded, size: 36, color: context.accentInk)
                 .animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
             const SizedBox(height: AppSizes.md),
             Text('Log in to book this provider', style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
@@ -107,7 +108,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                             Text(p.user.fullName, style: AppTextStyles.headlineLarge),
                             if (p.isVerified) ...[
                               const SizedBox(width: 6),
-                              const AppIcon(AppIcons.verified_rounded, size: 18, color: AppColors.secondary),
+                              AppIcon(AppIcons.verified_rounded, size: 18, color: context.accentInk),
                             ],
                           ],
                         ),
@@ -123,7 +124,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                 children: [
                   RatingWidget(rating: p.averageRating, reviewCount: p.reviewCount, size: 16),
                   const SizedBox(width: AppSizes.lg),
-                  const AppIcon(AppIcons.work_outline_rounded, size: 16, color: AppColors.neutral300),
+                  AppIcon(AppIcons.work_outline_rounded, size: 16, color: context.textMutedColor),
                   const SizedBox(width: 4),
                   Text('${p.completedJobs} jobs completed', style: AppTextStyles.bodyMedium),
                 ],
@@ -157,7 +158,7 @@ class _ProviderPreviewScreenState extends State<ProviderPreviewScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Starting at', style: AppTextStyles.bodySmall),
-                      Text(Formatters.peso(p.startingPrice!), style: AppTextStyles.headlineMedium.copyWith(color: AppColors.secondary)),
+                      Text(Formatters.peso(p.startingPrice!), style: AppTextStyles.headlineMedium.copyWith(color: context.accentInk)),
                     ],
                   ),
                 ),

@@ -59,7 +59,7 @@ class BadgeModel {
   Color get color {
     switch (key) {
       case 'top_rated':
-        return AppColors.secondary; // brass
+        return AppColors.secondaryInk; // olive: reads on the badge's pale tint and as a fill under white
       case 'rising_star':
         return AppColors.info; // blue
       case 'veteran':
@@ -69,7 +69,7 @@ class BadgeModel {
       case 'community_favorite':
         return AppColors.error; // red
       default:
-        return AppColors.secondary;
+        return AppColors.secondaryInk;
     }
   }
 }

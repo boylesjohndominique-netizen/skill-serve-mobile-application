@@ -10,6 +10,7 @@ import '../misc/rating_widget.dart';
 import '../feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Provider summary card — used in Browse Services, Search results, and
 /// Favorites. Shows the platform's verification seal when applicable.
@@ -115,7 +116,7 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(color: surfaceColor, shape: BoxShape.circle),
-                        child: const AppIcon(AppIcons.verified_rounded, size: 16, color: AppColors.secondary),
+                        child: AppIcon(AppIcons.verified_rounded, size: 16, color: context.accentInk),
                       ),
                     ),
                 ],
@@ -142,7 +143,7 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                               widget.isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
                               size: 16,
                               strokeWidth: 1.5,
-                              color: widget.isFavorite ? AppColors.error : AppColors.neutral300,
+                              color: widget.isFavorite ? AppColors.error : context.textMutedColor,
                             ),
                           ),
                         ),
@@ -155,7 +156,7 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                       children: [
                         RatingWidget(rating: widget.provider.averageRating, reviewCount: widget.provider.reviewCount),
                         const SizedBox(width: 10),
-                        const AppIcon(AppIcons.work_outline_rounded, size: 13, color: AppColors.neutral300),
+                        AppIcon(AppIcons.work_outline_rounded, size: 13, color: context.textMutedColor),
                         const SizedBox(width: 3),
                         Text('${widget.provider.completedJobs} jobs', style: AppTextStyles.bodySmall),
                       ],
@@ -164,7 +165,7 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                     if (widget.provider.startingPrice != null)
                       Text(
                         'From ${Formatters.peso(widget.provider.startingPrice!)}',
-                        style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
+                        style: AppTextStyles.label.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
                       ),
                   ],
                 ),

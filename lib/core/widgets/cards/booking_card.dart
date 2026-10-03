@@ -8,6 +8,7 @@ import '../../../features/booking/models/booking_model.dart';
 import '../misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Booking summary card used in Booking History (client) and
 /// Booking Requests / Active / Completed lists (provider).
@@ -76,7 +77,7 @@ class _BookingCardState extends State<BookingCard> {
               Divider(height: AppSizes.lg, color: lineColor),
               Row(
                 children: [
-                  const AppIcon(AppIcons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
+                  AppIcon(AppIcons.calendar_today_rounded, size: 14, color: context.textMutedColor),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -87,7 +88,7 @@ class _BookingCardState extends State<BookingCard> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const AppIcon(AppIcons.access_time_rounded, size: 14, color: AppColors.neutral300),
+                  AppIcon(AppIcons.access_time_rounded, size: 14, color: context.textMutedColor),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -101,7 +102,7 @@ class _BookingCardState extends State<BookingCard> {
                   Flexible(
                     child: Text(
                       Formatters.peso(widget.booking.amount),
-                      style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary),
+                      style: AppTextStyles.titleMedium.copyWith(color: context.accentInk),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

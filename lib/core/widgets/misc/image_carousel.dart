@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../constants/app_animations.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Swipeable image gallery used on provider profiles and portfolio galleries.
 /// Features smoother page indicators and improved dot indicator design.
@@ -29,11 +29,11 @@ class _ImageCarouselState extends State<ImageCarousel> {
       return Container(
         height: widget.height,
         decoration: BoxDecoration(
-          color: AppColors.surfaceAlt,
+          color: context.surfaceAltColor,
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
-        child: const Center(
-          child: AppIcon(AppIcons.image_outlined, color: AppColors.neutral300, size: 40),
+        child: Center(
+          child: AppIcon(AppIcons.image_outlined, color: context.textMutedColor, size: 40),
         ),
       );
     }
@@ -54,9 +54,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
                 width: double.infinity,
                 placeholder: (context, url) => const ShimmerPlaceholder(),
                 errorWidget: (context, url, error) => Container(
-                  color: AppColors.surfaceAlt,
-                  child: const Center(
-                    child: AppIcon(AppIcons.broken_image_outlined, color: AppColors.neutral300),
+                  color: context.surfaceAltColor,
+                  child: Center(
+                    child: AppIcon(AppIcons.broken_image_outlined, color: context.textMutedColor),
                   ),
                 ),
               ),

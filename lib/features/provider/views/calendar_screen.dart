@@ -9,6 +9,7 @@ import '../../../core/widgets/cards/booking_card.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Lightweight month calendar showing booking density per day,
 /// with the selected day's bookings listed below.
@@ -115,7 +116,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         decoration: BoxDecoration(
                           color: selected ? AppColors.secondary : Colors.transparent,
                           shape: BoxShape.circle,
-                          border: today && !selected ? Border.all(color: AppColors.secondary, width: 1.5) : null,
+                          border: today && !selected ? Border.all(color: context.accentInk, width: 1.5) : null,
                           boxShadow: selected
                               ? [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
                               : [],

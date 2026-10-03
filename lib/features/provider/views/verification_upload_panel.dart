@@ -14,6 +14,7 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../controllers/verification_controller.dart';
 import '../models/verification_document_model.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Pick verification documents (camera, gallery or PDF), label each one and
 /// send them for review. Used by the Verification screen and onboarding.
@@ -62,7 +63,7 @@ class _VerificationUploadPanelState extends State<VerificationUploadPanel> {
               ])
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: AppIcon(icon, color: AppColors.secondary),
+                  leading: AppIcon(icon, color: context.accentInk),
                   title: Text(label, style: AppTextStyles.bodyLarge),
                   onTap: () => Navigator.of(context).pop(value),
                 ),

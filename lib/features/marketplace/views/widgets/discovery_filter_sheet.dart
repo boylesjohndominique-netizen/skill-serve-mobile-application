@@ -11,6 +11,7 @@ import '../../../../core/widgets/misc/app_icon.dart';
 import '../../../provider/models/provider_availability_model.dart';
 import '../../models/category_model.dart';
 import '../../models/discovery_filters.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// Opens the discovery filter sheet and resolves with the filters the user
 /// applied, or `null` when they dismissed it without applying.
@@ -230,7 +231,7 @@ class _FilterChip extends StatelessWidget {
       showCheckmark: false,
       avatar: icon == null
           ? null
-          : AppIcon(icon!, size: 14, color: selected ? AppColors.primary : AppColors.star),
+          : AppIcon(icon!, size: 14, color: selected ? AppColors.primary : context.starColor),
       label: Text(label),
       labelStyle: AppTextStyles.label.copyWith(
         fontWeight: FontWeight.w600,

@@ -13,6 +13,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../profile/services/account_data_service.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// PDF §15.3 — Request Account Deletion
 ///
@@ -118,7 +119,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                     style: AppTextStyles.bodySmall.copyWith(
                         color: isDark
                             ? AppColors.textMutedDark
-                            : AppColors.textSecondary),
+                            : context.textSecondaryColor),
                   ),
                   const SizedBox(height: AppSizes.sm),
                   _BulletPoint('Profile and personal information', isDark: isDark),
@@ -133,7 +134,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                     style: AppTextStyles.bodySmall.copyWith(
                         color: isDark
                             ? AppColors.textMutedDark
-                            : AppColors.textSecondary),
+                            : context.textSecondaryColor),
                   ),
                 ],
               ),
@@ -154,7 +155,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                       hintStyle: AppTextStyles.bodyMedium.copyWith(
                           color: isDark
                               ? AppColors.textMutedDark
-                              : AppColors.textSecondary),
+                              : context.textSecondaryColor),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppSizes.radiusMd),
@@ -176,7 +177,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                       hintStyle: AppTextStyles.bodyMedium.copyWith(
                           color: isDark
                               ? AppColors.textMutedDark
-                              : AppColors.textSecondary),
+                              : context.textSecondaryColor),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(AppSizes.radiusMd),

@@ -12,6 +12,7 @@ import '../../../core/widgets/buttons/primary_button.dart';
 import '../models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Success screen shown right after a booking is created.
 class BookingConfirmationScreen extends StatelessWidget {
@@ -62,7 +63,7 @@ class BookingConfirmationScreen extends StatelessWidget {
               const SizedBox(height: AppSizes.sm),
               Text(
                 'REF ${booking.bookingNumber.isEmpty ? booking.id : booking.bookingNumber}',
-                style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary),
+                style: AppTextStyles.monoLg.copyWith(color: context.accentInk),
               ).animate().fadeIn(delay: 300.ms),
               const SizedBox(height: AppSizes.lg),
               Container(

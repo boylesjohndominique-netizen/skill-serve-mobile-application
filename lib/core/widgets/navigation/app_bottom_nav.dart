@@ -5,6 +5,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class NavItem {
   final AppIconData icon;
@@ -117,7 +118,7 @@ class _NavItemWidget extends StatelessWidget {
                   selected ? item.activeIcon : item.icon,
                   key: ValueKey('${item.label}_$selected'),
                   size: 24,
-                  color: selected ? AppColors.secondary : AppColors.neutral300,
+                  color: selected ? context.accentInk : context.textMutedColor,
                 ),
               ),
             ),
@@ -127,7 +128,7 @@ class _NavItemWidget extends StatelessWidget {
           AnimatedDefaultTextStyle(
             duration: AppAnimations.fast,
             style: AppTextStyles.caption.copyWith(
-              color: selected ? AppColors.secondary : AppColors.neutral300,
+              color: selected ? context.accentInk : context.textMutedColor,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               fontSize: selected ? 11.5 : 10.5,
             ),
@@ -141,7 +142,7 @@ class _NavItemWidget extends StatelessWidget {
             width: selected ? 20 : 0,
             height: 3,
             decoration: BoxDecoration(
-              color: selected ? AppColors.secondary : Colors.transparent,
+              color: selected ? context.accentInk : Colors.transparent,
               borderRadius: BorderRadius.circular(AppSizes.radiusPill),
             ),
           ),

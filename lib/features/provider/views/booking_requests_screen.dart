@@ -20,6 +20,7 @@ import '../../booking/models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Provider's Bookings tab — every status in one place with contextual
 /// actions: accept/decline requests, start confirmed jobs, mark complete.
@@ -308,23 +309,23 @@ class _RequestCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
                         ),
                         child: Text('Rescheduled',
-                            style: AppTextStyles.caption.copyWith(color: AppColors.info)),
+                            style: AppTextStyles.caption.copyWith(color: context.infoColor)),
                       ),
                     ],
                   ],
                 ),
               ),
-              Text(Formatters.peso(booking.amount), style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700)),
+              Text(Formatters.peso(booking.amount), style: AppTextStyles.monoMd.copyWith(color: context.accentInk, fontWeight: FontWeight.w700)),
             ],
           ),
           Divider(height: AppSizes.lg, color: lineColor),
           Row(
             children: [
-              const AppIcon(AppIcons.calendar_today_rounded, size: 14, color: AppColors.neutral300),
+              AppIcon(AppIcons.calendar_today_rounded, size: 14, color: context.textMutedColor),
               const SizedBox(width: 6),
               Text(Formatters.dateShort(booking.bookingDate), style: AppTextStyles.bodySmall),
               const SizedBox(width: 14),
-              const AppIcon(AppIcons.access_time_rounded, size: 14, color: AppColors.neutral300),
+              AppIcon(AppIcons.access_time_rounded, size: 14, color: context.textMutedColor),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(booking.schedule,
@@ -336,7 +337,7 @@ class _RequestCard extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                const AppIcon(AppIcons.location_on_outlined, size: 14, color: AppColors.neutral300),
+                AppIcon(AppIcons.location_on_outlined, size: 14, color: context.textMutedColor),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(booking.address,

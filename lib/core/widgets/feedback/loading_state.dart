@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Branded pulsing loading indicator — replaces the plain spinner with
 /// a more polished, on-brand loading animation.
@@ -20,11 +21,11 @@ class LoadingState extends StatelessWidget {
               shape: BoxShape.circle,
               color: AppColors.secondary.withValues(alpha: 0.1),
             ),
-            child: const Padding(
-              padding: EdgeInsets.all(10),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
               child: CircularProgressIndicator(
                 strokeWidth: 2.6,
-                color: AppColors.secondary,
+                color: context.accentInk,
                 strokeCap: StrokeCap.round,
               ),
             ),

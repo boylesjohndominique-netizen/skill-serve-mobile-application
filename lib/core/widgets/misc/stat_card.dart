@@ -5,6 +5,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// KPI stat tile — used on the provider dashboard and statistics screens.
 /// Ink card with a brass icon, mono value, and label. Includes the standard
@@ -40,7 +41,8 @@ class _StatCardState extends State<StatCard> {
       duration: AppAnimations.fast,
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        gradient: AppColors.surfaceGradient,
+        // The cream gradient is light-only; in dark mode it hid the text.
+        gradient: isDark ? null : AppColors.surfaceGradient,
         color: surfaceColor,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
@@ -52,7 +54,7 @@ class _StatCardState extends State<StatCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AppIcon(widget.icon, color: AppColors.secondary, size: 20),
+          AppIcon(widget.icon, color: context.accentInk, size: 20),
           const SizedBox(height: 8),
           Text(
             widget.value,

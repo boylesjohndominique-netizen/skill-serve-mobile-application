@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../controllers/identity_controller.dart';
@@ -13,6 +12,7 @@ import '../models/scanned_national_id.dart';
 import '../services/national_id_camera.dart';
 import '../services/national_id_parser.dart';
 import '../services/national_id_reader.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Sign-up's first step: scan the front of the National ID, then — without
 /// being asked — the back, and read both on the phone.
@@ -174,7 +174,7 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('Step ${front ? 1 : 2} of 2', style: theme.textTheme.labelLarge?.copyWith(color: AppColors.textSecondary)),
+        Text('Step ${front ? 1 : 2} of 2', style: theme.textTheme.labelLarge?.copyWith(color: context.textSecondaryColor)),
         const SizedBox(height: 4),
         Text(
           front ? 'Front of your National ID' : 'Now the back of your National ID',
@@ -185,7 +185,7 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
           front
               ? 'Your PhilSys card or printed ePhilID. Hold it inside the frame — it is found and captured automatically. Your name, birthday and address are filled in from it.'
               : 'Turn the card over. The scanner opens by itself; keep the QR code in view.',
-          style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+          style: theme.textTheme.bodyMedium?.copyWith(color: context.textSecondaryColor),
         ),
         const SizedBox(height: 20),
         AspectRatio(
@@ -193,7 +193,7 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
           child: DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.4), width: 2),
+              border: Border.all(color: context.textSecondaryColor.withValues(alpha: 0.4), width: 2),
             ),
             child: Center(
               child: _reading
@@ -201,7 +201,7 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
                       mainAxisSize: MainAxisSize.min,
                       children: [CircularProgressIndicator(), SizedBox(height: 12), Text('Reading your ID…')],
                     )
-                  : Icon(front ? Icons.badge_outlined : Icons.qr_code_2_rounded, size: 72, color: AppColors.textSecondary),
+                  : Icon(front ? Icons.badge_outlined : Icons.qr_code_2_rounded, size: 72, color: context.textSecondaryColor),
             ),
           ),
         ),
@@ -229,7 +229,7 @@ class _Tips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const tips = ['Lay the card flat in good light', 'Fill the frame, no glare on the text', 'Only SkillServe reviewers see these photos'];
-    final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary);
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -237,7 +237,7 @@ class _Tips extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Row(children: [
-              const Icon(Icons.check_circle_outline_rounded, size: 16, color: AppColors.textSecondary),
+              Icon(Icons.check_circle_outline_rounded, size: 16, color: context.textSecondaryColor),
               const SizedBox(width: 6),
               Expanded(child: Text(tip, style: style)),
             ]),

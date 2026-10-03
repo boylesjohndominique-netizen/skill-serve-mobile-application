@@ -14,6 +14,7 @@ import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// What the provider has earned from completed jobs.
 ///
@@ -212,7 +213,7 @@ class _Breakdown extends StatelessWidget {
             const SizedBox(height: AppSizes.sm),
             Row(
               children: [
-                const AppIcon(AppIcons.hourglass_top_rounded, size: 14, color: AppColors.secondary),
+                AppIcon(AppIcons.hourglass_top_rounded, size: 14, color: context.accentInk),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(

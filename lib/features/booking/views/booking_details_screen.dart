@@ -23,6 +23,7 @@ import '../../../core/widgets/misc/info_row.dart';
 import '../models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class BookingDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -291,7 +292,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                       Flexible(
                         child: Text(
                           Formatters.peso(booking.amount),
-                          style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary),
+                          style: AppTextStyles.monoLg.copyWith(color: context.accentInk),
                           textAlign: TextAlign.right,
                         ),
                       ),
@@ -518,9 +519,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       const SizedBox(height: AppSizes.sm),
       TextButton.icon(
         onPressed: () => context.push('/file-report?bookingId=${booking.id}'),
-        icon: const AppIcon(AppIcons.flag_outlined, size: 16, color: AppColors.neutral300),
+        icon: AppIcon(AppIcons.flag_outlined, size: 16, color: context.textMutedColor),
         label: Text('Report an issue',
-            style: AppTextStyles.label.copyWith(color: AppColors.neutral300)),
+            style: AppTextStyles.label.copyWith(color: context.textMutedColor)),
       ),
     ];
   }
@@ -741,19 +742,19 @@ class _Timeline extends StatelessWidget {
   final List<BookingTimelineEntry> entries;
   const _Timeline({required this.entries});
 
-  Color _colorFor(String status) {
+  Color _colorFor(BuildContext context, String status) {
     switch (status) {
       case 'completed':
         return AppColors.success;
       case 'inProgress':
       case 'in_progress':
-        return AppColors.info;
+        return context.infoColor;
       case 'cancelled':
       case 'disputed':
         return AppColors.error;
       case 'pending':
       case 'confirmed':
-        return AppColors.secondary; // brass
+        return context.accentInk; // brass
       default:
         return AppColors.neutral400;
     }
@@ -778,7 +779,7 @@ class _Timeline extends StatelessWidget {
                         height: 11,
                         margin: const EdgeInsets.only(top: 5),
                         decoration: BoxDecoration(
-                          color: _colorFor(entries[i].status),
+                          color: _colorFor(context, entries[i].status),
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: isDark ? AppColors.surfaceDark : Colors.white,
@@ -789,7 +790,7 @@ class _Timeline extends StatelessWidget {
                         Expanded(
                           child: Container(
                             width: 2,
-                            color: _colorFor(entries[i].status).withValues(alpha: 0.3),
+                            color: _colorFor(context, entries[i].status).withValues(alpha: 0.3),
                           ),
                         ),
                     ],

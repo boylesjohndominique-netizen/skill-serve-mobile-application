@@ -4,6 +4,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Label / value row used in booking summaries, receipts, and detail cards.
 /// Optionally highlights [value] with the mono face when it's an ID, price,
@@ -29,7 +30,7 @@ class InfoRow extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final valueStyle = mono
         ? AppTextStyles.monoMd.copyWith(
-            color: emphasize ? AppColors.secondary : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
+            color: emphasize ? context.accentInk : (isDark ? AppColors.textOnDark : AppColors.textPrimary),
             fontWeight: emphasize ? FontWeight.w700 : FontWeight.w500,
           )
         : AppTextStyles.titleMedium;
@@ -40,7 +41,7 @@ class InfoRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            AppIcon(icon, size: 16, color: AppColors.neutral300),
+            AppIcon(icon, size: 16, color: context.textMutedColor),
             const SizedBox(width: AppSizes.sm),
           ],
           Expanded(

@@ -15,6 +15,7 @@ import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 AppIconData methodIcon(String? code) {
   switch (code) {
@@ -188,7 +189,7 @@ class _PaymentRow extends StatelessWidget {
                 color: AppColors.secondary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              child: AppIcon(methodIcon(payment.methodCode), size: 18, color: AppColors.secondary),
+              child: AppIcon(methodIcon(payment.methodCode), size: 18, color: context.accentInk),
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(

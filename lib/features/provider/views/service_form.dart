@@ -18,6 +18,7 @@ import '../models/commission_model.dart';
 import '../models/provider_service_model.dart';
 import '../services/commission_service.dart';
 import '../services/provider_service_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 const _priceTypes = {'fixed': 'Fixed price', 'hourly': 'Per hour', 'custom': 'Custom quote'};
 
@@ -169,14 +170,14 @@ class _ServiceFormState extends State<ServiceForm> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AppIcon(AppIcons.info_outline_rounded, color: AppColors.info, size: 18),
+                AppIcon(AppIcons.info_outline_rounded, color: context.infoColor, size: 18),
                 const SizedBox(width: AppSizes.sm),
                 Expanded(
                   child: Text(
                     widget.existing == null
                         ? 'An administrator reviews every new service before customers can see it.'
                         : 'Saving changes sends this service back for administrator approval. It is hidden from customers until approved.',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.info),
+                    style: AppTextStyles.bodySmall.copyWith(color: context.infoColor),
                   ),
                 ),
               ],
@@ -260,7 +261,7 @@ class _ServiceFormState extends State<ServiceForm> {
           if (widget.existing != null && widget.existing!.locationDetails == null && widget.existing!.location.isNotEmpty) ...[
             Text(
               'Saved before: ${widget.existing!.location}. Choose it below.',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutral300),
+              style: AppTextStyles.bodySmall.copyWith(color: context.textMutedColor),
             ),
             const SizedBox(height: 6),
           ],
@@ -301,7 +302,7 @@ class _CommissionSplitNote extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const AppIcon(AppIcons.info_outline_rounded, color: AppColors.neutral300, size: 16),
+        AppIcon(AppIcons.info_outline_rounded, color: context.textMutedColor, size: 16),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
@@ -309,7 +310,7 @@ class _CommissionSplitNote extends StatelessWidget {
             // to whole pesos could make the two shares not add up.
             'SkillServe ${split.rateLabel} · ₱${split.commissionAmount} · '
             'you keep ₱${split.netAmount}$unit',
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutral300),
+            style: AppTextStyles.bodySmall.copyWith(color: context.textMutedColor),
           ),
         ),
       ],

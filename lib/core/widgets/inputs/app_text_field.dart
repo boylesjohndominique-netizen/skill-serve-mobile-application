@@ -5,6 +5,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Standard labeled text field used across auth, booking, and profile forms.
 /// Features animated label color shift and subtle container shadow on focus.
@@ -65,7 +66,7 @@ class _AppTextFieldState extends State<AppTextField> {
             fontWeight: FontWeight.w600,
             color: !widget.enabled
                 ? muted
-                : (_focused ? AppColors.secondary : (isDark ? AppColors.textOnDark : AppColors.textPrimary)),
+                : (_focused ? context.accentInk : (isDark ? AppColors.textOnDark : AppColors.textPrimary)),
           ),
           child: Text(widget.label),
         ),
@@ -114,7 +115,7 @@ class _AppTextFieldState extends State<AppTextField> {
                           widget.prefixIcon,
                           size: 18,
                           strokeWidth: 1.5,
-                          color: _focused ? AppColors.secondary : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
+                          color: _focused ? context.accentInk : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
                         ),
                       )
                     : null,
@@ -127,7 +128,7 @@ class _AppTextFieldState extends State<AppTextField> {
                           _obscured ? AppIcons.visibility_off_outlined : AppIcons.visibility_outlined,
                           size: 18,
                           strokeWidth: 1.5,
-                          color: _focused ? AppColors.secondary : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
+                          color: _focused ? context.accentInk : (isDark ? AppColors.textMutedDark : AppColors.textMuted),
                         ),
                         onPressed: widget.enabled
                             ? () => setState(() => _obscured = !_obscured)

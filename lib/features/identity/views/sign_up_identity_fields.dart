@@ -8,6 +8,7 @@ import '../../locations/services/location_service.dart';
 import '../../locations/widgets/ph_address_picker.dart';
 import '../controllers/identity_controller.dart';
 import '../models/scanned_national_id.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The sign-up fields that come from the National ID, pre-filled from the
 /// scan and corrected by the user: names, card number, birthday and the
@@ -121,7 +122,12 @@ class _SignUpIdentityFieldsState extends State<SignUpIdentityFields> {
                   style: theme.textTheme.bodySmall?.copyWith(color: AppColors.secondaryDeep),
                 ),
               ),
-              TextButton(onPressed: enabled ? widget.onRescan : null, child: const Text('Scan again')),
+              TextButton(
+                onPressed: enabled ? widget.onRescan : null,
+                // On the pale lime panel in both modes, so always the dark olive.
+                style: TextButton.styleFrom(foregroundColor: AppColors.secondaryInk),
+                child: const Text('Scan again'),
+              ),
             ],
           ),
         ),
@@ -176,7 +182,7 @@ class _SignUpIdentityFieldsState extends State<SignUpIdentityFields> {
                 form.birthdate == null
                     ? 'Select your date of birth'
                     : MaterialLocalizations.of(context).formatMediumDate(form.birthdate!),
-                style: TextStyle(color: form.birthdate == null ? AppColors.textSecondary : null),
+                style: TextStyle(color: form.birthdate == null ? context.textSecondaryColor : null),
               ),
             ),
           ),

@@ -8,6 +8,7 @@ import '../../../core/services/maintenance_state.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../services/platform_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Covers the app with a maintenance notice while the platform is in
 /// maintenance mode, and lifts it once the platform endpoint says it is over.
@@ -69,7 +70,7 @@ class _MaintenanceScreenState extends State<_MaintenanceScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const AppIcon(AppIcons.handyman_outlined, size: 56, color: AppColors.secondary),
+              AppIcon(AppIcons.handyman_outlined, size: 56, color: context.accentInk),
               const SizedBox(height: AppSizes.lg),
               Text('We\'ll be right back', style: AppTextStyles.headlineLarge, textAlign: TextAlign.center),
               const SizedBox(height: AppSizes.sm),

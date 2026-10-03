@@ -27,6 +27,7 @@ import 'schedule_picker.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Presentation for the two payment methods the API accepts
 /// ({@link BookingModel.paymentMethods}). Selection only: nothing is charged
@@ -479,7 +480,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          AppIcon(icon, size: 16, color: AppColors.neutral300),
+          AppIcon(icon, size: 16, color: context.textMutedColor),
           const SizedBox(width: AppSizes.sm),
           Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
           Flexible(
@@ -516,7 +517,7 @@ class _WizardStepper extends StatelessWidget {
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: i <= current ? AppColors.secondary : AppColors.neutral100,
+                    color: i <= current ? context.accentInk : AppColors.neutral100,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -562,7 +563,7 @@ class _WizardStepper extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.caption.copyWith(
-                      color: i == current ? AppColors.secondary : (Theme.of(context).brightness == Brightness.dark ? AppColors.textMutedDark : AppColors.textMuted),
+                      color: i == current ? context.accentInk : (Theme.of(context).brightness == Brightness.dark ? AppColors.textMutedDark : AppColors.textMuted),
                       fontWeight: i == current ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
@@ -607,7 +608,7 @@ class _RadioCard extends StatelessWidget {
           color: selected ? AppColors.secondary.withValues(alpha: 0.06) : (isDark ? AppColors.surfaceDark : AppColors.surface),
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
           border: Border.all(
-            color: selected ? AppColors.secondary : (isDark ? AppColors.lineDark : AppColors.line),
+            color: selected ? context.accentInk : (isDark ? AppColors.lineDark : AppColors.line),
             width: selected ? 1.6 : 0.8,
           ),
           boxShadow: selected
@@ -641,7 +642,7 @@ class _RadioCard extends StatelessWidget {
             const SizedBox(width: AppSizes.sm),
             Text(
               Formatters.peso(price),
-              style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
+              style: AppTextStyles.monoMd.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -672,7 +673,7 @@ class _MethodTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.secondary.withValues(alpha: 0.06) : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-          border: Border.all(color: selected ? AppColors.secondary : Colors.transparent, width: 1.4),
+          border: Border.all(color: selected ? context.accentInk : Colors.transparent, width: 1.4),
         ),
         child: Row(
           children: [
@@ -697,7 +698,7 @@ class _MethodTile extends StatelessWidget {
             AppIcon(
               selected ? AppIcons.radio_button_checked_rounded : AppIcons.radio_button_off_rounded,
               size: 19,
-              color: selected ? AppColors.secondary : AppColors.neutral300,
+              color: selected ? context.accentInk : context.textMutedColor,
             ),
           ],
         ),

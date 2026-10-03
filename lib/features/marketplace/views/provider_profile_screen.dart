@@ -28,6 +28,7 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Full public provider profile for signed-in clients — the mobile mirror of
 /// the admin Marketplace Preview → Profile tab.
@@ -155,7 +156,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                             ),
                             if (p.isVerified) ...[
                               const SizedBox(width: 6),
-                              const AppIcon(AppIcons.verified_rounded, size: 18, color: AppColors.secondary),
+                              AppIcon(AppIcons.verified_rounded, size: 18, color: context.accentInk),
                             ],
                           ],
                         ),
@@ -172,11 +173,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 children: [
                   RatingWidget(rating: p.averageRating, reviewCount: p.reviewCount, size: 16),
                   const SizedBox(width: AppSizes.lg),
-                  const AppIcon(AppIcons.work_outline_rounded, size: 16, color: AppColors.neutral300),
+                  AppIcon(AppIcons.work_outline_rounded, size: 16, color: context.textMutedColor),
                   const SizedBox(width: 4),
                   Text('${p.completedJobs} jobs', style: AppTextStyles.bodyMedium),
                   const SizedBox(width: AppSizes.lg),
-                  const AppIcon(AppIcons.timeline_rounded, size: 16, color: AppColors.neutral300),
+                  AppIcon(AppIcons.timeline_rounded, size: 16, color: context.textMutedColor),
                   const SizedBox(width: 4),
                   Text('${p.yearsExperience} yrs', style: AppTextStyles.bodyMedium),
                 ],
@@ -243,10 +244,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   runSpacing: 8,
                   children: [
                     if (p.isFeatured)
-                      const _RecognitionChip(
+                      _RecognitionChip(
                         label: 'Featured provider',
                         icon: AppIcons.workspace_premium_rounded,
-                        color: AppColors.secondary,
+                        color: context.accentInk,
                       ),
                     for (var i = 0; i < _badges.length; i++)
                       _BadgeChip(badge: _badges[i])
@@ -343,7 +344,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Starting at', style: AppTextStyles.bodySmall),
-                      Text(Formatters.peso(p.startingPrice!), style: AppTextStyles.monoLg.copyWith(color: AppColors.secondary)),
+                      Text(Formatters.peso(p.startingPrice!), style: AppTextStyles.monoLg.copyWith(color: context.accentInk)),
                     ],
                   ),
                 ),
@@ -387,7 +388,7 @@ class _VerificationNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final verified = provider.isVerified;
-    final color = verified ? AppColors.success : AppColors.secondary;
+    final color = verified ? AppColors.success : context.accentInk;
     final verifiedAt = provider.verifiedAt;
 
     return Container(
@@ -609,7 +610,7 @@ class _ServiceRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const AppIcon(AppIcons.schedule_rounded, size: 13, color: AppColors.neutral300),
+                    AppIcon(AppIcons.schedule_rounded, size: 13, color: context.textMutedColor),
                     const SizedBox(width: 4),
                     Text(service.duration, style: AppTextStyles.bodySmall),
                     const SizedBox(width: 12),
@@ -617,7 +618,7 @@ class _ServiceRow extends StatelessWidget {
                       // Custom-priced work is quoted by the provider, so no
                       // amount is shown for it.
                       service.isQuoteOnly ? 'On quote' : Formatters.peso(service.price),
-                      style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
+                      style: AppTextStyles.monoMd.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),

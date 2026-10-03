@@ -8,6 +8,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../provider/models/provider_availability_model.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The start times a customer may request with a provider — shared by the
 /// booking wizard and rescheduling, so both offer exactly what the API's
@@ -130,11 +131,11 @@ class SchedulePicker extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const AppIcon(AppIcons.calendar_today_rounded, size: 18, color: AppColors.secondary),
+                AppIcon(AppIcons.calendar_today_rounded, size: 18, color: context.accentInk),
                 const SizedBox(width: AppSizes.sm),
                 Text(Formatters.dateShort(date), style: AppTextStyles.bodyLarge),
                 const Spacer(),
-                const AppIcon(AppIcons.chevron_right_rounded, size: 18, color: AppColors.neutral300),
+                AppIcon(AppIcons.chevron_right_rounded, size: 18, color: context.textMutedColor),
               ],
             ),
           ),

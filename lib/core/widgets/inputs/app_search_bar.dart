@@ -5,6 +5,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Search field with an optional trailing filter button — used on Browse,
 /// Search, and Home screens.
@@ -112,7 +113,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
                           AppIcons.search_rounded,
                           size: 17,
                           strokeWidth: 1.5,
-                          color: _focused ? AppColors.secondary : AppColors.neutral300,
+                          color: _focused ? context.accentInk : context.textMutedColor,
                         ),
                       ),
                     ),
@@ -123,7 +124,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
                             tooltip: 'Clear search',
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(minWidth: 42, minHeight: 42),
-                            icon: const AppIcon(AppIcons.close_rounded, size: 16, color: AppColors.neutral300),
+                            icon: AppIcon(AppIcons.close_rounded, size: 16, color: context.textMutedColor),
                             onPressed: () {
                               _controller.clear();
                               widget.onChanged?.call('');

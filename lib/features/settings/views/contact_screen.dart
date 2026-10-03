@@ -5,6 +5,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -65,7 +66,7 @@ class ContactScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                       ),
                       child: AppIcon(items[i].$1,
-                          color: AppColors.secondary, size: 20),
+                          color: context.accentInk, size: 20),
                     ),
                     const SizedBox(width: AppSizes.md),
                     Expanded(

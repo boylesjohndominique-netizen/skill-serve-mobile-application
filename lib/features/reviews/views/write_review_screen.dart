@@ -20,6 +20,7 @@ import '../controllers/review_controller.dart';
 import '../models/review_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Write or edit the review for a completed booking (one per booking).
 class WriteReviewScreen extends StatefulWidget {
@@ -177,7 +178,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                                 child: AppIcon(
                                   i <= _rating ? AppIcons.star_rounded : AppIcons.star_outline_rounded,
                                   size: 40,
-                                  color: i <= _rating ? AppColors.star : AppColors.neutral200,
+                                  color: i <= _rating ? context.starColor : AppColors.neutral200,
                                 ),
                               ),
                             ),
@@ -193,7 +194,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                       child: Text(
                         _rating == 0 ? 'No rating yet' : _ratingLabel(_rating),
                         key: ValueKey(_rating),
-                        style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700),
+                        style: AppTextStyles.label.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],

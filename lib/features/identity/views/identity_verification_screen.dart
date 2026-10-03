@@ -14,6 +14,7 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/identity_controller.dart';
 import '../models/identity_verification_model.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Capture the Philippine National ID, front and back, and send it for review.
 ///
@@ -99,7 +100,7 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
               Text(
                 'SkillServe verifies every account before it can book or take on work. '
                 'Your ID is reviewed by our team and is never shown to other users.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.textSecondaryColor),
               ),
               if (rejection != null) ...[
                 const SizedBox(height: 16),
@@ -143,7 +144,7 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
               const SizedBox(height: 4),
               Text(
                 'Both sides are required. Make sure the whole card is in frame and the text is readable.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor),
               ),
               const SizedBox(height: 14),
 
@@ -297,7 +298,7 @@ class _StatusView extends StatelessWidget {
               AppIcon(
                 verified ? AppIcons.verified_rounded : AppIcons.hourglass_top_rounded,
                 size: 72,
-                color: verified ? AppColors.primary : AppColors.textSecondary,
+                color: verified ? AppColors.primary : context.textSecondaryColor,
               ),
               const SizedBox(height: 20),
               Text(
@@ -311,13 +312,13 @@ class _StatusView extends StatelessWidget {
                     : 'We have your National ID and are checking it. This usually takes a short while — '
                         'we will let you know as soon as it is done.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.textSecondaryColor),
               ),
               if (identity.verification?.idNumberLast4 != null) ...[
                 const SizedBox(height: 16),
                 Text(
                   'Card ending ${identity.verification!.idNumberLast4}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor),
                 ),
               ],
               const SizedBox(height: 32),
@@ -400,7 +401,7 @@ class _BirthdateField extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(color: value == null ? AppColors.textSecondary : null),
+          style: TextStyle(color: value == null ? context.textSecondaryColor : null),
         ),
       ),
     );
@@ -436,7 +437,7 @@ class _CaptureTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: captured ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.3),
+            color: captured ? AppColors.primary : context.textSecondaryColor.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -448,7 +449,7 @@ class _CaptureTile extends StatelessWidget {
                   : Container(
                       width: 110,
                       height: 76,
-                      color: AppColors.textSecondary.withValues(alpha: 0.08),
+                      color: context.textSecondaryColor.withValues(alpha: 0.08),
                       child: const AppIcon(AppIcons.add_photo_alternate_outlined),
                     ),
             ),
@@ -462,7 +463,7 @@ class _CaptureTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     captured ? 'Tap to retake' : 'Tap to capture',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor),
                   ),
                 ],
               ),

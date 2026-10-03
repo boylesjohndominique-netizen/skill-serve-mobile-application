@@ -17,6 +17,7 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../services/provider_service_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Provider's Profile tab — account, business tools, and preferences.
 class ProviderSettingsScreen extends StatefulWidget {
@@ -317,7 +318,7 @@ class _Tile extends StatelessWidget {
       trailing: danger
           ? null
           : AppIcon(AppIcons.chevron_right_rounded,
-              color: isDark ? AppColors.neutral400 : AppColors.neutral300),
+              color: context.textMutedColor),
       onTap: onTap,
     );
   }

@@ -10,6 +10,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The three Settings sub-screens. All of them read one account-scoped
 /// [PreferencesController], so a change made on any of them is stored
@@ -224,7 +225,7 @@ class _ThemeSelector extends StatelessWidget {
               AppIcon(AppIcons.dark_mode_outlined,
                   color: isDark
                       ? AppColors.textMutedDark
-                      : AppColors.textSecondary),
+                      : context.textSecondaryColor),
               const SizedBox(width: AppSizes.md),
               Text('Appearance', style: AppTextStyles.titleMedium),
             ],

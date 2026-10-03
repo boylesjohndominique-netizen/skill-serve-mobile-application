@@ -8,6 +8,7 @@ import '../../utils/formatters.dart';
 import '../../../features/marketplace/models/service_model.dart';
 import '../misc/app_icon.dart';
 import '../misc/rating_widget.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Service summary card — used by search results and any list of published
 /// services. Mirrors [ProviderCard]'s visual language, with the price and
@@ -84,7 +85,7 @@ class ServiceCard extends StatelessWidget {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const AppIcon(AppIcons.schedule_rounded, size: 13, color: AppColors.neutral300),
+                                AppIcon(AppIcons.schedule_rounded, size: 13, color: context.textMutedColor),
                                 const SizedBox(width: 3),
                                 Text(service.duration, style: AppTextStyles.bodySmall),
                               ],
@@ -98,7 +99,7 @@ class ServiceCard extends StatelessWidget {
                 Text(
                   service.isQuoteOnly ? 'On quote' : Formatters.peso(service.price),
                   style: AppTextStyles.label.copyWith(
-                    color: AppColors.secondary,
+                    color: context.accentInk,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

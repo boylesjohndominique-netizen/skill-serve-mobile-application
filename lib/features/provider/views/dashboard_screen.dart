@@ -21,6 +21,7 @@ import '../../identity/controllers/identity_controller.dart';
 import '../../identity/views/eligibility_banner.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../services/provider_service_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Provider's home tab — quick stats, verification status, and today's
 /// pending requests.
@@ -81,7 +82,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.secondary,
+          color: context.accentInk,
           onRefresh: () => _refresh(bookings),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad, vertical: AppSizes.lg),
@@ -136,7 +137,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       children: [
                         AppIcon(
                           providerProfile.isVerified == true ? AppIcons.verified_rounded : AppIcons.hourglass_top_rounded,
-                          color: AppColors.secondary,
+                          color: context.accentInk,
                           size: 20,
                         ),
                         const SizedBox(width: AppSizes.sm),
@@ -299,7 +300,7 @@ class _QuickAction extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppIcon(icon, size: 22, color: AppColors.secondary),
+              AppIcon(icon, size: 22, color: context.accentInk),
               const SizedBox(height: 6),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),

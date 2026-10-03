@@ -13,6 +13,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// View the account's data, and take a copy of it.
 ///
@@ -190,12 +191,12 @@ class _NoUserCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.xl),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
+        color: context.surfaceAltColor,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
       ),
       child: Column(
         children: [
-          const AppIcon(AppIcons.info_outline_rounded, size: 32, color: AppColors.textSecondary),
+          AppIcon(AppIcons.info_outline_rounded, size: 32, color: context.textSecondaryColor),
           const SizedBox(height: AppSizes.md),
           Text('No account data available', style: AppTextStyles.titleMedium),
           const SizedBox(height: AppSizes.sm),
@@ -225,7 +226,7 @@ class _InfoNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppIcon(AppIcons.info_outline_rounded, size: 18, color: AppColors.secondary),
+          AppIcon(AppIcons.info_outline_rounded, size: 18, color: context.accentInk),
           const SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(

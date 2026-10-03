@@ -14,6 +14,7 @@ import '../../marketplace/models/service_model.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class ServiceDetailsScreen extends StatefulWidget {
   final String serviceId;
@@ -134,7 +135,7 @@ class _Pill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppIcon(icon, size: 15, color: AppColors.secondary),
+          AppIcon(icon, size: 15, color: context.accentInk),
           const SizedBox(width: 6),
           Text(label, style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600)),
         ],

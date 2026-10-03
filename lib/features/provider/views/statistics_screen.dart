@@ -9,6 +9,7 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../services/provider_service_service.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Deeper performance view — completed jobs trend, rating breakdown.
 class StatisticsScreen extends StatefulWidget {
@@ -119,7 +120,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   children: [
                     Text('${5 - i}', style: AppTextStyles.label),
                     const SizedBox(width: 4),
-                    const AppIcon(AppIcons.star_rounded, size: 13, color: AppColors.star),
+                    AppIcon(AppIcons.star_rounded, size: 13, color: context.starColor),
                     const SizedBox(width: AppSizes.sm),
                     Expanded(
                       child: ClipRRect(
@@ -132,7 +133,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             value: val,
                             minHeight: 8,
                             backgroundColor: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
-                            valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                            valueColor: AlwaysStoppedAnimation(context.accentInk),
                           ),
                         ),
                       ),
@@ -172,7 +173,7 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIcon(icon, color: AppColors.secondary, size: 20),
+          AppIcon(icon, color: context.accentInk, size: 20),
           const SizedBox(height: 8),
           Text(value, style: AppTextStyles.headlineMedium),
           Text(label, style: AppTextStyles.bodySmall),

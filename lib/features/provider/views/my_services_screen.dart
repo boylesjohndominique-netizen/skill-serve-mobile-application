@@ -15,6 +15,7 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../controllers/provider_services_controller.dart';
 import '../models/provider_service_model.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Provider's own service listings with their approval state.
 class MyServicesScreen extends StatefulWidget {
@@ -92,7 +93,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                     IconButton(
                       tooltip: 'Add service',
                       onPressed: () => _openAndRefresh('/add-service'),
-                      icon: const AppIcon(AppIcons.add_circle_rounded, color: AppColors.secondary, size: 26),
+                      icon: AppIcon(AppIcons.add_circle_rounded, color: context.accentInk, size: 26),
                     ),
                   ],
                 ),
@@ -181,11 +182,11 @@ class _ServiceCard extends StatelessWidget {
                 children: [
                   Text(service.title, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
-                  Text(details, style: AppTextStyles.monoSm.copyWith(color: AppColors.neutral300), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(details, style: AppTextStyles.monoSm.copyWith(color: context.textMutedColor), maxLines: 1, overflow: TextOverflow.ellipsis),
                   if (service.earnings case final earnings?)
                     Text(
                       'You keep ₱${earnings.netAmount} after ${earnings.rateLabel} commission',
-                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutral300),
+                      style: AppTextStyles.bodySmall.copyWith(color: context.textMutedColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -212,7 +213,7 @@ class _ServiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            const AppIcon(AppIcons.chevron_right_rounded, color: AppColors.neutral300, size: 20),
+            AppIcon(AppIcons.chevron_right_rounded, color: context.textMutedColor, size: 20),
           ],
         ),
       ),

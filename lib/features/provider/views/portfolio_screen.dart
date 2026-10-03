@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../provider/controllers/portfolio_controller.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
@@ -14,6 +13,7 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// The provider's own portfolio grid: work samples they have published,
 /// with a long-press to remove one and a link to upload more.
@@ -98,7 +98,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
                               fit: BoxFit.cover,
                               placeholder: (c, u) => const ShimmerPlaceholder(),
                               errorWidget: (c, u, e) => Container(
-                                color: AppColors.surfaceAlt,
+                                color: context.surfaceAltColor,
                                 child: const AppIcon(
                                     AppIcons.photo_library_outlined),
                               ),

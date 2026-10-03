@@ -21,6 +21,7 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../reports/models/report_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// File a complaint about the other party on a booking.
 ///
@@ -241,7 +242,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
             ),
             const SizedBox(height: AppSizes.sm),
             Text('Reference #${report.id}',
-                style: AppTextStyles.monoMd.copyWith(color: AppColors.secondary)),
+                style: AppTextStyles.monoMd.copyWith(color: context.accentInk)),
             const SizedBox(height: AppSizes.xl),
             PrimaryButton(
               label: 'View my reports',
@@ -279,12 +280,12 @@ class _LinkedBookingNotice extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const AppIcon(AppIcons.link_rounded, size: 16, color: AppColors.info),
+          AppIcon(AppIcons.link_rounded, size: 16, color: context.infoColor),
           const SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
               'Linked to booking $bookingId',
-              style: AppTextStyles.label.copyWith(color: AppColors.info, fontWeight: FontWeight.w600),
+              style: AppTextStyles.label.copyWith(color: context.infoColor, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -325,7 +326,7 @@ class _ReasonTile extends StatelessWidget {
                 : (isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt),
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
             border: Border.all(
-              color: selected ? AppColors.secondary : Colors.transparent,
+              color: selected ? context.accentInk : Colors.transparent,
               width: 1.4,
             ),
           ),
@@ -334,7 +335,7 @@ class _ReasonTile extends StatelessWidget {
               AppIcon(
                 selected ? AppIcons.radio_button_checked_rounded : AppIcons.radio_button_off_rounded,
                 size: 19,
-                color: selected ? AppColors.secondary : AppColors.neutral300,
+                color: selected ? context.accentInk : context.textMutedColor,
               ),
               const SizedBox(width: AppSizes.md),
               Expanded(

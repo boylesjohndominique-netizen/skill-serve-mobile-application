@@ -10,6 +10,11 @@ import 'package:flutter/material.dart';
 ///   canvas       #F8F9F3 — soft creamy off-white canvas
 ///   surface      #FFFFFF — crisp white card surface
 ///   line         #E2E7D7 — gentle border line
+///
+/// Lime is a fill colour: on light surfaces it is unreadable as text or icon
+/// colour (1.3:1). For foregrounds use the theme-aware getters in
+/// `core/theme/app_palette.dart` (`context.accentInk` and friends), which
+/// switch to [secondaryInk] in light mode and stay lime in dark mode.
 class AppColors {
   AppColors._();
 
@@ -23,6 +28,9 @@ class AppColors {
   static const Color secondaryDark = Color(0xFFA5CF25);
   static const Color secondarySoft = Color(0xFFE1F2AE); // Soft Pale Lime Fill
   static const Color secondaryDeep = Color(0xFF1E2800); // Deep forest green-black for text on pale lime
+  /// The lime's hue dark enough to read on light surfaces (5.2–6.2:1):
+  /// accent text, icons and outlines in light mode.
+  static const Color secondaryInk = Color(0xFF4A6B00);
 
   static const Color accent = Color(0xFFC7F33C); // Soft lime accent
 
@@ -41,8 +49,9 @@ class AppColors {
   // ---- Text ----
   static const Color textPrimary = Color(0xFF1C2128); // Gentle deep charcoal
   static const Color textSecondary = Color(0xFF575E6A); // Soft slate grey
-  static const Color textMuted = Color(0xFF8C939E); // Muted pastel grey
+  static const Color textMuted = Color(0xFF626975); // Muted grey: 4.6:1 or better on every light surface, incl. input fills
   static const Color textOnDark = Color(0xFFF5F7FA); // Soft warm white on dark
+  static const Color textSecondaryDark = Color(0xFFC2C8D0); // Secondary text on dark surfaces
   static const Color textMutedDark = Color(0xFF9DA3AF);
 
   // ---- Semantic ----
@@ -54,6 +63,13 @@ class AppColors {
   static const Color errorBg = Color(0xFFFBEAE9);
   static const Color info = Color(0xFF1F5F8B); // soft blue
   static const Color infoBg = Color(0xFFEBF3F8);
+
+  // Semantic colours lightened for dark surfaces, where the ones above
+  // fall to 2–4:1.
+  static const Color successOnDark = Color(0xFF4FD1A5);
+  static const Color warningOnDark = Color(0xFFE8B84A);
+  static const Color errorOnDark = Color(0xFFF08A82);
+  static const Color infoOnDark = Color(0xFF7DB8E8);
 
   // ---- Neutral scale ----
   static const Color neutral50 = Color(0xFFF8F9F3);
@@ -84,4 +100,7 @@ class AppColors {
 
   /// Rating star color — warm golden amber star.
   static const Color star = Color(0xFFF2B705);
+
+  /// The star on light surfaces, where gold is too faint (3.4–3.8:1).
+  static const Color starOnLight = Color(0xFFB07800);
 }

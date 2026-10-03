@@ -15,6 +15,7 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Upload form for a new portfolio item.
 class UploadPortfolioScreen extends StatefulWidget {
@@ -94,7 +95,7 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
                       color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                       border: Border.all(
-                        color: _pickedImage != null ? AppColors.secondary : (isDark ? AppColors.lineDark : AppColors.line),
+                        color: _pickedImage != null ? context.accentInk : (isDark ? AppColors.lineDark : AppColors.line),
                         width: _pickedImage != null ? 2 : 1,
                       ),
                       boxShadow: _pickedImage != null ? AppSizes.shadowFor(context, level: ShadowLevel.md) : [],
@@ -103,7 +104,7 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const AppIcon(AppIcons.add_photo_alternate_outlined, size: 36, color: AppColors.neutral300),
+                              AppIcon(AppIcons.add_photo_alternate_outlined, size: 36, color: context.textMutedColor),
                               const SizedBox(height: 8),
                               Text('Tap to select a photo', style: AppTextStyles.bodyMedium),
                             ],

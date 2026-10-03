@@ -18,6 +18,7 @@ import '../../profile/services/profile_service.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -191,7 +192,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(height: 6),
                   Text(
                     'Saved before: $_legacyAddress. Choose it below so bookings and providers can find you.',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodySmall.copyWith(color: context.textSecondaryColor),
                   ),
                 ],
                 const SizedBox(height: AppSizes.md),

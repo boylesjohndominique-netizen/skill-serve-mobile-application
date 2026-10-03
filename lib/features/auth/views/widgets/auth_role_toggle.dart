@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/misc/app_icon.dart';
 import '../../models/user_model.dart';
+import '../../../../core/theme/app_palette.dart';
 
 /// "I need a service" / "I offer a service" segmented control, shared by
 /// every sign-up form so the choice looks and behaves the same whether the
@@ -116,14 +117,14 @@ class _Tab extends StatelessWidget {
                 curve: AppAnimations.springCurve,
                 child: AppIcon(icon,
                     size: 20,
-                    color: selected ? AppColors.primary : AppColors.textMuted),
+                    color: selected ? AppColors.primary : context.textMutedColor),
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.caption.copyWith(
-                  color: selected ? AppColors.primary : AppColors.textMuted,
+                  color: selected ? AppColors.primary : context.textMutedColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),

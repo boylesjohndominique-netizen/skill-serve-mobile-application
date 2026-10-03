@@ -19,6 +19,7 @@ import '../../../core/widgets/misc/app_avatar.dart';
 import '../models/message_model.dart';
 import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// One booking's conversation. [bookingId] addresses the thread, because a
 /// booking is the conversation.
@@ -180,7 +181,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                       _otherTyping ? 'typing…' : 'In this chat',
                       style: TextStyle(
                         fontSize: 11,
-                        color: _otherTyping ? AppColors.secondary : AppColors.success,
+                        color: _otherTyping ? context.accentInk : AppColors.success,
                         fontStyle: _otherTyping ? FontStyle.italic : FontStyle.normal,
                       ),
                       maxLines: 1,
@@ -188,7 +189,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                   else if (conversation?.serviceTitle.isNotEmpty == true)
                     Text(
                       conversation!.serviceTitle,
-                      style: const TextStyle(fontSize: 11, color: AppColors.neutral300),
+                      style: TextStyle(fontSize: 11, color: context.textMutedColor),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -406,7 +407,7 @@ class _Bubble extends StatelessWidget {
                         ? AppColors.error
                         : (fromMe
                             ? AppColors.primary.withValues(alpha: 0.65)
-                            : AppColors.textMuted),
+                            : context.textMutedColor),
                   ),
                 ),
                 // A read receipt only makes sense on a message you sent.

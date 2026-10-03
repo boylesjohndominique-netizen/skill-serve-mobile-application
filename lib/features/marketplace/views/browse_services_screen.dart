@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/marketplace_controller.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/cards/category_card.dart';
@@ -16,6 +15,7 @@ import '../../../core/widgets/misc/section_header.dart';
 import '../../marketplace/models/category_model.dart';
 import 'widgets/discovery_filter_sheet.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Guest-accessible marketplace browser. Booking a provider from here
 /// prompts a login (see ProviderPreviewScreen).
@@ -55,13 +55,13 @@ class _BrowseServicesScreenState extends State<BrowseServicesScreen> {
         actions: [
           TextButton(
             onPressed: () => context.go('/login'),
-            child: Text('Log in', style: AppTextStyles.button.copyWith(color: AppColors.secondary)),
+            child: Text('Log in', style: AppTextStyles.button.copyWith(color: context.accentInk)),
           ),
         ],
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.secondary,
+          color: context.accentInk,
           onRefresh: () => context.read<MarketplaceController>().loadInitial(),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.pageHPad, vertical: AppSizes.lg),

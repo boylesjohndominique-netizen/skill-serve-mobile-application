@@ -6,6 +6,7 @@ import '../../constants/app_text_styles.dart';
 import '../../../features/marketplace/models/category_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 const Map<String, AppIconData> _categoryIcons = {
   'plumbing': AppIcons.plumbing_rounded,
@@ -78,7 +79,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
               AnimatedRotation(
                 turns: widget.selected ? 0.02 : 0,
                 duration: AppAnimations.md,
-                child: AppIcon(icon, color: widget.selected ? AppColors.primary : AppColors.secondary, size: 24),
+                child: AppIcon(icon, color: widget.selected ? AppColors.primary : context.accentInk, size: 24),
               ),
               const SizedBox(height: 8),
               Text(
