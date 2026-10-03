@@ -10,6 +10,7 @@ import '../../identity/models/identity_verification_model.dart';
 import '../../identity/controllers/identity_controller.dart';
 import 'widgets/auth_role_toggle.dart';
 import 'widgets/provider_details_fields.dart';
+import 'widgets/google_password_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -20,6 +21,7 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../auth/models/user_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -37,8 +39,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _scanned = false;
   bool _preparing = false;
   final _email = TextEditingController();
-  final _password = TextEditingController();
-  final _confirm = TextEditingController();
   final _businessName = TextEditingController();
   final _specialization = TextEditingController();
   final _experienceYears = TextEditingController();
@@ -78,8 +78,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _identityForm.dispose();
     _email.dispose();
-    _password.dispose();
-    _confirm.dispose();
     _businessName.dispose();
     _specialization.dispose();
     _experienceYears.dispose();
@@ -97,7 +95,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       lastName: _identityForm.lastName.text.trim(),
       signUpDetails: _identityForm.signUpDetails,
       email: _email.text.trim(),
-      password: _password.text,
       role: _role,
       businessName: isProvider ? _businessName.text.trim() : null,
       specialization: isProvider ? _specialization.text.trim() : '',
@@ -109,8 +106,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     if (success) {
       // No account exists yet: both roles confirm the emailed 6-digit code
-      // first, and that is what creates it. A code that was already sent
-      // moments ago still counts, and says so.
+      // first, then choose a password, and that is what creates it. A code
+      // that was already sent moments ago still counts, and says so.
       if (auth.errorMessage != null) {
         AppSnackbar.success(context, auth.errorMessage!);
       }
@@ -130,6 +127,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Brand-new Google account: collect the name and role before
         // anything is written.
         context.go('/google-register');
+      case GoogleAuthOutcome.passwordRequired:
+        // This Google account already has a SkillServe account: log in to it
+        // with its password instead of signing up again.
+        if (await showGooglePasswordSheet(context) && mounted) {
+          context.go(auth.isProvider ? '/provider' : '/client');
+        }
       case GoogleAuthOutcome.cancelled:
         break;
       case GoogleAuthOutcome.failed:
@@ -220,26 +223,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: Validators.email,
                   enabled: !isBusy,
                 ).animate().fadeIn(delay: 370.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
-                const SizedBox(height: AppSizes.lg),
-                AppTextField(
-                  label: 'Password',
-                  hint: 'At least 8 characters',
-                  controller: _password,
-                  obscureText: true,
-                  prefixIcon: AppIcons.lock_outline_rounded,
-                  validator: Validators.password,
-                  enabled: !isBusy,
-                ).animate().fadeIn(delay: 440.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
-                const SizedBox(height: AppSizes.lg),
-                AppTextField(
-                  label: 'Confirm password',
-                  hint: 'Re-enter your password',
-                  controller: _confirm,
-                  obscureText: true,
-                  prefixIcon: AppIcons.lock_outline_rounded,
-                  validator: (v) => Validators.confirmPassword(v, _password.text),
-                  enabled: !isBusy,
-                ).animate().fadeIn(delay: 510.ms, duration: 350.ms).slideY(begin: 0.08, end: 0),
+                const SizedBox(height: AppSizes.sm),
+                // The password comes after the emailed code.
+                Text(
+                  'We will email you a 6-digit code. After you enter it, you will create your password.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Theme.of(context).brightness == Brightness.dark ? AppColors.textMutedDark : AppColors.textMuted,
+                  ),
+                ),
                 if (_role == UserRole.provider) ...[
                   const SizedBox(height: AppSizes.xl),
                   ProviderDetailsFields(
@@ -252,7 +243,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
                 const SizedBox(height: AppSizes.xl),
                 PrimaryButton(
-                  label: 'Create account',
+                  label: 'Continue',
                   isLoading: isBusy,
                   onPressed: () => _submit(auth),
                 ).animate().fadeIn(delay: 580.ms, duration: 350.ms).slideY(begin: 0.1, end: 0),
@@ -268,7 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text('By continuing, you agree to our ',
-                        style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+                        style: AppTextStyles.caption.copyWith(color: context.textMutedColor)),
                     for (final (label, route) in const [
                       ('Terms', '/terms'),
                       ('Privacy Policy', '/privacy'),
@@ -281,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         onPressed: () => context.push(route),
-                        child: Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.secondary)),
+                        child: Text(label, style: AppTextStyles.caption.copyWith(color: context.accentInk)),
                       ),
                   ],
                 ).animate().fadeIn(delay: 640.ms, duration: 300.ms),
@@ -296,7 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           alignment: PlaceholderAlignment.middle,
                           child: GestureDetector(
                             onTap: isBusy ? null : () => context.go('/login'),
-                            child: Text('Log in', style: AppTextStyles.label.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w700)),
+                            child: Text('Log in', style: AppTextStyles.label.copyWith(color: context.accentInk, fontWeight: FontWeight.w700)),
                           ),
                         ),
                       ],

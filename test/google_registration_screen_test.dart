@@ -64,7 +64,7 @@ void main() {
 
     expect(find.text('Front of your National ID'), findsOneWidget);
     expect(find.text('Scan the front'), findsOneWidget);
-    expect(find.text('Create my account'), findsNothing);
+    expect(find.text('Continue'), findsNothing);
   });
 
   testWidgets('asks providers for their professional details', (tester) async {
@@ -91,7 +91,7 @@ void main() {
     await tester.tap(find.text('I offer a service'));
     await tester.pumpAndSettle();
 
-    final submit = find.text('Create my account');
+    final submit = find.text('Continue');
     await tester.ensureVisible(submit);
     await tester.pumpAndSettle();
     await tester.tap(submit);

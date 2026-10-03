@@ -19,15 +19,17 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Shown when "Continue with Google" picks an account that has no
 /// SkillServe account yet. Google gave us a verified email and a name; the
 /// user confirms those and chooses whether they are here to book services
 /// or to offer them.
 ///
-/// Nothing exists server-side until this form is submitted, so leaving the
-/// screen cancels the sign-up cleanly and the same Google account can start
-/// over — as either role.
+/// Submitting it starts the same steps as an email sign-up: a 6-digit code
+/// to the Google address, then a password. Nothing exists server-side until
+/// those are done, so leaving cancels the sign-up cleanly and the same
+/// Google account can start over — as either role.
 class GoogleRegistrationScreen extends StatefulWidget {
   const GoogleRegistrationScreen({super.key});
 
@@ -95,10 +97,12 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
   Future<void> _submit(AuthController auth) async {
     if (!_formKey.currentState!.validate()) return;
     final isProvider = _role == UserRole.provider;
-    final identity = context.read<IdentityController>()..setScanned(_identityForm.confirmed);
+    context.read<IdentityController>().setScanned(_identityForm.confirmed);
+    // Read before the call: starting the sign-up clears the draft.
+    final googleEmail = auth.googleDraft?.email ?? '';
     // The name on the National ID, not Google's display name: the ID is what
     // gets reviewed.
-    final created = await auth.completeGoogleRegistration(
+    final started = await auth.completeGoogleRegistration(
       firstName: _identityForm.givenNames.text.trim(),
       lastName: _identityForm.lastName.text.trim(),
       signUpDetails: _identityForm.signUpDetails,
@@ -111,13 +115,11 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
       bio: isProvider ? _bio.text.trim() : null,
     );
     if (!mounted) return;
-    if (created) {
-      AppSnackbar.success(context, 'Welcome to SkillServe!');
-      // Same next step as an email sign-up: the National ID scanned before
-      // the form is sent for review now that the account exists.
-      final next = await submitScannedIdAndRoute(identity, isProvider: auth.isProvider);
-      if (!mounted) return;
-      context.go(next);
+    if (started) {
+      // Same steps as an email sign-up: the code, then the password. The
+      // National ID scanned before the form is sent once the account exists.
+      AppSnackbar.success(context, auth.errorMessage ?? 'We sent a 6-digit code to $googleEmail.');
+      context.go('/verify-email?email=${Uri.encodeComponent(auth.pendingEmail ?? googleEmail)}');
     } else {
       AppSnackbar.error(context, auth.errorMessage ?? 'Could not finish signing up.');
     }
@@ -261,7 +263,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
                   ],
                   const SizedBox(height: AppSizes.xl),
                   PrimaryButton(
-                    label: 'Create my account',
+                    label: 'Continue',
                     isLoading: isBusy,
                     onPressed: () => _submit(auth),
                   )
@@ -273,7 +275,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
                     child: Text(
                       'By continuing, you agree to our Terms & Privacy Policy.',
                       style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textMuted),
+                          .copyWith(color: context.textMutedColor),
                       textAlign: TextAlign.center,
                     ),
                   ).animate().fadeIn(delay: 400.ms, duration: 300.ms),

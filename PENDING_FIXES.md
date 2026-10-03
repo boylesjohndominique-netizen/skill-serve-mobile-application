@@ -1,6 +1,6 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
-Last updated: 2026-09-26 (H6 — the app caught up with the September API work).
+Last updated: 2026-10-03 (F2 — password after the sign-up code, Google needs the password, readable light/dark).
 Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
 Laravel API. The master list — including backend, admin web and deployment — is
 `web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
@@ -37,6 +37,11 @@ Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see b
    the form fills in (name, card number, birthday, address) and the ID reaches the admin review
    queue. The reader was tuned on the printed layout, not on photos of real cards; report any field
    it misreads so the parser can be adjusted.
+6. **Sign-up and login changed on 2026-10-03 (master F2).** Deploy the backend first. Then on the
+   phone: email and Google sign-up both go code → password; Google login asks for the password;
+   Forgot password works by code. Older APKs lose Google sign-in after the backend deploy, so
+   testers must install this build. Accounts made by Google sign-up before 2026-10-03 set their
+   password once with "Forgot password?". Also look through the app in light and dark mode.
 4. The National ID requirement ships **off** (master `PENDING_FIXES.md` → **H8**). Until an
    administrator turns it on in System Settings → Identity, the app's eligibility banner stays
    hidden and identity capture is optional — which is the intended state, not a gap.

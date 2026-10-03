@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `POST /api/client/v1/auth/cancel-registration`
 
-Removes the parked registration (and, for accounts created before sign-ups were deferred, the unverified account itself) so the email can be used again straight away.
+Removes the parked registration (and, for accounts created before sign-ups were deferred, the unverified account itself) so the email can be used again straight away. Send the `registration_token` from the sign-up response; older app versions send the password chosen at registration instead.
 
 **Authentication:** Public
 
@@ -17,7 +17,8 @@ None.
 | Field | Required | Validation / type |
 |---|---:|---|
 | `email` | yes | string, format=email |
-| `password` | yes | string, format=password |
+| `registration_token` | no | string |
+| `password` | no | string, format=password |
 
 ### Responses
 
@@ -65,9 +66,42 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
+## `POST /api/client/v1/auth/complete-registration`
+
+For a sign-up whose code was confirmed with POST /auth/verify-otp. `registration_token` is the one returned when the sign-up was started (POST /auth/register, /auth/register-provider or /auth/google/register), so knowing the email is not enough. Creates the customer or provider account and signs it in.
+
+**Authentication:** Public
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `email` | yes | string, format=email |
+| `registration_token` | yes | string |
+| `password` | yes | string, format=password, minLength=8 |
+| `password_confirmation` | yes | string, format=password |
+
+### Responses
+
+#### HTTP 201: Account created and signed in
+
+Response schema: `#/components/schemas/ClientAuthEnvelope`
+
+#### HTTP 409: The email was registered by someone else in the meantime, or this sign-up was already completed
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 422: Validation error; the sign-up expired or the token does not match; or the code has not been confirmed yet
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
 ## `POST /api/client/v1/auth/forgot-password`
 
-Request a customer password reset email
+Step 1 of 3: this code, then POST /auth/verify-reset-code, then POST /auth/reset-password with the new password. The response is the same for unknown or inactive addresses, and for an address sent a code in the last 60 seconds.
 
 **Authentication:** Public
 
@@ -91,10 +125,15 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
+#### HTTP 503: The code could not be sent
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
 ## `POST /api/client/v1/auth/google`
 
-Resolves the Google identity against existing accounts:
- * linked Google account, or an account owning the Google-verified email -> signed in (`registration_required: false`); the account is linked and its email marked verified.
+Resolves the Google identity against existing accounts. Google alone never signs in: the account password is required too.
+ * linked Google account, or an account owning the Google-verified email, without `password` -> `password_required: true` and the account `email`; nothing else happens. Call again with the same `id_token` and the `password`.
+ * the same, with the right `password` -> signed in; the account is linked and its email marked verified. Accounts created by Google sign-up before passwords were required set one with Forgot password.
  * no account -> nothing is created. Responds with `registration_required: true` plus a name/email draft for the sign-up form, which is submitted to POST /auth/google/register.
 
 **Authentication:** Public
@@ -108,14 +147,15 @@ None.
 | Field | Required | Validation / type |
 |---|---:|---|
 | `id_token` | yes | string |
+| `password` | no | string, format=password |
 
 ### Responses
 
-#### HTTP 200: Signed in, or a sign-up is required
+#### HTTP 200: Signed in, the password is required, or a sign-up is required
 
 Response schema: `#/components/schemas/ClientGoogleAuthEnvelope`
 
-#### HTTP 401: Invalid Google token
+#### HTTP 401: Invalid Google token, or incorrect password
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
@@ -129,7 +169,7 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `POST /api/client/v1/auth/google/register`
 
-Creates the customer or provider account for a Google identity that has none, and signs it in. The ID token is re-verified, so the email always comes from Google. Until this call succeeds nothing is written, so abandoning the form leaves no account behind.
+For a Google identity with no account. The ID token is re-verified, so the email always comes from Google. Like an email sign-up nothing is created yet: a 6-digit code is emailed to the Google address, then POST /auth/verify-otp and POST /auth/complete-registration (with the `registration_token` from this response) create the account, linked to the Google identity.
 
 **Authentication:** Public
 
@@ -154,19 +194,31 @@ None.
 
 ### Responses
 
-#### HTTP 201: Account created and signed in
+#### HTTP 202: Verification code sent to the Google address
 
-Response schema: `#/components/schemas/ClientAuthEnvelope`
+Response schema: `#/components/schemas/ClientPendingRegistrationEnvelope`
 
 #### HTTP 401: Invalid or expired Google token
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
-#### HTTP 403: Account not active, or the email belongs to an administrator
+#### HTTP 403: The email belongs to an administrator, or provider sign-ups are closed
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 409: This Google identity already has an account; log in instead
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
 #### HTTP 422: Validation error
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 429: A code was sent moments ago; wait before retrying
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 503: The verification email could not be sent
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
@@ -458,7 +510,7 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `POST /api/client/v1/auth/register`
 
-Parks the sign-up and emails a 6-digit code. The `users` row is created by POST /auth/verify-otp, so abandoning verification leaves the address free to register again.
+Parks the sign-up and emails a 6-digit code. Next: POST /auth/verify-otp with the code, then POST /auth/complete-registration with the password and the `registration_token` from this response, which creates the account. Abandoning any step leaves the address free to register again.
 
 **Authentication:** Public
 
@@ -473,8 +525,8 @@ None.
 | `first_name` | yes | string, maxLength=255 |
 | `last_name` | yes | string, maxLength=255 |
 | `email` | yes | string, format=email |
-| `password` | yes | string, format=password, minLength=8 |
-| `password_confirmation` | yes | string, format=password |
+| `password` | no | string, format=password, minLength=8 |
+| `password_confirmation` | no | string, format=password |
 | `birthday` | no | string, format=date |
 | `address_details` | no | object |
 
@@ -498,7 +550,7 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `POST /api/client/v1/auth/register-provider`
 
-Same deferred flow as customer registration: the provider account and its pending `provider_profiles` row are created by POST /auth/verify-otp.
+Same deferred flow as customer registration: code (POST /auth/verify-otp), then password (POST /auth/complete-registration), which creates the provider account and its pending `provider_profiles` row.
 
 **Authentication:** Public
 
@@ -513,8 +565,8 @@ None.
 | `first_name` | yes | string, maxLength=255 |
 | `last_name` | yes | string, maxLength=255 |
 | `email` | yes | string, format=email |
-| `password` | yes | string, format=password, minLength=8 |
-| `password_confirmation` | yes | string, format=password |
+| `password` | no | string, format=password, minLength=8 |
+| `password_confirmation` | no | string, format=password |
 | `business_name` | no | string, maxLength=255 |
 | `specialization` | yes | string, maxLength=255 |
 | `experience_years` | no | integer, minimum=0 |
@@ -576,7 +628,7 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `POST /api/client/v1/auth/reset-password`
 
-Complete a customer password reset
+Step 3 of 3. `token` is the `reset_token` from POST /auth/verify-reset-code. Signs the account out everywhere.
 
 **Authentication:** Public
 
@@ -670,7 +722,9 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/auth/verify-otp`
 
-For a sign-up started by /auth/register or /auth/register-provider this creates the account and returns a session. Accounts registered before sign-ups were deferred are simply marked verified and signed in.
+* A sign-up started without a password (current apps, email or Google): the address is marked verified and the response is the pending registration with `password_required: true`. No account yet: choose the password with POST /auth/complete-registration. Repeating the call after success returns the same.
+* A sign-up parked by an older app version with its password: the account is created and a session returned.
+* An account registered before sign-ups were deferred: marked verified and signed in.
 
 **Authentication:** Public
 
@@ -687,9 +741,9 @@ None.
 
 ### Responses
 
-#### HTTP 200: Email verified, account created and signed in
+#### HTTP 200: Email verified: either the pending registration (`password_required: true`) or, for older sign-ups, a session
 
-Response schema: `#/components/schemas/ClientAuthEnvelope`
+Response schema: `see openapi.json`
 
 #### HTTP 403: Account is not active
 
@@ -704,6 +758,37 @@ Response schema: `#/components/schemas/ApiEnvelope`
 Response schema: `#/components/schemas/ApiEnvelope`
 
 #### HTTP 422: Invalid or expired code
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 429: Too many incorrect attempts
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+## `POST /api/client/v1/auth/verify-reset-code`
+
+Step 2 of 3. Returns a single-use `reset_token` (valid 60 minutes) for POST /auth/reset-password. Five wrong codes void the code; request a new one.
+
+**Authentication:** Public
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `email` | yes | string, format=email |
+| `code` | yes | string, minLength=6, maxLength=6 |
+
+### Responses
+
+#### HTTP 200: Code confirmed
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Incorrect or expired code (also for unknown addresses)
 
 Response schema: `#/components/schemas/ApiEnvelope`
 

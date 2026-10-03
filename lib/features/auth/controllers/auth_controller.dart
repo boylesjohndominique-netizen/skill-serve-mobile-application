@@ -24,10 +24,28 @@ enum GoogleAuthOutcome {
   /// the profile form ([googleDraft] holds the prefill).
   registrationRequired,
 
+  /// The Google account has a SkillServe account; ask for its password and
+  /// call [AuthController.signInWithGooglePassword]. Google alone never
+  /// signs in.
+  passwordRequired,
+
   /// The user dismissed the Google account picker. Nothing to report.
   cancelled,
 
   /// Something failed; [AuthController.errorMessage] explains it.
+  failed,
+}
+
+/// What confirming the emailed sign-up code produced.
+enum OtpOutcome {
+  /// The address is confirmed; the password is chosen next (/create-password).
+  passwordRequired,
+
+  /// A sign-up parked by an older app version, which already had its
+  /// password: the account exists and the session is live.
+  signedIn,
+
+  /// Wrong or expired code, or a network failure; see [AuthController.errorMessage].
   failed,
 }
 
@@ -79,15 +97,27 @@ class AuthController extends ChangeNotifier {
   bool get isClient => currentUser?.role == UserRole.client;
   bool get isProvider => currentUser?.role == UserRole.provider;
 
-  /// Set between registration and successful OTP verification. While true,
-  /// the registration has NOT produced a session: no tokens are kept,
+  /// Sign-up runs details -> emailed code -> password. Until the password is
+  /// in, the registration has NOT produced a session: no tokens are kept,
   /// [status] stays [AuthStatus.unauthenticated], and the router pins the
-  /// user to /verify-email so the app cannot be reached unverified.
+  /// user to /verify-email, then to /create-password, so the app cannot be
+  /// reached half-registered.
   bool _pendingEmailVerification = false;
+  bool _pendingPasswordSetup = false;
   String? _pendingEmail;
+
+  /// Returned when the sign-up started; proves this device started it, so
+  /// it is needed to set the password and to cancel. Memory only.
+  String? _registrationToken;
+
+  /// Only for a sign-up parked by an older app version and resumed from the
+  /// login screen: the password typed there is what can cancel it.
   String? _pendingPassword;
 
   bool get requiresEmailVerification => _pendingEmailVerification;
+
+  /// The code is confirmed and the password is still to be chosen.
+  bool get requiresPasswordSetup => _pendingPasswordSetup;
 
   /// The address awaiting its 6-digit code, so the OTP screen can be
   /// reached without carrying the email through the route.
@@ -97,6 +127,14 @@ class AuthController extends ChangeNotifier {
   /// returns [GoogleAuthOutcome.registrationRequired]. Nothing exists
   /// server-side while this is set — dropping it cancels the sign-up.
   GoogleProfileDraft? googleDraft;
+
+  /// The account Google picked, set when [loginWithGoogle] returns
+  /// [GoogleAuthOutcome.passwordRequired]; its password is asked for next.
+  String? googlePasswordEmail;
+
+  /// The Google ID token waiting for that password. Google tokens last about
+  /// an hour, plenty for typing a password; memory only.
+  String? _googleIdToken;
 
   /// Restores the session saved by the last sign-in.
   ///
@@ -227,8 +265,9 @@ class AuthController extends ChangeNotifier {
   }
 
   /// Starts a sign-up. The backend parks it and emails a 6-digit code —
-  /// no account and no session exist until [verifyOtp] confirms it, so
-  /// backing out here leaves the email free to use again.
+  /// no account and no session exist until [verifyOtp] confirms the code and
+  /// [completeRegistration] sets the password, so backing out leaves the
+  /// email free to use again.
   ///
   /// [signUpDetails] carries what was read off the National ID: `birthday`
   /// and the structured `address_details`.
@@ -236,7 +275,6 @@ class AuthController extends ChangeNotifier {
     required String firstName,
     required String lastName,
     required String email,
-    required String password,
     required UserRole role,
     String? businessName,
     String specialization = '',
@@ -253,7 +291,6 @@ class AuthController extends ChangeNotifier {
               firstName: firstName,
               lastName: lastName,
               email: email,
-              password: password,
               businessName: businessName,
               specialization: specialization.isEmpty ? 'General Services' : specialization,
               experienceYears: experienceYears,
@@ -264,30 +301,20 @@ class AuthController extends ChangeNotifier {
               firstName: firstName,
               lastName: lastName,
               email: email,
-              password: password,
               signUpDetails: signUpDetails,
             );
-      _pendingEmailVerification = true;
-      _pendingEmail = pending.email;
-      // Kept in memory only so the OTP screen can cancel the sign-up,
-      // which the backend guards with this password.
-      _pendingPassword = password;
-      currentUser = null;
-      status = AuthStatus.unauthenticated;
-      sessionExpired = false;
-      restriction = null;
-      await TokenStorage.clear();
+      await _startPendingRegistration(pending);
       notifyListeners();
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
       // The address already has a sign-up waiting on a code that is still
-      // valid: resume that verification instead of starting over.
+      // valid (a double tap): resume that verification instead of starting
+      // over. The registration token from the first tap is still held.
       final pendingEmail = _pendingVerificationEmail(e);
       if (pendingEmail != null) {
         _pendingEmailVerification = true;
         _pendingEmail = pendingEmail;
-        _pendingPassword = password;
         errorMessage = _extractApiError(e, 'Registration failed. Please try again.');
         notifyListeners();
         return true;
@@ -298,36 +325,99 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Confirms the 6-digit code emailed at registration. For a parked
-  /// sign-up this creates the account server-side and returns a real
-  /// session, so the user lands straight in the app.
-  Future<bool> verifyOtp(String email, String code) async {
+  /// The sign-up is parked server-side and a code is on its way: pin the
+  /// user to the code screen with no session.
+  Future<void> _startPendingRegistration(PendingRegistration pending) async {
+    _pendingEmailVerification = true;
+    _pendingPasswordSetup = false;
+    _pendingEmail = pending.email;
+    _registrationToken = pending.registrationToken;
+    _pendingPassword = null;
+    currentUser = null;
+    status = AuthStatus.unauthenticated;
+    sessionExpired = false;
+    restriction = null;
+    await TokenStorage.clear();
+  }
+
+  /// Confirms the 6-digit code emailed at registration. The password is
+  /// chosen next ([completeRegistration]); a sign-up parked by an older app
+  /// version already has one, so the account is created here instead.
+  Future<OtpOutcome> verifyOtp(String email, String code) async {
     status = AuthStatus.authenticating;
     errorMessage = null;
     notifyListeners();
     try {
-      currentUser = await _authService.verifyOtp(email: email, code: code);
-      await _saveApiTokens();
-      _clearPendingRegistration();
-      status = AuthStatus.authenticated;
-      sessionExpired = false;
-      restriction = null;
-      await _persistSession();
-      notifyListeners();
-      return true;
+      final result = await _authService.verifyOtp(email: email, code: code);
+      if (result.requiresPassword) {
+        // Moves the router's pin from /verify-email to /create-password.
+        _pendingEmailVerification = false;
+        _pendingPasswordSetup = true;
+        _pendingEmail = email;
+        status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return OtpOutcome.passwordRequired;
+      }
+      currentUser = result.user;
+      await _signedIn();
+      return OtpOutcome.signedIn;
     } catch (e) {
       status = AuthStatus.unauthenticated;
       errorMessage = _extractApiError(e, 'Verification failed. Please try again.');
+      notifyListeners();
+      return OtpOutcome.failed;
+    }
+  }
+
+  /// The last sign-up step: sets the password, which creates the account
+  /// and signs in.
+  Future<bool> completeRegistration(String password) async {
+    final email = _pendingEmail;
+    final token = _registrationToken;
+    if (email == null || token == null) {
+      errorMessage = 'Your sign-up expired. Please start again.';
+      notifyListeners();
+      return false;
+    }
+
+    status = AuthStatus.authenticating;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      currentUser = await _authService.completeRegistration(
+        email: email,
+        registrationToken: token,
+        password: password,
+      );
+      await _signedIn();
+      return true;
+    } catch (e) {
+      status = AuthStatus.unauthenticated;
+      errorMessage = _extractApiError(e, 'We could not create your account. Please try again.');
       notifyListeners();
       return false;
     }
   }
 
-  /// Called when the user backs out of the OTP screen. Discards the parked
-  /// sign-up server-side so the email is immediately reusable, and drops it
-  /// locally. The password is kept only for this call and cleared after.
+  /// A session was just issued: keep it and release the sign-up pins.
+  Future<void> _signedIn() async {
+    await _saveApiTokens();
+    _clearPendingRegistration();
+    googleDraft = null;
+    _clearGooglePassword();
+    status = AuthStatus.authenticated;
+    sessionExpired = false;
+    restriction = null;
+    await _persistSession();
+    notifyListeners();
+  }
+
+  /// Called when the user backs out of the code or password screen. Discards
+  /// the parked sign-up server-side so the email is immediately reusable,
+  /// and drops it locally.
   Future<void> cancelPendingVerification() async {
     final email = _pendingEmail;
+    final token = _registrationToken;
     final password = _pendingPassword;
 
     _clearPendingRegistration();
@@ -337,9 +427,10 @@ class AuthController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    if (email != null && password != null) {
+    if (email != null && (token != null || password != null)) {
       try {
-        await _authService.cancelRegistration(email: email, password: password);
+        await _authService.cancelRegistration(
+            email: email, registrationToken: token, password: password);
       } catch (_) {
         // Server unreachable: the parked sign-up lives on until it expires,
         // but registering again simply replaces it, so nothing is lost.
@@ -349,7 +440,9 @@ class AuthController extends ChangeNotifier {
 
   void _clearPendingRegistration() {
     _pendingEmailVerification = false;
+    _pendingPasswordSetup = false;
     _pendingEmail = null;
+    _registrationToken = null;
     _pendingPassword = null;
   }
 
@@ -368,17 +461,19 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Google Sign-In: obtains an ID token on device and exchanges it for a
-  /// SkillServe session.
+  /// Google Sign-In: obtains an ID token on device and asks the backend who
+  /// it belongs to.
   ///
   /// An account already linked to this Google identity — or one that simply
-  /// owns the same (Google-verified) email — signs in. A Google account
-  /// with no SkillServe account creates nothing: the caller is told to show
-  /// the profile form, and only submitting it registers the account.
+  /// owns the same (Google-verified) email — still needs its password:
+  /// [GoogleAuthOutcome.passwordRequired], then [signInWithGooglePassword].
+  /// A Google account with no SkillServe account creates nothing: the caller
+  /// is told to show the profile form.
   Future<GoogleAuthOutcome> loginWithGoogle() async {
     status = AuthStatus.authenticating;
     errorMessage = null;
     googleDraft = null;
+    _clearGooglePassword();
     notifyListeners();
     try {
       final google = GoogleSignIn(serverClientId: _googleServerClientId);
@@ -406,14 +501,16 @@ class AuthController extends ChangeNotifier {
         return GoogleAuthOutcome.registrationRequired;
       }
 
+      if (result.requiresPassword) {
+        _googleIdToken = idToken;
+        googlePasswordEmail = result.passwordEmail;
+        status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return GoogleAuthOutcome.passwordRequired;
+      }
+
       currentUser = result.user;
-      await _saveApiTokens();
-      status = AuthStatus.authenticated;
-      sessionExpired = false;
-      restriction = null;
-      _clearPendingRegistration();
-      await _persistSession();
-      notifyListeners();
+      await _signedIn();
       return GoogleAuthOutcome.signedIn;
     } catch (e) {
       status = AuthStatus.unauthenticated;
@@ -429,8 +526,48 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Creates the account for the Google identity held in [googleDraft],
-  /// using the details the user typed on the profile form, and signs in.
+  /// Finishes a Google sign-in with the account password, after
+  /// [loginWithGoogle] returned [GoogleAuthOutcome.passwordRequired].
+  Future<bool> signInWithGooglePassword(String password) async {
+    final idToken = _googleIdToken;
+    if (idToken == null) {
+      errorMessage = 'Your Google sign-in expired. Please try again.';
+      notifyListeners();
+      return false;
+    }
+
+    status = AuthStatus.authenticating;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final result = await _authService.loginWithGoogle(idToken: idToken, password: password);
+      currentUser = result.user;
+      await _signedIn();
+      return true;
+    } catch (e) {
+      status = AuthStatus.unauthenticated;
+      restriction = AccountRestriction.fromError(e);
+      errorMessage = _extractApiError(e, 'Google sign-in failed. Please try again.');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// The user closed the password prompt: forget the Google token.
+  void cancelGooglePassword() {
+    _clearGooglePassword();
+    errorMessage = null;
+    notifyListeners();
+  }
+
+  void _clearGooglePassword() {
+    _googleIdToken = null;
+    googlePasswordEmail = null;
+  }
+
+  /// Starts the sign-up for the Google identity held in [googleDraft], using
+  /// the details the user typed on the profile form. Like an email sign-up,
+  /// a code then goes to the Google address and the password comes after it.
   Future<bool> completeGoogleRegistration({
     required String firstName,
     required String lastName,
@@ -452,7 +589,7 @@ class AuthController extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
     try {
-      currentUser = await _authService.completeGoogleRegistration(
+      final pending = await _authService.completeGoogleRegistration(
         idToken: draft.idToken,
         firstName: firstName,
         lastName: lastName,
@@ -463,18 +600,23 @@ class AuthController extends ChangeNotifier {
         bio: bio,
         signUpDetails: signUpDetails,
       );
-      await _saveApiTokens();
       googleDraft = null;
-      status = AuthStatus.authenticated;
-      sessionExpired = false;
-      restriction = null;
-      _clearPendingRegistration();
-      await _persistSession();
+      await _startPendingRegistration(pending);
       notifyListeners();
       return true;
     } catch (e) {
       status = AuthStatus.unauthenticated;
-      errorMessage = _extractApiError(e, 'We could not finish creating your account. Please try again.');
+      // A double tap: the code from the first one is still valid.
+      final pendingEmail = _pendingVerificationEmail(e);
+      if (pendingEmail != null && _registrationToken != null) {
+        googleDraft = null;
+        _pendingEmailVerification = true;
+        _pendingEmail = pendingEmail;
+        errorMessage = _extractApiError(e, 'A code was already sent.');
+        notifyListeners();
+        return true;
+      }
+      errorMessage = _extractApiError(e, 'We could not start your sign-up. Please try again.');
       notifyListeners();
       return false;
     }
@@ -553,6 +695,7 @@ class AuthController extends ChangeNotifier {
     sessionExpired = false;
     _clearPendingRegistration();
     googleDraft = null;
+    _clearGooglePassword();
     currentUser = null;
     status = AuthStatus.unauthenticated;
     notifyListeners();

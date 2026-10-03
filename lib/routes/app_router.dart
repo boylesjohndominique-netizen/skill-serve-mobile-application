@@ -12,6 +12,7 @@ import '../features/auth/views/register_screen.dart';
 import '../features/auth/views/otp_verification_screen.dart';
 import '../features/auth/views/google_registration_screen.dart';
 import '../features/auth/views/forgot_password_screen.dart';
+import '../features/auth/views/create_password_screen.dart';
 
 // Marketplace
 import '../features/marketplace/views/browse_services_screen.dart';
@@ -120,7 +121,9 @@ final List<RouteBase> appRoutes = [
       builder: (context, state) => const GoogleRegistrationScreen()),
   GoRoute(
       path: '/forgot-password',
-      builder: (context, state) => const ForgotPasswordScreen()),
+      builder: (context, state) => ForgotPasswordScreen(
+            initialEmail: state.uri.queryParameters['email'] ?? '',
+          )),
   GoRoute(
       path: '/browse',
       builder: (context, state) => const BrowseServicesScreen()),
@@ -307,6 +310,10 @@ final List<RouteBase> appRoutes = [
       builder: (context, state) => OtpVerificationScreen(
         email: state.uri.queryParameters['email'] ?? '',
       )),
+  // Sign-up's last step, after the code; the router pins it until done.
+  GoRoute(
+      path: '/create-password',
+      builder: (context, state) => const CreatePasswordScreen()),
   GoRoute(
       path: '/provider-badges',
       builder: (context, state) => const BadgesScreen()),
@@ -460,7 +467,11 @@ GoRouter createAuthenticatedRouter(AuthController auth) => GoRouter(
 
         // A registration that hasn't been verified by OTP yet must never
         // reach any other screen: keep the user on /verify-email until the
-        // code is confirmed. (Also guards against system back navigation.)
+        // code is confirmed, then on /create-password until the password is
+        // set. (Also guards against system back navigation.)
+        if (auth.requiresPasswordSetup) {
+          return path == '/create-password' ? null : '/create-password';
+        }
         if (auth.requiresEmailVerification) {
           if (path == '/verify-email') return null;
           // Carry the address so the OTP screen can label itself and

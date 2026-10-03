@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -10,7 +9,7 @@ import '../controllers/auth_controller.dart';
 import '../../identity/controllers/identity_controller.dart';
 import '../../identity/views/sign_up_identity_fields.dart';
 import '../models/user_model.dart';
-import '../../../core/constants/app_animations.dart';
+import 'widgets/otp_code_field.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -18,10 +17,11 @@ import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
-/// Post-registration email verification: the backend emails a 6-digit code,
-/// the user types it here. Confirming the code is what creates the account,
-/// so this screen is the last step of sign-up, not a formality afterwards.
+/// Sign-up email verification, for email and Google sign-ups alike: the
+/// backend emails a 6-digit code and the user types it here. The password is
+/// chosen next (/create-password); only then does the account exist.
 /// Resend is rate-limited (60s) by the backend.
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -33,7 +33,7 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  static const _codeLength = 6;
+  static const _codeLength = OtpCodeField.length;
 
   /// The address being verified: the route's value, or the pending sign-up
   /// the controller is holding when the route carries none.
@@ -92,11 +92,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final auth = context.read<AuthController>();
     final email = _email;
     final identity = context.read<IdentityController>();
-    final ok = await auth.verifyOtp(email, code);
+    final outcome = await auth.verifyOtp(email, code);
     if (!mounted) return;
-    if (ok) {
-      // The account now exists and the response carried a real session, so
-      // the router's requiresEmailVerification pin is released here.
+    if (outcome == OtpOutcome.passwordRequired) {
+      setState(() => _submitting = false);
+      AppSnackbar.success(context, 'Email verified. Now create your password.');
+      context.go('/create-password');
+    } else if (outcome == OtpOutcome.signedIn) {
+      // A sign-up started by an older app version, password included: the
+      // account now exists and the response carried a real session.
       AppSnackbar.success(context, 'Email verified! Welcome to SkillServe.');
       // The National ID scanned at the start of sign-up goes for review now;
       // the screen stays locked while it uploads. Without a complete scan the
@@ -187,55 +191,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               const SizedBox(height: 4),
               Text(
                 _email,
-                style: AppTextStyles.titleMedium.copyWith(color: AppColors.secondary),
+                style: AppTextStyles.titleMedium.copyWith(color: context.accentInk),
               ).animate().fadeIn(delay: 220.ms, duration: 350.ms),
               const SizedBox(height: AppSizes.xl),
 
-              // Hidden real field + visual boxes (supports paste).
-              GestureDetector(
-                onTap: _submitting ? null : () => _focusNode.requestFocus(),
-                child: Form(
-                  child: Column(
-                    children: [
-                      Stack(
-                        children: [
-                          Opacity(
-                            opacity: 0,
-                            child: TextField(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              keyboardType: TextInputType.number,
-                              maxLength: _codeLength,
-                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                              autofocus: true,
-                              // Locked while verifying so the code cannot
-                              // change under the request using it.
-                              enabled: !_submitting,
-                              onChanged: (v) {
-                                setState(() {});
-                                if (v.length == _codeLength) _verify();
-                              },
-                            ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              for (var i = 0; i < _codeLength; i++)
-                                _OtpBox(
-                                  character: _controller.text.length > i
-                                      ? _controller.text[i]
-                                      : '',
-                                  isFocused:
-                                      _controller.text.length == i && _focusNode.hasFocus,
-                                  isDark: isDark,
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+              OtpCodeField(
+                controller: _controller,
+                focusNode: _focusNode,
+                enabled: !_submitting,
+                onCompleted: (_) => _verify(),
               ).animate().fadeIn(delay: 300.ms, duration: 350.ms),
 
               const SizedBox(height: AppSizes.xl),
@@ -256,7 +220,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   style: AppTextStyles.label.copyWith(
                     color: _resendCountdown > 0
                         ? (isDark ? AppColors.textMutedDark : AppColors.textMuted)
-                        : AppColors.secondary,
+                        : context.accentInk,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -271,44 +235,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OtpBox extends StatelessWidget {
-  final String character;
-  final bool isFocused;
-  final bool isDark;
-
-  const _OtpBox({
-    required this.character,
-    required this.isFocused,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = isFocused ? AppColors.secondary : AppColors.neutral200;
-    return AnimatedContainer(
-      duration: AppAnimations.fast,
-      curve: AppAnimations.defaultCurve,
-      width: 44,
-      height: 54,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-        border: Border.all(color: borderColor, width: isFocused ? 1.8 : 1.2),
-        boxShadow: isFocused
-            ? [BoxShadow(color: AppColors.secondary.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
-            : [],
-      ),
-      child: Text(
-        character,
-        style: AppTextStyles.monoLg.copyWith(
-          color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
         ),
       ),
     );

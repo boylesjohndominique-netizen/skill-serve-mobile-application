@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'widgets/account_restriction_card.dart';
+import 'widgets/google_password_sheet.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -61,6 +63,11 @@ class _LoginScreenState extends State<LoginScreen> {
         // The Google account is new to SkillServe: finish signing up
         // rather than failing with "already registered".
         context.go('/google-register');
+      case GoogleAuthOutcome.passwordRequired:
+        // Google says who it is; the account password signs in.
+        if (await showGooglePasswordSheet(context) && mounted) {
+          context.go(auth.isProvider ? '/provider' : '/client');
+        }
       case GoogleAuthOutcome.cancelled:
         break;
       case GoogleAuthOutcome.failed:
@@ -172,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onTap: isBusy ? null : () => context.go('/register'),
                             child: Text('Sign up',
                                 style: AppTextStyles.label.copyWith(
-                                    color: AppColors.secondary,
+                                    color: context.accentInk,
                                     fontWeight: FontWeight.w700)),
                           ),
                         ),
@@ -186,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-                      child: Text('or', style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+                      child: Text('or', style: AppTextStyles.caption.copyWith(color: context.textMutedColor)),
                     ),
                     const Expanded(child: Divider()),
                   ],
@@ -222,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: isBusy ? null : () => context.go('/browse'),
                     child: Text('Continue as guest',
                         style: AppTextStyles.label
-                            .copyWith(color: AppColors.textMuted)),
+                            .copyWith(color: context.textMutedColor)),
                   ),
                 ).animate().fadeIn(delay: 550.ms, duration: 300.ms),
               ],
