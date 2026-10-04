@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/models/account_restriction.dart';
 import 'package:dio/dio.dart';
@@ -9,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_results.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/google_sign_in_errors.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/services/token_storage.dart';
@@ -476,8 +478,7 @@ class AuthController extends ChangeNotifier {
     _clearGooglePassword();
     notifyListeners();
     try {
-      final google = GoogleSignIn(serverClientId: _googleServerClientId);
-      final account = await google.signIn();
+      final account = await _pickGoogleAccount();
       if (account == null) {
         status = AuthStatus.unauthenticated;
         notifyListeners();
@@ -514,6 +515,10 @@ class AuthController extends ChangeNotifier {
       return GoogleAuthOutcome.signedIn;
     } catch (e) {
       status = AuthStatus.unauthenticated;
+      if (isGoogleSignInCancelled(e)) {
+        notifyListeners();
+        return GoogleAuthOutcome.cancelled;
+      }
       restriction = AccountRestriction.fromError(e);
       errorMessage = _describeGoogleError(e);
       notifyListeners();
@@ -523,6 +528,20 @@ class AuthController extends ChangeNotifier {
       try {
         await GoogleSignIn().signOut();
       } catch (_) {}
+    }
+  }
+
+  /// Opens the Google account picker. Play services' NETWORK_ERROR is often
+  /// a passing hiccup (Play services still connecting), so it is retried once
+  /// before the user sees it.
+  Future<GoogleSignInAccount?> _pickGoogleAccount() async {
+    final google = GoogleSignIn(serverClientId: _googleServerClientId);
+    try {
+      return await google.signIn();
+    } catch (e) {
+      if (!isGoogleNetworkError(e)) rethrow;
+      await Future<void>.delayed(const Duration(seconds: 1));
+      return google.signIn();
     }
   }
 
@@ -637,7 +656,8 @@ class AuthController extends ChangeNotifier {
     if (e is DioException) {
       return _extractApiError(e, 'Google sign-in failed. Please try again.');
     }
-    return 'Google sign-in failed: $e';
+    if (e is PlatformException) return googleSignInErrorMessage(e);
+    return 'Google sign-in failed. Please try again, or use your email.';
   }
 
   /// Pulls the most specific message out of a Laravel API error envelope:

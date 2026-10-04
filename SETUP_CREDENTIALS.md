@@ -57,6 +57,9 @@ The app requests a Google ID token; the backend validates it against a client ID
        `68:68:EE:E0:71:8A:F1:F5:38:F8:85:67:58:20:D9:91:86:01:B8:57`
      New clients can take minutes to hours to take effect; until then sign-in fails with
      `ApiException: 10`.
+     `network_error` / `ApiException: 7` is different: the phone's Google Play services could not
+     reach Google (offline, wrong date/time, VPN or Private DNS, outdated Play services, emulator
+     without Play Store). The app retries once, then says so; nothing is sent to the backend.
    - **Web client** — ✅ created: `505637339796-b7fi5m130m6amski1r4nckfhh0ge8d4g.apps.googleusercontent.com`. **Its client ID is what the backend checks (`GOOGLE_CLIENT_ID`) and what the app passes as `serverClientId`** — both already set to this value.
 4. Add to **Render environment** (then redeploy):
 
