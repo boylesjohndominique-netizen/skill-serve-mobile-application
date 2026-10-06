@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/core/utils/api_error.dart';
+import 'package:skillserve_mobile/core/utils/api_error.dart';
 
 DioException _response(int status, Object? data) {
   final options = RequestOptions(path: '/client/v1/auth/login');

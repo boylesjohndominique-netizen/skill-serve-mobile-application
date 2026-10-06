@@ -348,7 +348,7 @@ No JSON request body.
 
 ## `PATCH /api/service-categories/{serviceCategory}`
 
-PUT/PATCH /api/service-categories/{serviceCategory} — update name/description.
+Update a service category (PATCH alias of PUT)
 
 **Authentication:** Bearer token
 

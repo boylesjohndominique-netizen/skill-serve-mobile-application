@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skilllink_mobile/features/marketplace/controllers/discovery_controller.dart';
-import 'package:skilllink_mobile/features/marketplace/models/category_model.dart';
-import 'package:skilllink_mobile/features/marketplace/models/discovery_filters.dart';
-import 'package:skilllink_mobile/features/marketplace/models/provider_model.dart';
-import 'package:skilllink_mobile/features/marketplace/models/service_model.dart';
-import 'package:skilllink_mobile/features/marketplace/services/recent_searches_service.dart';
-import 'package:skilllink_mobile/features/marketplace/services/service_service.dart';
+import 'package:skillserve_mobile/features/marketplace/controllers/discovery_controller.dart';
+import 'package:skillserve_mobile/features/marketplace/models/category_model.dart';
+import 'package:skillserve_mobile/features/marketplace/models/discovery_filters.dart';
+import 'package:skillserve_mobile/features/marketplace/models/provider_model.dart';
+import 'package:skillserve_mobile/features/marketplace/models/service_model.dart';
+import 'package:skillserve_mobile/features/marketplace/services/recent_searches_service.dart';
+import 'package:skillserve_mobile/features/marketplace/services/service_service.dart';
 
 /// Payload shapes below mirror api-docs/openapi.json (ClientProvider,
 /// ClientService) and the query parameters documented for

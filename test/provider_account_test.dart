@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:skilllink_mobile/features/marketplace/models/provider_model.dart';
-import 'package:skilllink_mobile/features/provider/controllers/portfolio_controller.dart';
-import 'package:skilllink_mobile/features/provider/models/badge_model.dart';
-import 'package:skilllink_mobile/features/provider/models/portfolio_model.dart';
-import 'package:skilllink_mobile/features/provider/models/provider_availability_model.dart';
-import 'package:skilllink_mobile/features/provider/services/portfolio_service.dart';
+import 'package:skillserve_mobile/features/marketplace/models/provider_model.dart';
+import 'package:skillserve_mobile/features/provider/controllers/portfolio_controller.dart';
+import 'package:skillserve_mobile/features/provider/models/badge_model.dart';
+import 'package:skillserve_mobile/features/provider/models/portfolio_model.dart';
+import 'package:skillserve_mobile/features/provider/models/provider_availability_model.dart';
+import 'package:skillserve_mobile/features/provider/services/portfolio_service.dart';
 
 /// Stands in for the API so the portfolio controller can be exercised
 /// without a server.

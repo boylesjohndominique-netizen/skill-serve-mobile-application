@@ -241,11 +241,19 @@ The `ForceJsonResponse` middleware guarantees all error responses are JSON, neve
 
 Protected marketplace endpoints (`bookings`, `reviews`, `notifications`, `support`) additionally require a **verified email**. Unverified accounts receive `403`.
 
-### What is NOT yet implemented (gaps for Flutter)
+### Realtime, closed-app notifications and offline use
 
-1. **No push notifications** — Laravel Reverb WebSocket exists but is only connected to the web admin. For mobile, integrate Firebase Cloud Messaging (FCM) or APNs separately.
-2. **No deep links for email verification** — the `CLIENT_PASSWORD_RESET_URL` points to a web URL. For mobile, update this to a universal link or custom scheme.
-3. **No offline caching** — the backend has no offline sync. Flutter should cache responses locally (e.g., Hive, drift) for offline resilience.
+1. **Realtime is Laravel Reverb, for the web admin and the app alike** — the app listens on the
+   private `App.Models.User.{id}` channel (`client.notification.created`, `client.message.created`)
+   and joins `presence-booking-chat.{booking}` for presence and typing. Channels are authorised by
+   `POST /api/broadcasting/auth`. There is no Firebase / FCM, by the owner's decision.
+2. **Closed-app notifications** — the app's background task polls
+   `GET /api/client/v1/notifications/background` with a narrow token from
+   `POST /api/client/v1/notifications/background-token` (Android, WorkManager).
+3. **Password reset is in the app** — email → 6-digit code (`POST /auth/verify-reset-code`) → new
+   password (`POST /auth/reset-password`); there is no web link or deep link.
+4. **No offline sync** — the API needs a connection; the app shows a "No internet" gate instead of
+   caching.
 
 ## Regenerating
 

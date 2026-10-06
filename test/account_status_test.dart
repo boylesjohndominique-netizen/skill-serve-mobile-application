@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/core/models/account_restriction.dart';
-import 'package:skilllink_mobile/features/auth/models/user_model.dart';
+import 'package:skillserve_mobile/core/models/account_restriction.dart';
+import 'package:skillserve_mobile/features/auth/models/user_model.dart';
 
 DioException _refusal(Map<String, dynamic> body, {int status = 403}) {
   final options = RequestOptions(path: '/client/v1/auth/login');

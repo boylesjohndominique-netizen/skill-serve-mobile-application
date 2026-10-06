@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
-import 'package:skilllink_mobile/features/identity/models/identity_verification_model.dart';
-import 'package:skilllink_mobile/features/identity/services/identity_service.dart';
-import 'package:skilllink_mobile/features/provider/models/commission_model.dart';
+import 'package:skillserve_mobile/features/identity/controllers/identity_controller.dart';
+import 'package:skillserve_mobile/features/identity/models/identity_verification_model.dart';
+import 'package:skillserve_mobile/features/identity/services/identity_service.dart';
+import 'package:skillserve_mobile/features/provider/models/commission_model.dart';
 
 /// Stands in for the API. The real service is HTTP-only, so the controller is
 /// exercised against the payload shapes in

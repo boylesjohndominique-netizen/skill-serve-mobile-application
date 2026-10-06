@@ -42,6 +42,7 @@
 - [Service Categories](modules/service-categories.md)
 - [Services](modules/services.md)
 - [Support](modules/support.md)
+- [System](modules/system.md)
 - [System Settings](modules/system-settings.md)
 - [Transaction Eligibility](modules/transaction-eligibility.md)
 - [Users](modules/users.md)

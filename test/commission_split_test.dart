@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skilllink_mobile/core/services/api_client.dart';
-import 'package:skilllink_mobile/core/theme/app_theme.dart';
-import 'package:skilllink_mobile/features/provider/models/commission_model.dart';
-import 'package:skilllink_mobile/features/provider/models/provider_service_model.dart';
-import 'package:skilllink_mobile/features/provider/views/service_form.dart';
+import 'package:skillserve_mobile/core/services/api_client.dart';
+import 'package:skillserve_mobile/core/theme/app_theme.dart';
+import 'package:skillserve_mobile/features/provider/models/commission_model.dart';
+import 'package:skillserve_mobile/features/provider/models/provider_service_model.dart';
+import 'package:skillserve_mobile/features/provider/views/service_form.dart';
 
 /// Answers the two calls the service form makes: the categories, and the
 /// commission preview at a flat 15% of the requested amount.

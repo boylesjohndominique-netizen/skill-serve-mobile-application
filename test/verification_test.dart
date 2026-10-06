@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/provider/controllers/verification_controller.dart';
-import 'package:skilllink_mobile/features/provider/models/verification_document_model.dart';
-import 'package:skilllink_mobile/features/provider/services/verification_service.dart';
+import 'package:skillserve_mobile/features/provider/controllers/verification_controller.dart';
+import 'package:skillserve_mobile/features/provider/models/verification_document_model.dart';
+import 'package:skillserve_mobile/features/provider/services/verification_service.dart';
 
 Map<String, dynamic> _payload(String status, {Map<String, dynamic>? request, bool canSubmit = false}) => {
       'verification_status': status,

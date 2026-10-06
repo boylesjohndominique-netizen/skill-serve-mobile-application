@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:skilllink_mobile/features/settings/controllers/preferences_controller.dart';
-import 'package:skilllink_mobile/features/settings/models/user_preferences.dart';
-import 'package:skilllink_mobile/features/settings/services/preferences_service.dart';
+import 'package:skillserve_mobile/features/settings/controllers/preferences_controller.dart';
+import 'package:skillserve_mobile/features/settings/models/user_preferences.dart';
+import 'package:skillserve_mobile/features/settings/services/preferences_service.dart';
 
 /// Stands in for the API so the controller's sync and rollback behaviour can
 /// be exercised without a server.

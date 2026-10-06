@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skilllink_mobile/core/services/api_client.dart';
-import 'package:skilllink_mobile/core/theme/app_theme.dart';
-import 'package:skilllink_mobile/features/auth/models/user_model.dart';
-import 'package:skilllink_mobile/features/booking/services/booking_service.dart';
-import 'package:skilllink_mobile/features/locations/models/ph_address.dart';
-import 'package:skilllink_mobile/features/locations/services/location_service.dart';
-import 'package:skilllink_mobile/features/locations/widgets/ph_address_picker.dart';
-import 'package:skilllink_mobile/features/profile/services/profile_service.dart';
-import 'package:skilllink_mobile/features/provider/models/provider_service_model.dart';
+import 'package:skillserve_mobile/core/services/api_client.dart';
+import 'package:skillserve_mobile/core/theme/app_theme.dart';
+import 'package:skillserve_mobile/features/auth/models/user_model.dart';
+import 'package:skillserve_mobile/features/booking/services/booking_service.dart';
+import 'package:skillserve_mobile/features/locations/models/ph_address.dart';
+import 'package:skillserve_mobile/features/locations/services/location_service.dart';
+import 'package:skillserve_mobile/features/locations/widgets/ph_address_picker.dart';
+import 'package:skillserve_mobile/features/profile/services/profile_service.dart';
+import 'package:skillserve_mobile/features/provider/models/provider_service_model.dart';
 
 Map<String, dynamic> _place(String code, String name, String level, [String? parent]) =>
     {'code': code, 'name': name, 'level': level, 'parent_code': parent};

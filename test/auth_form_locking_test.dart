@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'package:skilllink_mobile/core/theme/app_theme.dart';
-import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
-import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
-import 'package:skilllink_mobile/routes/app_router.dart';
+import 'package:skillserve_mobile/core/theme/app_theme.dart';
+import 'package:skillserve_mobile/features/auth/controllers/auth_controller.dart';
+import 'package:skillserve_mobile/features/identity/controllers/identity_controller.dart';
+import 'package:skillserve_mobile/routes/app_router.dart';
 
 import 'support/scanned_identity.dart';
 

@@ -1,9 +1,9 @@
-name: skilllink_mobile
+name: skillserve_mobile
 description: >
-  SkillLink — Users Side (Guest, Client, Service Provider) mobile frontend for
-  "Bridging Service Accessibility and Talent Visibility Through an Integrated
-  Skills Marketplace and Service Management Platform." Frontend only —
-  ready for future REST API integration.
+  SkillServe mobile app for customers and service providers — "Bridging Service
+  Accessibility and Talent Visibility Through an Integrated Skills Marketplace
+  and Service Management Platform." Uses the SkillServe REST API
+  (/api/client/v1) and Reverb for realtime.
 publish_to: "none"
 version: 1.0.0+1
 
@@ -42,7 +42,7 @@ dependencies:
   # Formatting
   intl: ^0.19.0
 
-  # Media (UI only — no upload logic)
+  # Media: camera and gallery capture for uploads
   image_picker: ^1.1.2
 
   # Icons

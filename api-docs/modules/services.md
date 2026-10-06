@@ -302,7 +302,7 @@ No JSON request body.
 
 ## `PATCH /api/services/{service}`
 
-PUT/PATCH /api/services/{service} — update service information.
+Update a service (PATCH alias of PUT)
 
 **Authentication:** Bearer token
 

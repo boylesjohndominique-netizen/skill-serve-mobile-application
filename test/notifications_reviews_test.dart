@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/notifications/models/notification_model.dart';
-import 'package:skilllink_mobile/features/reviews/models/review_model.dart';
+import 'package:skillserve_mobile/features/notifications/models/notification_model.dart';
+import 'package:skillserve_mobile/features/reviews/models/review_model.dart';
 
 Map<String, dynamic> notificationPayload([Map<String, dynamic> overrides = const {}]) => {
       'id': 'a1b2c3',

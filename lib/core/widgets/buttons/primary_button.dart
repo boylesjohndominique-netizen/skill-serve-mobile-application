@@ -10,8 +10,9 @@ import '../../../core/constants/app_icons.dart';
 /// spinner and disable interaction — this doubles as the "Loading Button"
 /// variant so state stays in one place instead of two near-identical widgets.
 ///
-/// Rendered with the brand brass gradient (135° #E3AD50 → #C9852E → #A66B22),
-/// ink text, and a brass-tinted glow shadow. Pressing scales the button down
+/// Rendered with the brand lime gradient (`AppColors.brassGradient`, 135°
+/// #C7F33C → #A5CF25 — the name predates the lime palette), charcoal text,
+/// and a soft glow shadow. Pressing scales the button down
 /// (0.97) with a smooth cubic-bezier curve for tactile feedback.
 class PrimaryButton extends StatefulWidget {
   final String label;

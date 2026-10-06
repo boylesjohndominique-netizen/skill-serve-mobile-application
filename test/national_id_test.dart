@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/identity/models/scanned_national_id.dart';
-import 'package:skilllink_mobile/features/identity/services/national_id_parser.dart';
-import 'package:skilllink_mobile/features/locations/models/ph_address.dart';
+import 'package:skillserve_mobile/features/identity/models/scanned_national_id.dart';
+import 'package:skillserve_mobile/features/identity/services/national_id_parser.dart';
+import 'package:skillserve_mobile/features/locations/models/ph_address.dart';
 
 /// The front of a plastic PhilSys card as the camera reads it: a bilingual
 /// label on one line and its value on the next, the address over two lines.

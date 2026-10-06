@@ -78,7 +78,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/client/v1/reviews/{review}`
 
-Update an owned review
+Update an owned review (PATCH alias of PUT)
 
 **Authentication:** Bearer token
 

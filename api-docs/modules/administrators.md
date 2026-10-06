@@ -295,7 +295,7 @@ No JSON request body.
 
 ## `PATCH /api/administrators/{administrator}`
 
-PUT/PATCH /api/administrators/{administrator} — update name, email, role or status.
+Update an administrator (PATCH alias of PUT)
 
 **Authentication:** Bearer token
 

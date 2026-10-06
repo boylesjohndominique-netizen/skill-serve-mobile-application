@@ -251,7 +251,7 @@ No JSON request body.
 
 ## `PATCH /api/users/{user}`
 
-PUT/PATCH /api/users/{user} — update a user's profile.
+Update a user profile (PATCH alias of PUT)
 
 **Authentication:** Bearer token
 

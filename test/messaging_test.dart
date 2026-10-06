@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/messaging/models/message_model.dart';
+import 'package:skillserve_mobile/features/messaging/models/message_model.dart';
 
 /// A `BookingMessage` payload as the API returns it.
 Map<String, dynamic> messagePayload([Map<String, dynamic> overrides = const {}]) => {

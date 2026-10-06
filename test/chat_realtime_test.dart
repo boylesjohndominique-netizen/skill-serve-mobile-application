@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/messaging/controllers/chat_controller.dart';
-import 'package:skilllink_mobile/features/messaging/models/message_model.dart';
+import 'package:skillserve_mobile/features/messaging/controllers/chat_controller.dart';
+import 'package:skillserve_mobile/features/messaging/models/message_model.dart';
 
 ConversationModel _conversation(String bookingId, {int unread = 0, String last = 'Earlier.'}) =>
     ConversationModel(

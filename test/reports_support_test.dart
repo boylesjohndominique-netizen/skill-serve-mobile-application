@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/reports/models/report_model.dart';
-import 'package:skilllink_mobile/features/support/models/support_ticket_model.dart';
+import 'package:skillserve_mobile/features/reports/models/report_model.dart';
+import 'package:skillserve_mobile/features/support/models/support_ticket_model.dart';
 
 Map<String, dynamic> reportPayload([Map<String, dynamic> overrides = const {}]) => {
       'id': 8,

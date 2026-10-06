@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
-import 'package:skilllink_mobile/features/identity/models/identity_verification_model.dart';
-import 'package:skilllink_mobile/features/identity/models/scanned_national_id.dart';
+import 'package:skillserve_mobile/features/identity/controllers/identity_controller.dart';
+import 'package:skillserve_mobile/features/identity/models/identity_verification_model.dart';
+import 'package:skillserve_mobile/features/identity/models/scanned_national_id.dart';
 
 /// An [IdentityController] holding a National ID already scanned at sign-up
 /// — both photos and the fields read from them — so a sign-up screen opens

@@ -107,10 +107,10 @@ checks, layout overflow sweeps): `tool/wsl-flutter.sh test`.
 
 ## Design system
 
-Shares the admin web's identity: Ink Navy `#101828` (primary), Brass `#C9852E` (accent), Warm
-Slate `#F5F4F1` (background); light and dark themes in `lib/core/theme/app_theme.dart`, built from
-the tokens in `lib/core/constants/`. Typography: Space Grotesk (display/titles), Inter (body),
-IBM Plex Mono (IDs, prices, timestamps). Statuses render through `StatusBadge`; trust signals
+Soft charcoal `#1C2128` (primary), pastel lime `#C7F33C` (accent; primary buttons use the lime
+gradient `#C7F33C → #A5CF25`), creamy off-white `#F8F9F3` (background); light and dark themes in
+`lib/core/theme/app_theme.dart`, built from the tokens in `lib/core/constants/`. Typography: Outfit
+throughout (Google Fonts), including the numeric styles for IDs, prices and timestamps. Statuses render through `StatusBadge`; trust signals
 (verified provider, approved document) through `VerificationSeal`.
 
 ## Building a release

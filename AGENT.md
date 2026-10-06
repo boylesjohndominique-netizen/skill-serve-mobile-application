@@ -51,21 +51,17 @@ complete.
 
 ## Deferred Scope
 
-The following PDF items are not currently implemented and must not be added unless the user
-explicitly requests them as a new feature:
+Not built, by the owner's decision — do not add unless explicitly asked:
 
-- Production-grade secure token storage and server-side authorization hardening.
-- Account suspension/ban workflows beyond displaying the existing status.
-- Review reporting.
-- Closed-app push notifications (FCM/APNs): the owner chose realtime over the Laravel backend rather than Firebase, so notifications arrive live only while the app is open and are waiting in the feed otherwise.
-- Account deactivation: an account is either active or deleted.
-- Message reporting (reports are filed against the other party on a booking, not against a message).
-- Dispute evidence upload: the API accepts a written reason only.
-- Support tickets for provider accounts: `/support/tickets` is restricted to customers, so the provider Help Center points at the contact details instead.
-- Presence ("online"/"active now") and typing indicators: there is no presence infrastructure, so the chat screens must not display either.
-- Admin announcements and true targeted/push notifications.
-- Provider information-request response and provider restriction workflows.
-- Device-level biometric authentication and server-side authorization enforcement.
+- Account deactivation: an account is either active or deleted (deletion is a restorable soft delete).
+- Firebase / FCM / APNs push. Notifications arrive in realtime over Reverb while the app is open,
+  and a WorkManager task polls `GET /api/client/v1/notifications/background` with a narrow token
+  while it is closed (Android).
+- Device-level biometric sign-in.
+
+Everything else the PDF lists — review, message and service reporting, dispute evidence, provider
+support tickets, chat presence and typing, admin announcements, provider information requests and
+restrictions, suspension and ban handling — is implemented; see API Integration Status.
 
 ## Engineering Rules
 
@@ -95,13 +91,13 @@ explicitly requests them as a new feature:
 ## API Integration Status
 
 - Client authentication: `/api/client/v1/auth/login`, `register`, `register-provider`, `verify-otp`, `resend-otp`, `google`, `logout`, `me`, `refresh`, `forgot-password`, `change-password`.
-- Registration (client and provider) issues a 6-digit email OTP; `verify-otp` must be called before login works. Google Sign-In exchanges a mobile ID token for a session and skips OTP.
+- Sign-up (customer, provider, and Google) runs details → 6-digit email code (`verify-otp`) → password (`complete-registration`); nothing exists server-side until the password is set. Google login of an existing account asks for its password. The birthday (from the National ID) is required and must be 18+; a provider's `experience_years` is at most age − 16.
 - Client notifications: inbox, read, read-all, unread-count.
 - Account data: `GET /api/client/v1/auth/me/data-export` returns the account's own data (profile, preferences, provider profile, bookings, reviews, reports, support tickets); the app copies it to the clipboard as JSON. `DELETE /api/client/v1/auth/me` takes the password (and an optional reason), refuses while any booking is pending/confirmed/active/disputed, then soft-deletes the account and revokes every token. An administrator can restore it from Data Management.
 - Client reviews: `GET /api/client/v1/reviews` (own history), `POST` (completed booking, once) and `PATCH /api/client/v1/reviews/{review}` (edit).
-- Client reports: `GET`/`POST /api/client/v1/reports` and `GET /api/client/v1/reports/{report}`. `POST` takes `booking_id`, `reason` (enum) and `description`; the reported account is the booking's other party, so the caller must have been on it. The reporter sees status and outcome, never the moderators' investigation notes.
-- Booking disputes: `PATCH /api/client/v1/bookings/{booking}/dispute` (either party, once, on an `active` or `completed` booking) and `GET /api/client/v1/disputes`. Raising one sets `dispute_status = pending`, which is what hands the case to the admin dispute queue.
-- Client support: `GET`/`POST /api/client/v1/support/tickets`, `GET .../{ticket}` and `POST .../{ticket}/replies`. Customer accounts only; a resolved ticket refuses new replies.
+- Client reports: `GET`/`POST /api/client/v1/reports` and `GET /api/client/v1/reports/{report}`. `POST` takes exactly one subject — `booking_id` (the booking's other party), `review_id` (a published review, not your own), `message_id` (a message you received) or `service_id` (a listed service, not your own) — plus `reason` (enum) and `description`. The reporter sees status and outcome, never the moderators' investigation notes.
+- Booking disputes: `PATCH /api/client/v1/bookings/{booking}/dispute` (either party, once, on an `active` or `completed` booking) and `GET /api/client/v1/disputes`. Raising one sets `dispute_status = pending`, which is what hands the case to the admin dispute queue. Either party can add up to 5 photos while it is open (`POST .../dispute/evidence`). A rejected dispute returns the booking to completed or active.
+- Client support: `GET`/`POST /api/client/v1/support/tickets`, `GET .../{ticket}` and `POST .../{ticket}/replies`. Customers and providers; a resolved ticket refuses new replies.
 - Conversations: `GET /api/client/v1/conversations` (the Messages inbox — bookings with at least one message, newest first, each with its counterpart, last message and unread count; reading it marks nothing read) and `GET /api/client/v1/conversations/unread-count` for the tab badge.
 - Booking messages: `GET`/`POST /api/client/v1/bookings/{booking}/messages`. Messaging is booking-scoped — a booking *is* the conversation, so threads are addressed by booking id and there is no way to message a provider before booking them. `GET` marks the caller's received messages in that thread as read; `POST` accepts an `Idempotency-Key`.
 - Realtime messages: a new message broadcasts `client.message.created` on the receiver's private `App.Models.User.{id}` channel, carrying `booking_id` and the message. It is not gated by the "Messages" notification setting, because muting the alert must not stop an open conversation from updating; the muteable alert is a separate notification.
@@ -109,5 +105,5 @@ explicitly requests them as a new feature:
 - Provider availability: `GET`/`PUT /api/client/v1/provider/availability` — the signed-in provider's weekly hours and `is_accepting_bookings`. `PUT` replaces the whole schedule; an empty array means no published hours, which leaves booking times unrestricted.
 - Client bookings: list, create, get, cancel. Creation accepts `service_address` and `contact_phone` alongside `client_notes` and `payment_method`, and an `Idempotency-Key` header makes a retried submit return the booking already created.
 - Provider bookings: `GET /api/client/v1/provider/bookings` and `/{booking}`, plus `PATCH .../{booking}/confirm|decline|start|complete`. The lifecycle is pending → confirmed → active → completed, with decline cancelling a pending request; a transition from the wrong status returns 422. The provider payload carries the customer's contact details instead of a provider block, which is why provider screens read this endpoint rather than the customer's.
-- Profile reads use `GET /api/client/v1/auth/me`. Profile update has no documented client endpoint — throws `UnsupportedError`.
+- Profile: `GET`/`PATCH /api/client/v1/auth/me` (name, phone, structured address), `POST`/`DELETE .../auth/me/photo`.
 - Endpoints without client documentation throw `UnsupportedError` — never return mock data.

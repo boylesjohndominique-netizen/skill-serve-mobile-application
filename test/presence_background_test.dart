@@ -5,9 +5,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skilllink_mobile/core/services/background_notifications.dart';
-import 'package:skilllink_mobile/core/services/realtime_client.dart';
-import 'package:skilllink_mobile/core/services/token_storage.dart';
+import 'package:skillserve_mobile/core/services/background_notifications.dart';
+import 'package:skillserve_mobile/core/services/realtime_client.dart';
+import 'package:skillserve_mobile/core/services/token_storage.dart';
 
 /// Answers every request with [body] and records what was asked.
 class _FakeAdapter implements HttpClientAdapter {

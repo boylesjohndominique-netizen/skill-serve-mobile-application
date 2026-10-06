@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/auth/services/google_sign_in_errors.dart';
+import 'package:skillserve_mobile/features/auth/services/google_sign_in_errors.dart';
 
 void main() {
   // Release builds rename Play services' ApiException, e.g. to "h".

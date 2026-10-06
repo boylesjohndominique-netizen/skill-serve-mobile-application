@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/settings/models/platform_info.dart';
+import 'package:skillserve_mobile/features/settings/models/platform_info.dart';
 
 void main() {
   test('platform info carries the admin policies, rules and maintenance flag', () {

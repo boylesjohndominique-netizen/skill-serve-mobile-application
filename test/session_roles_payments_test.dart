@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skilllink_mobile/core/services/token_storage.dart';
-import 'package:skilllink_mobile/features/auth/controllers/auth_controller.dart';
-import 'package:skilllink_mobile/features/auth/models/user_model.dart';
-import 'package:skilllink_mobile/features/booking/models/booking_model.dart';
-import 'package:skilllink_mobile/features/payments/models/payment_model.dart';
-import 'package:skilllink_mobile/features/reports/models/report_model.dart';
-import 'package:skilllink_mobile/routes/app_router.dart';
+import 'package:skillserve_mobile/core/services/token_storage.dart';
+import 'package:skillserve_mobile/features/auth/controllers/auth_controller.dart';
+import 'package:skillserve_mobile/features/auth/models/user_model.dart';
+import 'package:skillserve_mobile/features/booking/models/booking_model.dart';
+import 'package:skillserve_mobile/features/payments/models/payment_model.dart';
+import 'package:skillserve_mobile/features/reports/models/report_model.dart';
+import 'package:skillserve_mobile/routes/app_router.dart';
 
 UserModel _user(UserRole role) => UserModel(
       id: '7',

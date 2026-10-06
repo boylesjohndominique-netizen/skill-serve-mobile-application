@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
-import 'package:skilllink_mobile/features/identity/models/identity_verification_model.dart';
-import 'package:skilllink_mobile/features/identity/models/scanned_national_id.dart';
-import 'package:skilllink_mobile/features/identity/services/identity_service.dart';
-import 'package:skilllink_mobile/features/identity/views/sign_up_identity_fields.dart';
+import 'package:skillserve_mobile/features/identity/controllers/identity_controller.dart';
+import 'package:skillserve_mobile/features/identity/models/identity_verification_model.dart';
+import 'package:skillserve_mobile/features/identity/models/scanned_national_id.dart';
+import 'package:skillserve_mobile/features/identity/services/identity_service.dart';
+import 'package:skillserve_mobile/features/identity/views/sign_up_identity_fields.dart';
 
 import 'support/scanned_identity.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/notifications/models/notification_model.dart';
-import 'package:skilllink_mobile/features/provider/models/provider_service_model.dart';
+import 'package:skillserve_mobile/features/notifications/models/notification_model.dart';
+import 'package:skillserve_mobile/features/provider/models/provider_service_model.dart';
 
 void main() {
   test('provider service parses the API shape including moderation state', () {

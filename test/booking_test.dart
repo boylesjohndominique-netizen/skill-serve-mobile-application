@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/booking/models/booking_model.dart';
-import 'package:skilllink_mobile/features/booking/views/schedule_picker.dart';
-import 'package:skilllink_mobile/features/marketplace/models/service_model.dart';
-import 'package:skilllink_mobile/features/provider/models/provider_availability_model.dart';
+import 'package:skillserve_mobile/features/booking/models/booking_model.dart';
+import 'package:skillserve_mobile/features/booking/views/schedule_picker.dart';
+import 'package:skillserve_mobile/features/marketplace/models/service_model.dart';
+import 'package:skillserve_mobile/features/provider/models/provider_availability_model.dart';
 
 /// A `ClientBooking` payload as `GET /api/client/v1/bookings` returns it.
 Map<String, dynamic> clientPayload([Map<String, dynamic> overrides = const {}]) => {

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:skilllink_mobile/features/marketplace/controllers/favorites_controller.dart';
-import 'package:skilllink_mobile/features/marketplace/models/provider_model.dart';
-import 'package:skilllink_mobile/features/marketplace/services/favorites_service.dart';
+import 'package:skillserve_mobile/features/marketplace/controllers/favorites_controller.dart';
+import 'package:skillserve_mobile/features/marketplace/models/provider_model.dart';
+import 'package:skillserve_mobile/features/marketplace/services/favorites_service.dart';
 
 ProviderModel _provider(int id, String name) =>
     ProviderModel.fromJson({'id': id, 'business_name': name});

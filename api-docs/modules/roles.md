@@ -326,7 +326,7 @@ No JSON request body.
 
 ## `PATCH /api/roles/{role}`
 
-PUT/PATCH /api/roles/{role} — update name/description.
+Update a role (PATCH alias of PUT)
 
 **Authentication:** Bearer token
 

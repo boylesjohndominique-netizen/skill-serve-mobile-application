@@ -6,13 +6,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:skilllink_mobile/core/theme/app_theme.dart';
-import 'package:skilllink_mobile/features/identity/controllers/identity_controller.dart';
-import 'package:skilllink_mobile/features/identity/models/scanned_national_id.dart';
-import 'package:skilllink_mobile/features/identity/services/national_id_camera.dart';
-import 'package:skilllink_mobile/features/identity/services/national_id_reader.dart';
-import 'package:skilllink_mobile/features/identity/services/sign_up_scan_store.dart';
-import 'package:skilllink_mobile/features/identity/views/national_id_scan_flow.dart';
+import 'package:skillserve_mobile/core/theme/app_theme.dart';
+import 'package:skillserve_mobile/features/identity/controllers/identity_controller.dart';
+import 'package:skillserve_mobile/features/identity/models/scanned_national_id.dart';
+import 'package:skillserve_mobile/features/identity/services/national_id_camera.dart';
+import 'package:skillserve_mobile/features/identity/services/national_id_reader.dart';
+import 'package:skillserve_mobile/features/identity/services/sign_up_scan_store.dart';
+import 'package:skillserve_mobile/features/identity/views/national_id_scan_flow.dart';
 
 /// Answers by image: [frontText]/[frontQr] for the front, [backQr] for the
 /// back. [failFront] makes reading the front throw, as ML Kit can.
