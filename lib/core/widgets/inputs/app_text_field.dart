@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
@@ -24,6 +25,9 @@ class AppTextField extends StatefulWidget {
   final int? maxLength;
   final void Function(String)? onChanged;
 
+  /// Shape the text as it is typed (e.g. [PhMobileNumber.formatter]).
+  final List<TextInputFormatter>? inputFormatters;
+
   /// Set false while a request is in flight so the value cannot change
   /// under the submission that is already using it.
   final bool enabled;
@@ -40,6 +44,7 @@ class AppTextField extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength,
     this.onChanged,
+    this.inputFormatters,
     this.enabled = true,
   });
 
@@ -97,6 +102,7 @@ class _AppTextFieldState extends State<AppTextField> {
               validator: widget.validator,
               maxLines: widget.obscureText ? 1 : widget.maxLines,
               maxLength: widget.maxLength,
+              inputFormatters: widget.inputFormatters,
               onChanged: widget.onChanged,
               style: AppTextStyles.bodyLarge.copyWith(
                 color: widget.enabled ? null : muted,

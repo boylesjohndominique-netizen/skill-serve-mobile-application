@@ -1,3 +1,5 @@
+import 'ph_mobile_number.dart';
+
 /// Simple client-side form validators shared across auth and profile forms.
 class Validators {
   Validators._();
@@ -25,10 +27,7 @@ class Validators {
     return null;
   }
 
-  static String? phone(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Phone number is required';
-    final regex = RegExp(r'^(09|\+639)\d{9}$');
-    if (!regex.hasMatch(value.trim())) return 'Enter a valid PH mobile number';
-    return null;
-  }
+  /// An 11-digit Philippine mobile number (09123456789); see [PhMobileNumber].
+  static String? phone(String? value) =>
+      PhMobileNumber.validate(value, requiredMessage: 'Phone number is required');
 }

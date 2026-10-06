@@ -11,6 +11,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/ph_mobile_number.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
@@ -48,7 +49,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthController>().currentUser;
     _firstName = TextEditingController(text: user?.firstName);
     _lastName = TextEditingController(text: user?.lastName);
-    _phone = TextEditingController(text: user?.phone);
+    // Older accounts may hold +63 numbers; the field shows 09XXXXXXXXX.
+    _phone = TextEditingController(text: PhMobileNumber.normalise(user?.phone ?? ''));
     _address = user?.addressDetails ?? PhAddress.empty;
     final text = user?.address.trim() ?? '';
     _legacyAddress = user?.addressDetails == null && text.isNotEmpty ? text : null;
@@ -175,8 +177,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Phone number',
+                  hint: PhMobileNumber.hint,
                   controller: _phone,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [PhMobileNumber.formatter],
                   prefixIcon: AppIcons.call_outlined,
                   validator: Validators.phone,
                   enabled: !_saving,

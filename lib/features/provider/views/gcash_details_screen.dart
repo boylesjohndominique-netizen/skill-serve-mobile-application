@@ -5,6 +5,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/api_error.dart';
+import '../../../core/utils/ph_mobile_number.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/error_state.dart';
@@ -58,7 +59,7 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
       final ProviderModel profile = await ProviderServiceService().getMyProfile();
       if (!mounted) return;
       setState(() {
-        _number.text = profile.gcashNumber ?? '';
+        _number.text = PhMobileNumber.normalise(profile.gcashNumber ?? '');
         _name.text = profile.gcashName ?? '';
         _loading = false;
       });
@@ -149,37 +150,23 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
                         const SizedBox(height: AppSizes.xl),
                         AppTextField(
                           label: 'GCash number',
-                          hint: '09XX XXX XXXX',
+                          hint: PhMobileNumber.hint,
                           controller: _number,
                           keyboardType: TextInputType.phone,
+                          // Only an 11-digit 09 number can be typed; a pasted
+                          // +63 number is turned into one.
+                          inputFormatters: [PhMobileNumber.formatter],
                           onChanged: (_) => setState(() {}),
-                          // The API normalises +63 / 63 / 9XXXXXXXXX to
-                          // 09XXXXXXXXX itself, so this accepts the same
-                          // shapes rather than refusing a number that is
-                          // actually fine.
-                          validator: (value) {
-                            final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
-                            if (digits.isEmpty) {
-                              return _isClearing
-                                  ? null
-                                  : 'Enter the GCash number customers should pay.';
-                            }
-                            final normalised = switch (digits) {
-                              _ when digits.startsWith('639') && digits.length == 12 =>
-                                '0${digits.substring(2)}',
-                              _ when digits.startsWith('9') && digits.length == 10 => '0$digits',
-                              _ => digits,
-                            };
-                            if (!RegExp(r'^09\d{9}$').hasMatch(normalised)) {
-                              return 'Enter an 11-digit GCash number starting with 09.';
-                            }
-                            return null;
-                          },
+                          validator: (value) => PhMobileNumber.validate(
+                            value,
+                            required: !_isClearing,
+                            requiredMessage: 'Enter the GCash number customers should pay.',
+                          ),
                         ),
                         const SizedBox(height: AppSizes.lg),
                         AppTextField(
                           label: 'Account name',
-                          hint: 'The name GCash shows for this number',
+                          hint: 'e.g. Juan Dela Cruz',
                           controller: _name,
                           maxLength: 120,
                           onChanged: (_) => setState(() {}),
@@ -189,8 +176,10 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
                         ),
                         const SizedBox(height: AppSizes.sm),
                         Text(
-                          'Customers are asked to check this name matches before they send, '
-                          'so it must be exactly what GCash displays.',
+                          'Your name as registered on this GCash account — check it in GCash under '
+                          'Profile. When a customer enters your number, GCash shows a partly '
+                          'hidden version of this name (like JU** D***), and the app tells them '
+                          'to send only if it matches, so they know they are paying you.',
                           style: AppTextStyles.bodySmall,
                         ),
                         const SizedBox(height: AppSizes.xl),

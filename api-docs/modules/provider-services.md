@@ -308,6 +308,8 @@ None.
 | `hourly_rate` | no | number, format=float |
 | `location` | no | string, maxLength=255 |
 | `website` | no | string, format=uri |
+| `gcash_number` | no | string |
+| `gcash_name` | no | string, maxLength=120 |
 | `skills` | no | array |
 | `certifications` | no | array |
 | `languages` | no | array |

@@ -11,6 +11,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/ph_mobile_number.dart';
 import '../../../core/widgets/buttons/outlined_app_button.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
@@ -87,7 +88,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     final auth = context.read<AuthController>();
     final user = auth.currentUser;
     _clientName = user?.fullName ?? '';
-    _phoneController = TextEditingController(text: user?.phone ?? '');
+    // Older accounts may hold +63 numbers; the field shows 09XXXXXXXXX.
+    _phoneController = TextEditingController(text: PhMobileNumber.normalise(user?.phone ?? ''));
     _address = user?.addressDetails ?? PhAddress.empty;
     _load();
   }
@@ -369,9 +371,10 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         const SizedBox(height: AppSizes.lg),
         AppTextField(
           label: 'Phone number',
-          hint: '09XX XXX XXXX',
+          hint: PhMobileNumber.hint,
           controller: _phoneController,
           keyboardType: TextInputType.phone,
+          inputFormatters: [PhMobileNumber.formatter],
           prefixIcon: AppIcons.phone_outlined,
           validator: Validators.phone,
         ),

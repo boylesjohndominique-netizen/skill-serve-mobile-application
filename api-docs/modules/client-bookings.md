@@ -65,7 +65,7 @@ The commission is included in the advertised price, so `total_price` is what the
 | `client_notes` | no | string, maxLength=2000 |
 | `service_address` | no | string, maxLength=255 |
 | `service_address_details` | no | object |
-| `contact_phone` | no | string, maxLength=32 |
+| `contact_phone` | no | string |
 | `payment_method` | no | string, one of: `on_hand`, `gcash`, `cash` |
 
 ### Responses

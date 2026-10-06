@@ -364,7 +364,7 @@ None.
 |---|---:|---|
 | `first_name` | no | string, maxLength=255 |
 | `last_name` | no | string, maxLength=255 |
-| `phone` | no | string, maxLength=30 |
+| `phone` | no | string |
 | `address` | no | string, maxLength=500 |
 | `address_details` | no | object |
 
