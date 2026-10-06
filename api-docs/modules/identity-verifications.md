@@ -77,7 +77,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/identity-verifications/{identityVerification}/approve`
 
-Only a pending submission can be decided; a second decision returns 409. Approving starts the retention clock on the stored images (System Settings → Identity).
+Only a pending submission can be decided; a second decision returns 409. Approving starts the retention clock on the stored images (System Settings → Identity). For a provider who is not yet verified, approving also verifies them in Provider Management and closes any open business-verification request as approved.
 
 **Authentication:** Bearer token
 
