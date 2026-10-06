@@ -44,6 +44,13 @@ class TokenStorage {
     await _storage.write(key: backgroundTokenKey, value: token);
   }
 
+  /// Drops a background token the server refused, so the next sign-in
+  /// ([BackgroundNotifications.enable]) asks for a new one.
+  static Future<void> clearBackgroundToken() async {
+    await _migrateLegacy();
+    await _storage.delete(key: backgroundTokenKey);
+  }
+
   static Future<void> save(
       {String? accessToken, String? refreshToken, String? expiresAt}) async {
     await _migrateLegacy();

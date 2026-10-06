@@ -36,22 +36,25 @@ class ReportService {
   }
 
   /// POST /api/client/v1/reports — exactly one subject: the other party on
-  /// [bookingId], a published [reviewId], or a [messageId] this account
-  /// received. The API works out who that is, so no name is sent.
+  /// [bookingId], a published [reviewId], a [messageId] this account
+  /// received, or a listed [serviceId]. The API works out who that is, so no
+  /// name is sent.
   Future<ReportModel> fileReport({
     String? bookingId,
     String? reviewId,
     String? messageId,
+    String? serviceId,
     required ReportReason reason,
     required String details,
   }) async {
-    final subjects = [bookingId, reviewId, messageId].whereType<String>().length;
+    final subjects = [bookingId, reviewId, messageId, serviceId].whereType<String>().length;
     assert(subjects == 1, 'A report names exactly one subject.');
 
     final response = await ApiClient.instance.dio.post(_reports, data: {
       if (bookingId != null) 'booking_id': int.parse(bookingId),
       if (reviewId != null) 'review_id': int.parse(reviewId),
       if (messageId != null) 'message_id': int.parse(messageId),
+      if (serviceId != null) 'service_id': int.parse(serviceId),
       'reason': reason.value,
       'description': details,
     });

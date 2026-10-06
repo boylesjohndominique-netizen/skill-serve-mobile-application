@@ -81,7 +81,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/disputes/{booking}/close`
 
-Close a resolved dispute
+Close a resolved or rejected dispute
 
 **Authentication:** Bearer token
 
@@ -218,7 +218,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/disputes/{booking}/reject`
 
-Reject a dispute
+The booking returns to where it was before the dispute: completed if the job had been completed, otherwise active.
 
 **Authentication:** Bearer token
 

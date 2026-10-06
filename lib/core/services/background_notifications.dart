@@ -162,10 +162,12 @@ class BackgroundNotifications {
       );
       items = response.data['data'] as List? ?? const [];
     } on DioException catch (e) {
-      // 401/403: signed out, suspended or token revoked. Stop until the app
-      // signs in again and enables it.
+      // 401/403: signed out, suspended or token revoked. Stop, and forget the
+      // refused token so the next time the app opens signed in it is issued
+      // a new one instead of staying silent for good.
       final status = e.response?.statusCode;
       if (status == 401 || status == 403) {
+        await TokenStorage.clearBackgroundToken();
         try {
           await Workmanager().cancelByUniqueName(taskName);
         } catch (_) {}

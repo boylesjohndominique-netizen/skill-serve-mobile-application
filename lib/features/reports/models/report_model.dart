@@ -25,6 +25,15 @@ enum ReportReason {
     other,
   ];
 
+  /// The reasons that make sense for a service listing.
+  static const forServices = [
+    misleadingInformation,
+    spam,
+    inappropriateContent,
+    safetyConcern,
+    other,
+  ];
+
   /// The reasons that make sense for a review or a message.
   static const forContent = [
     inappropriateContent,
@@ -94,12 +103,13 @@ class ReportModel {
 
   String get reasonLabel => ReportReason.labelFor(reason);
 
-  /// "About Juan", "Review by Juan" or "Message from Juan".
+  /// "About Juan", "Review by Juan", "Message from Juan" or "Service by …".
   String get subjectLabel {
     final name = reportedName.isEmpty ? null : reportedName;
     return switch (subjectType) {
       'review' => name == null ? 'A review' : 'Review by $name',
       'message' => name == null ? 'A message' : 'Message from $name',
+      'service' => name == null ? 'A service' : 'Service by $name',
       _ => name == null ? 'Reported account' : 'About $name',
     };
   }

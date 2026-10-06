@@ -60,12 +60,13 @@ class ReportController extends ChangeNotifier {
     }
   }
 
-  /// Files a report about the other party on [bookingId]. Returns null and sets
-  /// [errorMessage] when the API refuses it.
+  /// Files a report about the other party on [bookingId], a review, a message
+  /// or a service. Returns null and sets [errorMessage] when the API refuses it.
   Future<ReportModel?> fileReport({
     String? bookingId,
     String? reviewId,
     String? messageId,
+    String? serviceId,
     required ReportReason reason,
     required String details,
   }) async {
@@ -77,6 +78,7 @@ class ReportController extends ChangeNotifier {
         bookingId: bookingId,
         reviewId: reviewId,
         messageId: messageId,
+        serviceId: serviceId,
         reason: reason,
         details: details,
       );

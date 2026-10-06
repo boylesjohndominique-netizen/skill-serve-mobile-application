@@ -92,6 +92,19 @@ void main() {
       expect(report.decidedAt, isNotNull);
     });
 
+    test('a reported service names who offers it and shows its title', () {
+      final report = ReportModel.fromJson(reportPayload({
+        'subject_type': 'service',
+        'reported': {'name': 'Juan Aircon Services', 'excerpt': 'Aircon cleaning'},
+      }));
+
+      expect(report.subjectType, 'service');
+      expect(report.subjectLabel, 'Service by Juan Aircon Services');
+      expect(report.excerpt, 'Aircon cleaning');
+      // Every reason offered for a listing is one the API accepts.
+      expect(ReportReason.forServices.every(ReportReason.values.contains), isTrue);
+    });
+
     test('an unknown status reads as pending instead of throwing', () {
       expect(ReportModel.statusFromApi('archived'), ReportStatus.pending);
       expect(ReportModel.statusFromApi(null), ReportStatus.pending);

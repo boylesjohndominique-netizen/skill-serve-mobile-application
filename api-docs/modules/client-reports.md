@@ -39,7 +39,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/reports`
 
-Send exactly one subject. `booking_id` reports the other party on a booking the caller took part in; `review_id` reports a published review (not the caller's own); `message_id` reports a message the caller received. Moderators review every report from the admin console. One open report per subject per reporter.
+Send exactly one subject. `booking_id` reports the other party on a booking the caller took part in; `review_id` reports a published review (not the caller's own); `message_id` reports a message the caller received; `service_id` reports a service listed in the marketplace (not the caller's own). Moderators review every report from the admin console. One open report per subject per reporter.
 
 **Authentication:** Bearer token
 
@@ -54,6 +54,7 @@ None.
 | `booking_id` | no | integer |
 | `review_id` | no | integer |
 | `message_id` | no | integer |
+| `service_id` | no | integer |
 | `reason` | yes | string, one of: `service_quality`, `no_show`, `safety_concern`, `payment_dispute`, `misleading_information`, `harassment`, `inappropriate_content`, `spam`, `other` |
 | `description` | yes | string, minLength=10, maxLength=2000 |
 

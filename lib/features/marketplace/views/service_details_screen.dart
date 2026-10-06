@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -56,8 +59,22 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     final s = _service!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Only a signed-in customer reports a listing; guests have no account,
+    // and providers never see other providers' services.
+    final canReport = context.select<AuthController, bool>((auth) => auth.isClient);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Service Details')),
+      appBar: AppBar(
+        title: const Text('Service Details'),
+        actions: [
+          if (canReport)
+            IconButton(
+              tooltip: 'Report this service',
+              icon: const AppIcon(AppIcons.flag_outlined),
+              onPressed: () => showReportContentSheet(context, serviceId: s.id, title: 'Report this service'),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.pageHPad),

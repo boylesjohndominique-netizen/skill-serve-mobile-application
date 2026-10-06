@@ -11,15 +11,16 @@ import 'package:skilllink_mobile/core/services/token_storage.dart';
 
 /// Answers every request with [body] and records what was asked.
 class _FakeAdapter implements HttpClientAdapter {
-  _FakeAdapter(this.body);
+  _FakeAdapter(this.body, {this.status = 200});
 
   final Map<String, dynamic> body;
+  final int status;
   final requests = <RequestOptions>[];
 
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     requests.add(options);
-    return ResponseBody.fromString(jsonEncode(body), 200, headers: {
+    return ResponseBody.fromString(jsonEncode(body), status, headers: {
       Headers.contentTypeHeader: ['application/json'],
     });
   }
@@ -102,6 +103,15 @@ void main() {
 
       expect(await BackgroundNotifications.check(client: Dio()..httpClientAdapter = adapter), isTrue);
       expect(adapter.requests, isEmpty);
+    });
+
+    test('a refused token is forgotten, so the next sign-in issues a new one', () async {
+      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({TokenStorage.backgroundTokenKey: 'expired-token'});
+      final adapter = _FakeAdapter({'message': 'Unauthenticated.'}, status: 401);
+
+      expect(await BackgroundNotifications.check(client: Dio()..httpClientAdapter = adapter), isTrue);
+      expect(await TokenStorage.readBackgroundToken(), isNull);
     });
 
     test('asks for what is new with the narrow token, then moves the cursor and remembers ids', () async {
