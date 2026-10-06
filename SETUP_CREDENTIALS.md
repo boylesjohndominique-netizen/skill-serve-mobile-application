@@ -2,15 +2,19 @@
 
 The mobile app now requires two external services. Both are free and take ~10 minutes to configure. Nothing works on the deployed backend until these env vars are set.
 
-## 1. Mailjet — sends the 6-digit codes and every email (required)
+## 1. Gmail API — sends the 6-digit codes and every email (required)
 
-Since 2026-10-06 the sign-up code, its resend and the forgot-password code go out through
-**Mailjet** (Brevo was dropped; Twilio has no free trial in the Philippines). Free plan: 200 emails a
-day, no domain needed. Full steps are in the web repo's `DEPLOYMENT.md` → "Email codes — Mailjet":
+Since 2026-10-06 the sign-up code, its resend and the forgot-password code are sent **as your Gmail
+account through the Gmail API** — free, no domain, no email company to approve you (Brevo and
+Mailjet both blocked new accounts; Twilio has no free trial in the Philippines). It uses the same
+Google Cloud project as Google sign-in. Full click-by-click steps are in the web repo's
+`DEPLOYMENT.md` → "Email codes — Gmail API". In short:
 
-1. Sign up at app.mailjet.com (free) and complete any account review Mailjet asks for.
-2. *Account settings → Senders & Domains → Add a sender address* → confirm the link Mailjet emails.
-3. *Account settings → REST API → API Key Management* → copy the API Key and Secret Key.
+1. Enable the **Gmail API**; set the OAuth consent screen to **In production** (Publish app).
+2. Create an OAuth client of type **Web application** with redirect URI
+   `https://developers.google.com/oauthplayground`; copy its ID and secret.
+3. In the OAuth Playground, with your own credentials, authorize the scope
+   `https://www.googleapis.com/auth/gmail.send` as your Gmail and copy the **refresh token**.
 4. Put them on Render (section 3).
 
 ## 2. Google Cloud — Sign-In with Google (required for the Google button)
@@ -73,19 +77,19 @@ Environment**, then redeploy:
 
 ```
 OTP_DRIVER=mail
-MAIL_MAILER=mailjet-api
-MAILJET_API_KEY=…
-MAILJET_SECRET_KEY=…
-MAIL_FROM_ADDRESS=<the sender validated in Mailjet>
+MAIL_MAILER=gmail-api
+GMAIL_CLIENT_ID=…apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=…
+GMAIL_REFRESH_TOKEN=1//…
+MAIL_FROM_ADDRESS=<the same Gmail>
 MAIL_FROM_NAME=SkillServe
 ```
 
-Mailjet is reached over HTTPS, so Render's blocked SMTP ports do not matter. **Verify:** open
-`https://skillserve-web-backend.onrender.com/api/health` — `"otp": {"status": "up", "driver":
-"mail", "mailer": "mailjet-api"}`. Then sign up in the app with a real Gmail (check Spam the first
-time) and try Forgot password. If a code does not arrive: Mailjet → Statistics shows whether it was
-delivered, bounced or blocked; Render → Logs shows `Failed to send registration OTP` with Mailjet's
-error code.
+The Gmail API is reached over HTTPS, so Render's blocked SMTP ports do not matter. **Verify:**
+`https://skillserve-web-backend.onrender.com/api/health` shows `"otp": {"status": "up", "driver":
+"mail", "mailer": "gmail-api"}`. Then sign up in the app and try Forgot password — the emails also
+appear in that Gmail's *Sent* folder. If a code does not arrive, Render → Logs shows
+`Failed to send registration OTP` with Google's reason.
 
 ## 4. Local development
 
