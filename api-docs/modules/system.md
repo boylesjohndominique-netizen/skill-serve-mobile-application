@@ -39,7 +39,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/health`
 
-Public. Reports whether the database and the upload storage (storage/app, the Render persistent disk in production) are usable. Never includes error details; those go to the server log.
+Public. Reports whether the database and the upload storage (storage/app, the Render persistent disk in production) are usable. Never includes error details; those go to the server log. `otp` says whether the 6-digit codes can be sent (Twilio Verify configured, or a real mailer) without failing the check.
 
 **Authentication:** Public
 
@@ -65,6 +65,10 @@ No JSON request body.
         },
         "storage": {
             "status": "up"
+        },
+        "otp": {
+            "status": "up",
+            "driver": "twilio"
         }
     }
 }
@@ -82,6 +86,10 @@ No JSON request body.
         },
         "storage": {
             "status": "up"
+        },
+        "otp": {
+            "status": "up",
+            "driver": "twilio"
         }
     }
 }
