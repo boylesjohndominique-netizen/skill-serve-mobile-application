@@ -1,6 +1,6 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
-Last updated: 2026-10-03 (F2 — password after the sign-up code, Google needs the password, readable light/dark).
+Last updated: 2026-10-06 (F3 — sign-up survives the app being closed at the ID camera; 18+ only, experience ≤ age − 16).
 Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
 Laravel API. The master list — including backend, admin web and deployment — is
 `web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
@@ -17,6 +17,13 @@ Nothing open.
 ## High
 
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
+
+### F3 · owner checks (2026-10-06)
+- [ ] Build the new APK and sign up on the low-memory phone that went back to the start after the
+  ID photo: the back scan must continue, and after a forced restart the app must reopen on
+  Create your account with the front photo kept.
+- [ ] A birthday under 18 is refused; a provider aged 18 can claim at most 2 years of experience.
+- [ ] Older APKs (before the ID scan) send no birthday and can no longer sign up — reinstall.
 
 ### Before the release build is handed out
 1. ~~Create the upload keystore and `android/key.properties`~~ — **done 2026-09-30**:

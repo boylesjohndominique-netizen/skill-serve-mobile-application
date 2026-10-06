@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/age_requirement.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../locations/models/ph_address.dart';
@@ -8,6 +9,7 @@ import '../../locations/services/location_service.dart';
 import '../../locations/widgets/ph_address_picker.dart';
 import '../controllers/identity_controller.dart';
 import '../models/scanned_national_id.dart';
+import '../services/sign_up_scan_store.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// The sign-up fields that come from the National ID, pre-filled from the
@@ -154,17 +156,25 @@ class _SignUpIdentityFieldsState extends State<SignUpIdentityFields> {
         const SizedBox(height: 12),
         FormField<DateTime>(
           initialValue: form.birthdate,
-          validator: (_) => form.birthdate == null ? 'Enter your date of birth.' : null,
+          validator: (_) {
+            final birthdate = form.birthdate;
+            if (birthdate == null) return 'Enter your date of birth.';
+            if (!AgeRequirement.isOldEnough(birthdate)) return AgeRequirement.tooYoungMessage;
+            return null;
+          },
           builder: (field) => InkWell(
             onTap: !enabled
                 ? null
                 : () async {
                     final now = DateTime.now();
+                    final latest = AgeRequirement.latestBirthday();
+                    final current = form.birthdate ?? DateTime(now.year - 20);
+                    // Only adults can sign up, so younger dates are not offered.
                     final picked = await showDatePicker(
                       context: context,
-                      initialDate: form.birthdate ?? DateTime(now.year - 20),
+                      initialDate: current.isAfter(latest) ? latest : current,
                       firstDate: DateTime(now.year - 120),
-                      lastDate: now,
+                      lastDate: latest,
                     );
                     if (picked != null) {
                       setState(() => form.birthdate = picked);
@@ -206,6 +216,8 @@ class _SignUpIdentityFieldsState extends State<SignUpIdentityFields> {
 /// refused it, the National ID screen takes over, pre-filled from the scan.
 Future<String> submitScannedIdAndRoute(IdentityController identity, {required bool isProvider}) async {
   final home = isProvider ? '/provider-onboarding' : '/client';
+  // The account exists, so a restart has no sign-up to return to.
+  await SignUpScanStore.clear();
   if (await identity.submitScanned()) return home;
   return isProvider ? '/identity-verification?next=${Uri.encodeComponent(home)}' : '/identity-verification';
 }

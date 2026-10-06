@@ -54,13 +54,198 @@ Paginated responses put pagination information under `meta.pagination`. Validati
 - `422`: request validation or a business-rule validation failure.
 - `429`: rate limit exceeded. Login is limited to 5 attempts per minute per IP; the general API limit is 60 requests per minute per user/IP.
 
-## Mobile-specific flow
+## Mobile connectivity architecture
 
-1. Register or log in through `Client Authentication`.
-2. Store the returned access token securely and send it as a bearer token.
-3. Refresh the client token with `/api/client/v1/auth/refresh` when required by the response.
-4. On `401`, clear the session and authenticate again; logout and password changes revoke sessions.
-5. Use the public `Client Marketplace` routes for catalog discovery and protected client routes for bookings, reviews, notifications, support, and booking messages.
+The backend is already configured for mobile clients. Every endpoint under `/api/client/v1/*` is designed for Flutter integration. Here is exactly how the connection works.
+
+### How Flutter connects to the backend
+
+```
+Flutter App  ─── HTTPS ──►  Laravel Backend  ─── SQL ──►  PostgreSQL
+     │                             │
+     │  Authorization: Bearer xxx  │
+     │  Accept: application/json   │
+     │                             │
+     └── REST API calls ──────────┘
+```
+
+1. Flutter sends **HTTP requests** to `http://localhost:8000` (dev) or your production URL.
+2. Every request includes the header `Authorization: Bearer <token>` for authenticated endpoints.
+3. The backend validates the token, queries PostgreSQL, and returns JSON.
+4. **No CORS configuration is needed** — CORS is a browser-only mechanism. Native mobile apps (Flutter, Swift, Kotlin) never trigger CORS preflight requests. The existing `cors.php` config is irrelevant for mobile.
+
+### Authentication flow (complete lifecycle)
+
+```
+┌──────────────┐
+│  App Launch   │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐    No token stored     ┌──────────────────┐
+│  Token exists │──────────────────────►│  Show Login/Register│
+└──────┬───────┘                        └──────────────────┘
+       │ Yes
+       ▼
+┌──────────────┐    Token valid         ┌──────────────────┐
+│  Check token  │──────────────────────►│  Go to Home Screen │
+│  expiry      │                        └──────────────────┘
+└──────┬───────┘
+       │ Expired
+       ▼
+┌──────────────┐    Refresh valid       ┌──────────────────┐
+│  POST /auth/  │──────────────────────►│  Store new token   │
+│  refresh     │                        │  Continue request  │
+└──────┬───────┘                        └──────────────────┘
+       │ Refresh expired/invalid
+       ▼
+┌──────────────┐
+│  Clear store  │
+│  Show Login   │
+└──────────────┘
+```
+
+### Token lifecycle
+
+| Token type | Lifetime | Storage | Usage |
+|---|---|---|---|
+| Access token (Sanctum) | **60 minutes** | Secure storage (Flutter `flutter_secure_storage`) | Sent as `Authorization: Bearer <token>` on every request |
+| Refresh token (opaque) | **14 days** | Secure storage | Sent to `POST /api/client/v1/auth/refresh` to get a new access + refresh token pair |
+
+**Key behaviors:**
+- Access tokens are Sanctum bearer tokens with the `client:auth` ability.
+- Refresh tokens are 96-character random strings stored as SHA-256 hashes in the `client_refresh_tokens` database table.
+- Refresh tokens use **rotating family rotation**: every refresh issues a new refresh token and invalidates the old one. If a revoked refresh token is presented, the entire family is revoked (all sessions for that login chain are killed) — this is reuse detection.
+- `POST /api/client/v1/auth/logout` and `POST /api/client/v1/auth/change-password` revoke **all** tokens for the user.
+
+### Rate limits
+
+| Endpoint group | Limit | Scope |
+|---|---|---|
+| Login (`/auth/login`) | **5 requests/minute** | Per IP address |
+| All other API endpoints | **60 requests/minute** | Per authenticated user (or per IP if unauthenticated) |
+
+The 60 req/min limit is generous for normal mobile usage. If the Flutter app makes many parallel requests (e.g., loading a feed with images), batch or debounce where possible.
+
+### What Flutter must send on every request
+
+```dart
+// Headers for ALL requests (authenticated or not):
+{
+  'Accept': 'application/json',
+  'Content-Type': 'application/json',
+}
+
+// Additional header for authenticated requests:
+{
+  'Authorization': 'Bearer $accessToken',
+}
+```
+
+The backend's `ForceJsonResponse` middleware automatically sets `Accept: application/json` on the server side, so Flutter does not strictly need to send it — but it is best practice to include it.
+
+### Storing tokens in Flutter
+
+```dart
+// Use flutter_secure_storage for token storage:
+final storage = FlutterSecureStorage();
+
+// After login/register, store:
+await storage.write(key: 'access_token', value: response['token']);
+await storage.write(key: 'refresh_token', value: response['refresh_token']);
+await storage.write(key: 'token_expires_at', value: response['expires_at']);
+await storage.write(key: 'refresh_expires_at', value: response['refresh_expires_at']);
+
+// On app launch, read:
+final token = await storage.read(key: 'access_token');
+final refreshToken = await storage.read(key: 'refresh_token');
+
+// On logout, clear:
+await storage.deleteAll();
+```
+
+**Never store tokens in `SharedPreferences`, `localStorage`, or plain text files.** Use platform-secure storage (Keychain on iOS, EncryptedSharedPreferences on Android).
+
+### Handling token refresh in Flutter
+
+```dart
+Future<String> getValidToken() async {
+  final expiresAt = await storage.read(key: 'token_expires_at');
+  if (expiresAt != null && DateTime.parse(expiresAt).isAfter(DateTime.now())) {
+    return await storage.read(key: 'access_token') ?? '';
+  }
+  // Token expired — refresh it
+  final refreshToken = await storage.read(key: 'refresh_token');
+  if (refreshToken == null) {
+    // No refresh token — must re-login
+    throw AuthException('No refresh token');
+  }
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/client/v1/auth/refresh'),
+    headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+    body: jsonEncode({'refresh_token': refreshToken}),
+  );
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body)['data'];
+    await storage.write(key: 'access_token', value: data['token']);
+    await storage.write(key: 'refresh_token', value: data['refresh_token']);
+    await storage.write(key: 'token_expires_at', value: data['expires_at']);
+    await storage.write(key: 'refresh_expires_at', value: data['refresh_expires_at']);
+    return data['token'];
+  }
+  // Refresh failed — clear and redirect to login
+  await storage.deleteAll();
+  throw AuthException('Refresh failed');
+}
+```
+
+### Error handling for Flutter
+
+| HTTP status | Meaning | Flutter action |
+|---|---|---|
+| `200` / `201` | Success | Parse `data` field |
+| `401` | Token missing, expired, or revoked | Try refresh; if refresh fails, clear storage and show login |
+| `403` | Authenticated but lacks permission | Show "access denied" message |
+| `404` | Resource not found | Show "not found" message |
+| `422` | Validation error | Parse `errors` object and display field-level messages |
+| `429` | Rate limited | Back off exponentially; show "too many requests" message |
+
+The `ForceJsonResponse` middleware guarantees all error responses are JSON, never HTML.
+
+### Public vs protected endpoints
+
+**Public** (no token required):
+- `POST /api/client/v1/auth/register`
+- `POST /api/client/v1/auth/login`
+- `POST /api/client/v1/auth/refresh`
+- `POST /api/client/v1/auth/forgot-password`
+- `POST /api/client/v1/auth/reset-password`
+- `GET /api/client/v1/auth/verify-email/{user}/{hash}`
+- `GET /api/client/v1/categories`
+- `GET /api/client/v1/categories/{category}`
+- `GET /api/client/v1/services`
+- `GET /api/client/v1/services/{service}`
+- `GET /api/client/v1/providers`
+- `GET /api/client/v1/providers/{provider}`
+
+**Protected** (bearer token required, active client account):
+- `GET /api/client/v1/auth/me`
+- `POST /api/client/v1/auth/logout`
+- `POST /api/client/v1/auth/change-password`
+- `POST /api/client/v1/auth/verification-notification`
+- `GET/POST /api/client/v1/bookings/*`
+- `GET/POST/PUT/PATCH /api/client/v1/reviews/*`
+- `GET/PATCH/POST /api/client/v1/notifications/*`
+- `GET/POST /api/client/v1/support/tickets/*`
+- `GET/POST /api/client/v1/bookings/{id}/messages`
+
+Protected marketplace endpoints (`bookings`, `reviews`, `notifications`, `support`) additionally require a **verified email**. Unverified accounts receive `403`.
+
+### What is NOT yet implemented (gaps for Flutter)
+
+1. **No push notifications** — Laravel Reverb WebSocket exists but is only connected to the web admin. For mobile, integrate Firebase Cloud Messaging (FCM) or APNs separately.
+2. **No deep links for email verification** — the `CLIENT_PASSWORD_RESET_URL` points to a web URL. For mobile, update this to a universal link or custom scheme.
+3. **No offline caching** — the backend has no offline sync. Flutter should cache responses locally (e.g., Hive, drift) for offline resilience.
 
 ## Regenerating
 

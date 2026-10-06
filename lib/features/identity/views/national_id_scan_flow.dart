@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import '../models/scanned_national_id.dart';
 import '../services/national_id_camera.dart';
 import '../services/national_id_parser.dart';
 import '../services/national_id_reader.dart';
+import '../services/sign_up_scan_store.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// Sign-up's first step: scan the front of the National ID, then — without
@@ -25,8 +27,19 @@ import '../../../core/theme/app_palette.dart';
 /// The two images are kept in [IdentityController] so they can be submitted
 /// for review once the account exists; what was read is handed to
 /// [onComplete] to fill the sign-up form, where the user confirms it.
+///
+/// Android may close the app while the camera is open. Progress is therefore
+/// kept in [SignUpScanStore]: a restart returns here with the sides already
+/// photographed, and only the side being captured is taken again.
 class NationalIdScanFlow extends StatefulWidget {
-  const NationalIdScanFlow({super.key, required this.onComplete, this.reader, this.capturePhoto, this.readFile});
+  const NationalIdScanFlow({
+    super.key,
+    required this.onComplete,
+    this.reader,
+    this.capturePhoto,
+    this.readFile,
+    this.recoverLostPhoto,
+  });
 
   final ValueChanged<ScannedNationalId> onComplete;
   final NationalIdReader? reader;
@@ -35,6 +48,10 @@ class NationalIdScanFlow extends StatefulWidget {
   /// Reads a captured image; the file system unless a test supplies bytes.
   final Future<Uint8List> Function(String path)? readFile;
 
+  /// A photo the camera took while the app was closed; Android's unless a
+  /// test supplies one.
+  final CaptureIdPhoto? recoverLostPhoto;
+
   @override
   State<NationalIdScanFlow> createState() => _NationalIdScanFlowState();
 }
@@ -42,7 +59,6 @@ class NationalIdScanFlow extends StatefulWidget {
 enum _Side { front, back }
 
 class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
-  late final NationalIdReader _reader = widget.reader ?? MlKitNationalIdReader();
   _Side _side = _Side.front;
   bool _reading = false;
 
@@ -56,50 +72,85 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
   String? _lastError;
 
   @override
-  void dispose() {
-    if (widget.reader == null) _reader.close();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resume());
+  }
+
+  /// Picks up a scan the app was closed in the middle of.
+  Future<void> _resume() async {
+    final identity = context.read<IdentityController>();
+    if (identity.hasFront || identity.hasBack) return;
+    var scan = await SignUpScanStore.load();
+    if (scan == null || !mounted) return;
+
+    final lost = await (widget.recoverLostPhoto ?? recoverLostNationalIdPhoto)();
+    final missing = scan.path(PendingIdentityDocument.frontType) == null
+        ? PendingIdentityDocument.frontType
+        : PendingIdentityDocument.backType;
+    if (lost != null && scan.path(missing) == null) {
+      await SignUpScanStore.saveSide(missing, lost);
+      scan = scan.withSide(missing, lost);
+    }
+    if (!mounted) return;
+
+    final front = scan.path(PendingIdentityDocument.frontType);
+    if (front == null || !await _accept(front, _Side.front, openBack: false)) return;
+    final back = scan.path(PendingIdentityDocument.backType);
+    if (back == null) {
+      if (mounted) AppSnackbar.success(context, 'Your front photo was kept. Now scan the back.');
+      return;
+    }
+    if (mounted) await _accept(back, _Side.back, openBack: false);
   }
 
   Future<void> _capture() async {
-    final identity = context.read<IdentityController>();
     final side = _side;
 
     String? path;
     try {
+      // Before the camera opens: if Android closes the app meanwhile, the
+      // restart comes back to this sign-up.
+      await SignUpScanStore.start();
       path = await (widget.capturePhoto ?? captureNationalIdPhoto)();
     } catch (e) {
       if (mounted) AppSnackbar.error(context, 'The camera could not be opened. (${_describe(e)})');
       return;
     }
     if (path == null || !mounted) return;
+    await _accept(path, side, openBack: true);
+  }
 
-    final bytes = await (widget.readFile ?? (String p) => File(p).readAsBytes())(path);
-    if (!mounted) return;
+  /// Keeps the photo of [side] at [path] and reads it. Returns false when the
+  /// photo could not be kept, so the side has to be taken again.
+  Future<bool> _accept(String path, _Side side, {required bool openBack}) async {
+    final identity = context.read<IdentityController>();
+    final type = side == _Side.front ? PendingIdentityDocument.frontType : PendingIdentityDocument.backType;
+
+    final Uint8List bytes;
+    try {
+      bytes = await (widget.readFile ?? (String p) => File(p).readAsBytes())(path);
+    } catch (e) {
+      // A photo kept from before a restart can be gone (cache cleared).
+      debugPrint('[NationalId] the ${side.name} photo could not be opened: $e');
+      return false;
+    }
+    if (!mounted) return false;
     final base = path.split(RegExp(r'[/\\]')).last;
     final error = identity.capture(PendingIdentityDocument(
-      type: side == _Side.front ? PendingIdentityDocument.frontType : PendingIdentityDocument.backType,
+      type: type,
       fileName: base.contains('.') ? base : '$base.jpg',
       bytes: bytes,
     ));
     if (error != null) {
       AppSnackbar.error(context, error);
-      return;
+      return false;
     }
+    await SignUpScanStore.saveSide(type, path);
 
     setState(() => _reading = true);
-    var text = ScannedNationalId.empty;
-    var qr = const <String>[];
-    try {
-      text = NationalIdParser.parseFront(await _reader.readText(path));
-      qr = await _reader.readQrCodes(path);
-    } catch (e, stack) {
-      // A side that cannot be read is not the end: the image is kept and the
-      // flow carries on.
-      debugPrint('[NationalId] reading the ${side.name} failed: $e\n$stack');
-      _lastError = _describe(e);
-    }
-    if (!mounted) return;
+    final (text, qr) = await _read(path, side);
+    if (!mounted) return false;
 
     if (side == _Side.front) {
       _front = text;
@@ -108,8 +159,8 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
         _side = _Side.back;
         _reading = false;
       });
-      _openBackScanner();
-      return;
+      if (openBack) _openBackScanner();
+      return true;
     }
 
     // The front's text outranks what is printed on the back; the QR code,
@@ -122,17 +173,43 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
 
     if (scanned.isEmpty) {
       final retake = await _askToRetake();
-      if (!mounted) return;
+      if (!mounted) return false;
       if (retake) {
-        setState(() {
-          _side = _Side.front;
-          _lastError = null;
-        });
-        return;
+        _startOver();
+        return true;
       }
     }
     identity.setScanned(scanned);
     widget.onComplete(scanned);
+    return true;
+  }
+
+  /// Reads one side. ML Kit's models are loaded only for the read and
+  /// released straight after, so the app is not holding them in the
+  /// background while the camera is open — which is when Android looks for
+  /// apps to close. A side that cannot be read is not the end: the image is
+  /// kept and the flow carries on.
+  Future<(ScannedNationalId, List<String>)> _read(String path, _Side side) async {
+    final reader = widget.reader ?? MlKitNationalIdReader();
+    try {
+      final text = NationalIdParser.parseFront(await reader.readText(path));
+      return (text, await reader.readQrCodes(path));
+    } catch (e, stack) {
+      debugPrint('[NationalId] reading the ${side.name} failed: $e\n$stack');
+      _lastError = _describe(e);
+      return (ScannedNationalId.empty, const <String>[]);
+    } finally {
+      if (widget.reader == null) await reader.close();
+    }
+  }
+
+  /// Back to the front, forgetting the photos kept for a restart.
+  void _startOver() {
+    unawaited(SignUpScanStore.clear());
+    setState(() {
+      _side = _Side.front;
+      _lastError = null;
+    });
   }
 
   /// Opens the scanner for the back by itself, a moment after the front is
@@ -215,7 +292,7 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
         ),
         if (!front && !_reading)
           TextButton(
-            onPressed: () => setState(() => _side = _Side.front),
+            onPressed: _startOver,
             child: const Text('Scan the front again'),
           ),
       ],

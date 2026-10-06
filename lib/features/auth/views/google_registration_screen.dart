@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import '../../identity/views/national_id_scan_flow.dart';
 import '../../identity/models/scanned_national_id.dart';
 import '../../identity/models/identity_verification_model.dart';
 import '../../identity/controllers/identity_controller.dart';
+import '../../identity/services/sign_up_scan_store.dart';
 import '../models/user_model.dart';
 import 'widgets/auth_role_toggle.dart';
 import 'widgets/provider_details_fields.dart';
@@ -71,6 +74,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
   }
 
   void _rescan() {
+    SignUpScanStore.clear();
     context.read<IdentityController>()
       ..remove(PendingIdentityDocument.frontType)
       ..remove(PendingIdentityDocument.backType)
@@ -90,6 +94,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
 
   Future<void> _cancel(AuthController auth) async {
     auth.cancelGoogleRegistration();
+    unawaited(SignUpScanStore.clear());
     if (!mounted) return;
     context.go('/login');
   }
@@ -258,6 +263,7 @@ class _GoogleRegistrationScreenState extends State<GoogleRegistrationScreen> {
                       specialization: _specialization,
                       experienceYears: _experienceYears,
                       bio: _bio,
+                      birthdate: () => _identityForm.birthdate,
                       enabled: !isBusy,
                     ).animate().fadeIn(duration: 250.ms),
                   ],

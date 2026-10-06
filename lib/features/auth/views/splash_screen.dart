@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
+import '../../identity/services/sign_up_scan_store.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
@@ -39,8 +40,12 @@ class _SplashScreenState extends State<SplashScreen> {
       context.go('/client');
     } else if (auth.isProvider) {
       context.go('/provider');
+    } else if (await SignUpScanStore.load() != null) {
+      // Android closed the app while the ID scanner was open: carry on with
+      // that sign-up instead of starting over.
+      if (mounted) context.go('/register');
     } else {
-      context.go('/onboarding');
+      if (mounted) context.go('/onboarding');
     }
   }
 

@@ -189,7 +189,7 @@ None.
 | `specialization` | no | string, maxLength=255 |
 | `experience_years` | no | integer, minimum=0 |
 | `bio` | no | string, maxLength=5000 |
-| `birthday` | no | string, format=date |
+| `birthday` | yes | string, format=date |
 | `address_details` | no | object |
 
 ### Responses
@@ -527,7 +527,7 @@ None.
 | `email` | yes | string, format=email |
 | `password` | no | string, format=password, minLength=8 |
 | `password_confirmation` | no | string, format=password |
-| `birthday` | no | string, format=date |
+| `birthday` | yes | string, format=date |
 | `address_details` | no | object |
 
 ### Responses
@@ -571,7 +571,7 @@ None.
 | `specialization` | yes | string, maxLength=255 |
 | `experience_years` | no | integer, minimum=0 |
 | `bio` | no | string, maxLength=5000 |
-| `birthday` | no | string, format=date |
+| `birthday` | yes | string, format=date |
 | `address_details` | no | object |
 
 ### Responses

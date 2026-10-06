@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/utils/age_requirement.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/inputs/app_text_field.dart';
 
@@ -17,6 +18,9 @@ class ProviderDetailsFields extends StatelessWidget {
   final TextEditingController experienceYears;
   final TextEditingController bio;
 
+  /// The birthday entered on the form, which caps the years of experience.
+  final ValueGetter<DateTime?> birthdate;
+
   /// False while a submission is in flight.
   final bool enabled;
 
@@ -26,6 +30,7 @@ class ProviderDetailsFields extends StatelessWidget {
     required this.specialization,
     required this.experienceYears,
     required this.bio,
+    required this.birthdate,
     this.enabled = true,
   });
 
@@ -36,11 +41,13 @@ class ProviderDetailsFields extends StatelessWidget {
     return years.clamp(0, 80);
   }
 
-  static String? _validateExperience(String? value) {
+  /// At most the age minus 16: 2 years at 18, 3 at 19, and so on.
+  String? _validateExperience(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     final years = int.tryParse(value.trim());
     if (years == null) return 'Enter a number of years';
-    if (years < 0 || years > 80) return 'Enter between 0 and 80 years';
+    final max = AgeRequirement.maxExperienceYears(birthdate());
+    if (years < 0 || years > max) return 'At your age, enter between 0 and $max years';
     return null;
   }
 

@@ -19,6 +19,10 @@ class UserModel {
   final String status;
   final DateTime createdAt;
 
+  /// From the National ID at sign-up; null for accounts made before it was
+  /// collected. Caps a provider's years of experience.
+  final DateTime? birthday;
+
   /// Provider accounts only: verification state and an administrator's
   /// suspension, which applies while the account itself stays active (M 9.6).
   final String? providerVerificationStatus;
@@ -37,6 +41,7 @@ class UserModel {
     this.profilePicture,
     this.status = 'active',
     required this.createdAt,
+    this.birthday,
     this.providerVerificationStatus,
     this.providerSuspended = false,
     this.providerSuspensionReason,
@@ -71,6 +76,7 @@ class UserModel {
             clearProfilePicture ? null : profilePicture ?? this.profilePicture,
         status: status ?? this.status,
         createdAt: createdAt,
+        birthday: birthday,
         providerVerificationStatus: providerVerificationStatus,
         providerSuspended: providerSuspended,
         providerSuspensionReason: providerSuspensionReason,
@@ -94,6 +100,7 @@ class UserModel {
       status: json['status'] as String? ?? 'active',
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
           DateTime.now(),
+      birthday: DateTime.tryParse(json['birthday'] as String? ?? ''),
       providerVerificationStatus: provider?['verification_status'] as String?,
       providerSuspended: provider?['suspended'] == true,
       providerSuspensionReason: provider?['suspension_reason'] as String?,
@@ -140,6 +147,8 @@ class UserModel {
         'profile_picture': profilePicture,
         'status': status,
         'created_at': createdAt.toIso8601String(),
+        if (birthday != null)
+          'birthday': '${birthday!.year.toString().padLeft(4, '0')}-${birthday!.month.toString().padLeft(2, '0')}-${birthday!.day.toString().padLeft(2, '0')}',
         if (role == UserRole.provider)
           'provider': {
             'verification_status': providerVerificationStatus,

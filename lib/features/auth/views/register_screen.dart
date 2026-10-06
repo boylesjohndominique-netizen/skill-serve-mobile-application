@@ -8,6 +8,7 @@ import '../../identity/views/national_id_scan_flow.dart';
 import '../../identity/models/scanned_national_id.dart';
 import '../../identity/models/identity_verification_model.dart';
 import '../../identity/controllers/identity_controller.dart';
+import '../../identity/services/sign_up_scan_store.dart';
 import 'widgets/auth_role_toggle.dart';
 import 'widgets/provider_details_fields.dart';
 import 'widgets/google_password_sheet.dart';
@@ -67,11 +68,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _rescan() {
+    SignUpScanStore.clear();
     context.read<IdentityController>()
       ..remove(PendingIdentityDocument.frontType)
       ..remove(PendingIdentityDocument.backType)
       ..scanned = null;
     setState(() => _scanned = false);
+  }
+
+  /// Leaving sign-up: a restart must not bring it back.
+  void _leave() {
+    SignUpScanStore.clear();
+    context.canPop() ? context.pop() : context.go('/welcome');
   }
 
   @override
@@ -157,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    onPressed: () => context.canPop() ? context.pop() : context.go('/welcome'),
+                    onPressed: _leave,
                     icon: const AppIcon(AppIcons.arrow_back_rounded),
                     padding: EdgeInsets.zero,
                   ),
@@ -192,7 +200,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 IconButton(
                   onPressed: isBusy
                       ? null
-                      : () => context.canPop() ? context.pop() : context.go('/welcome'),
+                      : _leave,
                   icon: const AppIcon(AppIcons.arrow_back_rounded),
                   padding: EdgeInsets.zero,
                 ).animate().fadeIn(duration: 250.ms),
@@ -238,6 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     specialization: _specialization,
                     experienceYears: _experienceYears,
                     bio: _bio,
+                    birthdate: () => _identityForm.birthdate,
                     enabled: !isBusy,
                   ).animate().fadeIn(duration: 250.ms),
                 ],

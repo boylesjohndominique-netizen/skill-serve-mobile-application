@@ -14,6 +14,8 @@ import 'package:provider/provider.dart';
 import '../../marketplace/services/service_service.dart';
 import '../services/provider_service_service.dart';
 import '../../../core/utils/api_error.dart';
+import '../../../core/utils/age_requirement.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../controllers/verification_controller.dart';
 import 'verification_status_screen.dart';
 import 'verification_upload_panel.dart';
@@ -33,7 +35,10 @@ class ProviderOnboardingScreen extends StatefulWidget {
 
 class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
   final _bioController = TextEditingController();
-  int _yearsExperience = 3;
+  /// At most the provider's age minus 16 (2 years at 18, 3 at 19...).
+  late final int _maxExperience = AgeRequirement.maxExperienceYears(
+      context.read<AuthController>().currentUser?.birthday);
+  late int _yearsExperience = _maxExperience < 3 ? _maxExperience : 3;
   String _category = '';
   List<dynamic> _categories = [];
 
@@ -81,7 +86,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
       setState(() {
         if (profile.bio.isNotEmpty) _bioController.text = profile.bio;
         if (profile.yearsExperience > 0) {
-          _yearsExperience = profile.yearsExperience;
+          _yearsExperience = profile.yearsExperience.clamp(1, _maxExperience);
         }
         if (profile.categoryName.isNotEmpty) _category = profile.categoryName;
       });
@@ -240,7 +245,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                 ),
               ),
               IconButton(
-                onPressed: () => setState(() => _yearsExperience++),
+                onPressed: _yearsExperience < _maxExperience ? () => setState(() => _yearsExperience++) : null,
                 icon: const AppIcon(AppIcons.add_circle_outline_rounded),
                 color: context.accentInk,
               ),

@@ -41,3 +41,16 @@ Future<String?> captureNationalIdPhoto() async {
     }
   }
 }
+
+/// A photo the plain camera took while Android closed the app, handed back
+/// once the app is open again; null when there is none. The document scanner
+/// cannot do this, so a side it was capturing is simply taken again.
+Future<String?> recoverLostNationalIdPhoto() async {
+  if (defaultTargetPlatform != TargetPlatform.android) return null;
+  try {
+    final lost = await ImagePicker().retrieveLostData();
+    return lost.isEmpty ? null : lost.file?.path;
+  } catch (_) {
+    return null;
+  }
+}
