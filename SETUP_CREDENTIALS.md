@@ -2,19 +2,16 @@
 
 The mobile app now requires two external services. Both are free and take ~10 minutes to configure. Nothing works on the deployed backend until these env vars are set.
 
-## 1. Twilio Verify + SendGrid — send the 6-digit codes (required)
+## 1. Mailjet — sends the 6-digit codes and every email (required)
 
-Since 2026-10-06 the sign-up code, its resend and the forgot-password code are sent by **Twilio
-Verify** (Brevo was dropped). Twilio Verify emails through a **SendGrid** account linked to it, and
-the same SendGrid account sends every other email. Full click-by-click steps, including the email
-template, are in the web repo's `DEPLOYMENT.md` → "Email codes — Twilio Verify + SendGrid". In short:
+Since 2026-10-06 the sign-up code, its resend and the forgot-password code go out through
+**Mailjet** (Brevo was dropped; Twilio has no free trial in the Philippines). Free plan: 200 emails a
+day, no domain needed. Full steps are in the web repo's `DEPLOYMENT.md` → "Email codes — Mailjet":
 
-1. **SendGrid:** verify a single sender, create an API key (`SG.…`), and create a dynamic template
-   that shows `{{twilio_code}}` (copy its `d-…` ID).
-2. **Twilio:** create a Verify service with **code length 6** (`VA…`), create an Email Integration
-   with the SendGrid key, template ID and sender, and select it on the service's *Email* tab. Copy
-   the Account SID (`AC…`) and Auth Token.
-3. Put them on Render (section 3).
+1. Sign up at app.mailjet.com (free) and complete any account review Mailjet asks for.
+2. *Account settings → Senders & Domains → Add a sender address* → confirm the link Mailjet emails.
+3. *Account settings → REST API → API Key Management* → copy the API Key and Secret Key.
+4. Put them on Render (section 3).
 
 ## 2. Google Cloud — Sign-In with Google (required for the Google button)
 
@@ -75,26 +72,24 @@ The mobile app talks to the Render deployment, so the settings go in **Render �
 Environment**, then redeploy:
 
 ```
-OTP_DRIVER=twilio
-TWILIO_ACCOUNT_SID=AC…
-TWILIO_AUTH_TOKEN=…
-TWILIO_VERIFY_SERVICE_SID=VA…
-MAIL_MAILER=sendgrid-api
-SENDGRID_API_KEY=SG.…
-MAIL_FROM_ADDRESS=<the sender verified in SendGrid>
+OTP_DRIVER=mail
+MAIL_MAILER=mailjet-api
+MAILJET_API_KEY=…
+MAILJET_SECRET_KEY=…
+MAIL_FROM_ADDRESS=<the sender validated in Mailjet>
 MAIL_FROM_NAME=SkillServe
 ```
 
-Both go over HTTPS, so Render's blocked SMTP ports do not matter. **Verify:** open
+Mailjet is reached over HTTPS, so Render's blocked SMTP ports do not matter. **Verify:** open
 `https://skillserve-web-backend.onrender.com/api/health` — `"otp": {"status": "up", "driver":
-"twilio"}`. Then sign up in the app with a real Gmail (check Spam the first time) and try Forgot
-password. If a code does not arrive: Twilio → Monitor → Logs → Verify shows whether it was sent and
-why not; SendGrid → Activity shows whether the email was delivered; Render → Logs shows
-`Failed to send registration OTP` with Twilio's error.
+"mail", "mailer": "mailjet-api"}`. Then sign up in the app with a real Gmail (check Spam the first
+time) and try Forgot password. If a code does not arrive: Mailjet → Statistics shows whether it was
+delivered, bounced or blocked; Render → Logs shows `Failed to send registration OTP` with Mailjet's
+error code.
 
 ## 4. Local development
 
-Copy the same variables into `backend/.env` on WSL. For quick local testing without Twilio, `OTP_DRIVER=mail` with `MAIL_MAILER=log` writes OTP codes to `backend/storage/logs/laravel.log` — grab the code from there.
+Copy the same variables into `backend/.env` on WSL. For quick local testing, `MAIL_MAILER=log` writes OTP codes to `backend/storage/logs/laravel.log` — grab the code from there.
 
 ## Security notes
 
