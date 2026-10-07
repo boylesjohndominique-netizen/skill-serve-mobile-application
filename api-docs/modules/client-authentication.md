@@ -626,6 +626,10 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 Response schema: `#/components/schemas/ApiEnvelope`
 
+#### HTTP 503: The verification email could not be sent; it can be retried at once
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
 ## `POST /api/client/v1/auth/reset-password`
 
 Step 3 of 3. `token` is the `reset_token` from POST /auth/verify-reset-code. Signs the account out everywhere.
