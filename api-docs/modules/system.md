@@ -39,7 +39,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/health`
 
-Public. Reports whether the database and the upload storage (storage/app, the Render persistent disk in production) are usable. Never includes error details; those go to the server log. `otp` says whether the 6-digit codes can be sent (Twilio Verify configured, or a real mailer) without failing the check.
+Public. Reports whether the database and the upload storage (storage/app, the Render persistent disk in production) are usable. Never includes error details; those go to the server log. `otp` says whether the 6-digit codes can be sent (Twilio Verify configured, or a real mailer) without failing the check. With the brevo-api mailer it also asks Brevo (answer cached 5 minutes) and is `down`, with a plain-language `error`, when Brevo refuses the key or the server's IP, the sending allowance is used up, or emails were accepted in the last two days but none delivered (a suspended account).
 
 **Authentication:** Public
 
@@ -58,7 +58,7 @@ No JSON request body.
 ```json
 {
     "status": "ok",
-    "timestamp": "2026-10-06T08:00:00+00:00",
+    "timestamp": "2026-10-10T08:00:00+00:00",
     "services": {
         "database": {
             "status": "up"
@@ -68,7 +68,8 @@ No JSON request body.
         },
         "otp": {
             "status": "up",
-            "driver": "twilio"
+            "driver": "mail",
+            "mailer": "brevo-api"
         }
     }
 }
@@ -79,7 +80,7 @@ No JSON request body.
 ```json
 {
     "status": "degraded",
-    "timestamp": "2026-10-06T08:00:00+00:00",
+    "timestamp": "2026-10-10T08:00:00+00:00",
     "services": {
         "database": {
             "status": "down"
@@ -88,8 +89,10 @@ No JSON request body.
             "status": "up"
         },
         "otp": {
-            "status": "up",
-            "driver": "twilio"
+            "status": "down",
+            "driver": "mail",
+            "mailer": "brevo-api",
+            "error": "Brevo accepted 12 emails in the last two days and delivered none. Check Brevo \u2192 Transactional \u2192 Logs; the account may be suspended."
         }
     }
 }
