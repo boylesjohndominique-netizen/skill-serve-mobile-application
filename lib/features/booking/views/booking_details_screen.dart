@@ -43,10 +43,41 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   /// only one that carries the customer's contact details.
   bool get _isProviderView => context.read<AuthController>().isProvider;
 
+  ChangeNotifier? _bookings;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadBooking());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _bookings = _isProviderView
+          ? context.read<ProviderBookingController>()
+          : context.read<BookingController>();
+      _bookings!.addListener(_followList);
+      _loadBooking();
+    });
+  }
+
+  @override
+  void dispose() {
+    _bookings?.removeListener(_followList);
+    super.dispose();
+  }
+
+  /// A notification about a booking reloads the booking lists
+  /// (NotificationPoller). When this booking's copy there has moved on — the
+  /// provider confirmed the GCash payment, accepted, completed it — this
+  /// screen reloads too, instead of showing the old status until refreshed.
+  void _followList() {
+    final current = _booking;
+    if (!mounted || current == null || _loading) return;
+    final bookings = _isProviderView
+        ? context.read<ProviderBookingController>().bookings
+        : context.read<BookingController>().bookings;
+    final listed = bookings.where((b) => b.id == current.id).firstOrNull;
+    if (listed != null &&
+        (listed.status != current.status || listed.paymentStatus != current.paymentStatus)) {
+      _loadBooking();
+    }
   }
 
   Future<void> _loadBooking() async {

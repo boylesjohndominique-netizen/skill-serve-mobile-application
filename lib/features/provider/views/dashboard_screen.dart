@@ -19,8 +19,6 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../identity/controllers/identity_controller.dart';
 import '../../identity/views/eligibility_banner.dart';
-import '../../marketplace/models/provider_model.dart';
-import '../services/provider_service_service.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// Provider's home tab — quick stats, verification status, and today's
@@ -33,35 +31,26 @@ class ProviderDashboardScreen extends StatefulWidget {
 }
 
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
-  ProviderModel? _providerProfile;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadProvider();
+      context.read<AuthController>().refreshCurrentUser();
       context.read<ProviderBookingController>().loadProviderBookings();
     });
-  }
-
-  Future<void> _loadProvider() async {
-    if (context.read<AuthController>().currentUser == null) return;
-    final ProviderModel profile;
-    try {
-      profile = await ProviderServiceService().getMyProfile();
-    } catch (_) {
-      return; // Keep the screen usable without profile details.
-    }
-    if (mounted) setState(() => _providerProfile = profile);
   }
 
   /// Pulling down also re-asks whether this provider may take work: an
   /// administrator may have approved their National ID or recorded a
   /// remittance while the app was open.
   Future<void> _refresh(ProviderBookingController bookings) async {
-    await bookings.loadProviderBookings();
-    if (!mounted) return;
-    await context.read<IdentityController>().refreshEligibility();
+    final auth = context.read<AuthController>();
+    final identity = context.read<IdentityController>();
+    await Future.wait([
+      bookings.loadProviderBookings(),
+      auth.refreshCurrentUser(),
+      identity.refreshEligibility(),
+    ]);
   }
 
   @override
@@ -70,7 +59,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     final bookings = context.watch<ProviderBookingController>();
     final user = auth.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final providerProfile = _providerProfile;
+    // The signed-in account's status: a verification notification refreshes
+    // it the moment an administrator decides, so this card follows at once.
+    final verificationStatus = user?.providerVerificationStatus;
+    final isVerified = verificationStatus == 'verified';
 
     // Labelled "This Month", so it has to be this month — the same net figure
     // the Earnings screen shows, after the platform fee.
@@ -122,7 +114,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               const EligibilityBanner(),
 
               // ── Verification banner ──
-              if (providerProfile != null)
+              if (verificationStatus != null)
                 InkWell(
                   onTap: () => context.push('/verification-status'),
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -136,18 +128,18 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     child: Row(
                       children: [
                         AppIcon(
-                          providerProfile.isVerified == true ? AppIcons.verified_rounded : AppIcons.hourglass_top_rounded,
+                          isVerified ? AppIcons.verified_rounded : AppIcons.hourglass_top_rounded,
                           color: context.accentInk,
                           size: 20,
                         ),
                         const SizedBox(width: AppSizes.sm),
                         Expanded(
                           child: Text(
-                            providerProfile.isVerified == true ? 'Your account is verified' : 'Verification in progress',
+                            isVerified ? 'Your account is verified' : 'Verification in progress',
                             style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
-                        StatusBadge.fromStatus(providerProfile.verificationStatus),
+                        StatusBadge.fromStatus(verificationStatus),
                       ],
                     ),
                   ),

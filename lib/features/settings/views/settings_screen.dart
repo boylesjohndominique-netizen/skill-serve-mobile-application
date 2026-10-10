@@ -163,8 +163,10 @@ class SettingsScreen extends StatelessWidget {
             _SwitchTile(
               icon: AppIcons.dark_mode_outlined,
               label: 'Dark mode',
-              value: preferences.isDarkMode,
-              onChanged: (_) async => preferences.toggleDarkMode(),
+              value: isDark,
+              onChanged: (dark) async => preferences.setDarkMode(dark,
+                  phoneIsDark: MediaQuery.platformBrightnessOf(context) ==
+                      Brightness.dark),
               isDark: isDark,
             )
                 .animate()

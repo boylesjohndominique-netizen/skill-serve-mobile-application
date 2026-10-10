@@ -6,6 +6,7 @@ import '../../../core/services/realtime_client.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../booking/controllers/booking_controller.dart';
 import '../../booking/controllers/provider_booking_controller.dart';
+import '../../identity/controllers/identity_controller.dart';
 import '../../messaging/controllers/chat_controller.dart';
 import '../../provider/controllers/provider_services_controller.dart';
 import '../../settings/controllers/preferences_controller.dart';
@@ -137,6 +138,13 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
         rawType == 'provider_status' ||
         rawType == 'account_status') {
       _auth.refreshCurrentUser();
+    }
+    // A National ID decision also changes what the account may do, which the
+    // eligibility banner and the identity screen show.
+    if (rawType == 'identity_verification') {
+      final identity = context.read<IdentityController>();
+      identity.refreshEligibility();
+      identity.load();
     }
 
     // Service moderation (approved, rejected, …) changes the provider's list.

@@ -34,40 +34,52 @@ class OtpCodeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: enabled ? () => focusNode.requestFocus() : null,
-      child: ListenableBuilder(
-        listenable: Listenable.merge([controller, focusNode]),
-        builder: (context, _) => Stack(
-          children: [
-            Opacity(
+    return ListenableBuilder(
+      listenable: Listenable.merge([controller, focusNode]),
+      builder: (context, _) => Stack(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              for (var i = 0; i < length; i++)
+                _OtpBox(
+                  character: controller.text.length > i ? controller.text[i] : '',
+                  isFocused: controller.text.length == i && focusNode.hasFocus,
+                  isDark: isDark,
+                ),
+            ],
+          ),
+          // The real field lies over the boxes, so a tap lands on it and the
+          // keyboard opens at once — also when the field already has focus
+          // and the keyboard was closed, which a bare requestFocus() ignores.
+          Positioned.fill(
+            child: Opacity(
               opacity: 0,
               child: TextField(
                 controller: controller,
                 focusNode: focusNode,
                 keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.oneTimeCode],
                 maxLength: length,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 autofocus: true,
                 enabled: enabled,
+                showCursor: false,
+                expands: true,
+                maxLines: null,
+                decoration: const InputDecoration(
+                  counterText: '',
+                  border: InputBorder.none,
+                  isCollapsed: true,
+                ),
                 onChanged: (value) {
                   if (value.length == length) onCompleted(value);
                 },
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                for (var i = 0; i < length; i++)
-                  _OtpBox(
-                    character: controller.text.length > i ? controller.text[i] : '',
-                    isFocused: controller.text.length == i && focusNode.hasFocus,
-                    isDark: isDark,
-                  ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

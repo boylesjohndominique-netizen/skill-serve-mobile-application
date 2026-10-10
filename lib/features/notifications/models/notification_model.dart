@@ -59,6 +59,8 @@ class NotificationModel {
     if (bookingId != null) return '/booking-details/$bookingId';
     // A decision on the provider's verification opens where they can act on it.
     if (_rawType == 'provider_verification') return '/verification-status';
+    // A decision on the National ID opens the identity screen.
+    if (_rawType == 'identity_verification') return '/identity-verification';
     // The outcome of something the user reported.
     if (_rawType == 'report_update' || data['report_id'] != null) return '/my-reports';
     if (ticketId != null) return '/support/tickets/$ticketId';

@@ -131,16 +131,23 @@ void main() {
     expect(service.saveCalls, 0);
   });
 
-  test('toggling dark mode moves between light and dark', () async {
+  test('the dark mode switch follows the phone unless set against it', () async {
     final service = _FakePreferencesService();
     final controller = await _signedInController(service);
+    expect(controller.themeMode, ThemeMode.system, reason: 'a new account follows the phone');
 
-    await controller.toggleDarkMode();
+    // Phone in light mode: switching dark on keeps dark; off follows the phone again.
+    await controller.setDarkMode(true, phoneIsDark: false);
     expect(controller.themeMode, ThemeMode.dark);
-    expect(controller.isDarkMode, isTrue);
+    await controller.setDarkMode(false, phoneIsDark: false);
+    expect(controller.themeMode, ThemeMode.system);
 
-    await controller.toggleDarkMode();
+    // Phone in dark mode: switching dark off keeps light; on follows the phone again.
+    await controller.setDarkMode(false, phoneIsDark: true);
     expect(controller.themeMode, ThemeMode.light);
+    await controller.setDarkMode(true, phoneIsDark: true);
+    expect(controller.themeMode, ThemeMode.system);
+    expect(service.stored.theme, ThemeMode.system, reason: 'saved to the account');
   });
 
   test('an auth change notifies no one synchronously', () async {

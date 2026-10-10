@@ -79,7 +79,11 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
                 user: user,
                 onEdit: () => context.push('/edit-profile'),
                 trailingBadge:
-                    StatusBadge.fromStatus(provider?.verificationStatus ?? 'pending'),
+                    // The live account status, refreshed by verification
+                    // notifications; the profile loaded on open is a fallback.
+                    StatusBadge.fromStatus(user.providerVerificationStatus ??
+                        provider?.verificationStatus ??
+                        'pending'),
               )
                   .animate()
                   .fadeIn(delay: 80.ms, duration: 350.ms)
@@ -201,8 +205,10 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             stagger(_SwitchTile(
                 icon: AppIcons.dark_mode_outlined,
                 label: 'Dark mode',
-                value: preferences.isDarkMode,
-                onChanged: (_) async => preferences.toggleDarkMode(),
+                value: isDark,
+                onChanged: (dark) async => preferences.setDarkMode(dark,
+                  phoneIsDark: MediaQuery.platformBrightnessOf(context) ==
+                      Brightness.dark),
                 isDark: isDark)),
             stagger(_Tile(
                 icon: AppIcons.notifications_none_rounded,

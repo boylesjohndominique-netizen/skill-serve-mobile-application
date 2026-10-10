@@ -48,7 +48,6 @@ class PreferencesController extends ChangeNotifier {
   bool get activityPersonalization => _values.activityPersonalization;
   bool get reduceMotion => _values.reduceMotion;
   ThemeMode get themeMode => _values.theme;
-  bool get isDarkMode => _values.theme == ThemeMode.dark;
 
   /// Reads the cached settings so the app starts with the user's own theme
   /// rather than flashing the default one.
@@ -135,9 +134,13 @@ class PreferencesController extends ChangeNotifier {
     return _apply(next, {'theme': next.themeName});
   }
 
-  /// Flips between light and dark, leaving "system" for an explicit choice.
-  Future<bool> toggleDarkMode() =>
-      setThemeMode(isDarkMode ? ThemeMode.light : ThemeMode.dark);
+  /// The settings switch, which shows the theme on screen. Choosing what
+  /// the phone already uses goes back to following the phone, so the app
+  /// keeps changing with it; choosing the other theme keeps that one.
+  Future<bool> setDarkMode(bool dark, {required bool phoneIsDark}) =>
+      setThemeMode(dark == phoneIsDark
+          ? ThemeMode.system
+          : (dark ? ThemeMode.dark : ThemeMode.light));
 
   /// Moves the UI first, then persists. On failure the previous value is
   /// restored so the switch reflects what is actually stored.
