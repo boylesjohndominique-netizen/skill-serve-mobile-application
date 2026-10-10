@@ -101,7 +101,7 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `POST /api/client/v1/auth/forgot-password`
 
-Step 1 of 3: this code, then POST /auth/verify-reset-code, then POST /auth/reset-password with the new password. The response is the same for unknown or inactive addresses, and for an address sent a code in the last 60 seconds.
+Step 1 of 3: this code, then POST /auth/verify-reset-code, then POST /auth/reset-password with the new password. Works for every mobile account, including one created with Google sign-in. An address with no mobile account answers 404, so the app moves to the code screen only for a real account; a suspended or banned account answers 403 with `meta.account`, as at login. An address sent a code in the last 60 seconds answers 202 without a new email: the code already sent is the one to enter.
 
 **Authentication:** Public
 
@@ -117,7 +117,15 @@ None.
 
 ### Responses
 
-#### HTTP 202: Reset request accepted without account enumeration
+#### HTTP 202: A code was emailed to the account (or one sent in the last 60 seconds is still valid)
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 403: The account is suspended or banned (`meta.account`)
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 404: No mobile account uses this email (`errors.email`)
 
 Response schema: `#/components/schemas/ApiEnvelope`
 

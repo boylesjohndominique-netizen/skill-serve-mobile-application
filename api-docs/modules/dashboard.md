@@ -93,3 +93,36 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `GET /api/dashboard/attention`
+
+For the sidebar badges: support tickets still `open` (nobody has replied) and reports still `pending` (nobody has picked them up). Needs no dashboard permission; each count is null when the viewer may not view that list. The admin web refetches it on every realtime change.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The counts
+
+```json
+{
+    "success": true,
+    "message": "Attention counts retrieved.",
+    "data": {
+        "open_support_tickets": 3,
+        "pending_reports": null
+    }
+}
+```
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+

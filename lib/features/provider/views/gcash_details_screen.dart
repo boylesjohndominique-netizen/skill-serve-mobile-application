@@ -154,14 +154,21 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
                           controller: _number,
                           keyboardType: TextInputType.phone,
                           // Only an 11-digit 09 number can be typed; a pasted
-                          // +63 number is turned into one.
+                          // +63 number is turned into one. The counter shows
+                          // how many of the 11 digits are in.
                           inputFormatters: [PhMobileNumber.formatter],
+                          maxLength: PhMobileNumber.length,
                           onChanged: (_) => setState(() {}),
                           validator: (value) => PhMobileNumber.validate(
                             value,
                             required: !_isClearing,
                             requiredMessage: 'Enter the GCash number customers should pay.',
                           ),
+                        ),
+                        Text(
+                          'Philippine mobile number only. A +63 number is changed to 09 '
+                          'automatically.',
+                          style: AppTextStyles.bodySmall,
                         ),
                         const SizedBox(height: AppSizes.lg),
                         AppTextField(

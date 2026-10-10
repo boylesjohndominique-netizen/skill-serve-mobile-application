@@ -87,9 +87,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _step = _ResetStep.code;
       });
       _startResendCountdown();
-      // The API answers the same way for unknown addresses, so the copy
-      // deliberately does not confirm that an account exists.
-      AppSnackbar.success(context, 'If that email has an account, a 6-digit code is on its way.');
+      // Only an address with an account gets here: the API answers 404 for
+      // one without, and that message is shown below instead.
+      AppSnackbar.success(context, 'A 6-digit code is on its way to your email.');
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -151,7 +151,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         _ResetStep.code => (
             'Enter the code',
-            'If ${_email.text.trim()} has a SkillServe account, we sent it a 6-digit code. It expires in 10 minutes.',
+            'We sent a 6-digit code to ${_email.text.trim()}. It expires in 10 minutes.',
           ),
         _ResetStep.password => (
             'Create a new password',
