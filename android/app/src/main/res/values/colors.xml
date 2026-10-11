@@ -2,4 +2,6 @@
 <resources>
     <!-- Warm Slate, the app's light background, behind the launch icon -->
     <color name="splash_background">#F5F4F1</color>
+    <!-- The SkillServe tile's edge green, behind the adaptive launcher icon -->
+    <color name="ic_launcher_background">#01622D</color>
 </resources>

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/buttons/outlined_app_button.dart';
-import '../../../core/widgets/misc/app_icon.dart';
-import '../../../core/constants/app_icons.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -45,12 +44,10 @@ class WelcomeScreen extends StatelessWidget {
                       .then()
                       .animate(onPlay: (c) => c.repeat(reverse: true))
                       .scaleXY(begin: 1.0, end: 1.1, duration: 2000.ms, curve: Curves.easeInOut),
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                    child: const AppIcon(AppIcons.check_rounded, color: AppColors.primary, size: 46),
-                  ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
+                  // The official SkillServe logo.
+                  Image.asset(AppAssets.logo, width: 104, height: 104, semanticLabel: 'SkillServe')
+                      .animate()
+                      .scale(duration: 500.ms, curve: Curves.easeOutBack),
                 ],
               ),
               const SizedBox(height: AppSizes.xl),
