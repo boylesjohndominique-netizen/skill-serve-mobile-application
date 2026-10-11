@@ -51,4 +51,17 @@ class CommissionService {
     );
     return CommissionRemittance.fromJson(response.data['data'] as Map<String, dynamic>);
   }
+
+  /// A PayMongo QR Ph code for everything owed now — or the one already open.
+  /// The amount is the server's; nothing about it is sent from here.
+  Future<CommissionRemittance> startQrPayment() async {
+    final response = await ApiClient.instance.dio.post('/client/v1/provider/commission-remittances/qr');
+    return CommissionRemittance.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// One payment, to follow a QR code until PayMongo confirms it.
+  Future<CommissionRemittance> getRemittance(int id) async {
+    final response = await ApiClient.instance.dio.get('/client/v1/provider/commission-remittances/$id');
+    return CommissionRemittance.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
 }

@@ -35,6 +35,11 @@ class PaymentInstructions {
   final String reference;
   final String note;
 
+  /// The provider's own GCash QR Ph code with this booking's exact amount
+  /// written in, to draw as a QR; null when they have not added their QR.
+  /// Scanning it pays the provider directly with the amount filled in.
+  final String? qrPayload;
+
   const PaymentInstructions({
     this.method = 'gcash',
     this.gcashNumber,
@@ -42,10 +47,13 @@ class PaymentInstructions {
     this.amount = '0.00',
     this.reference = '',
     required this.note,
+    this.qrPayload,
   });
 
-  /// Whether there is a number to send money to.
-  bool get isPayable => (gcashNumber ?? '').isNotEmpty;
+  bool get hasQr => (qrPayload ?? '').isNotEmpty;
+
+  /// Whether there is a number or a QR to send money to.
+  bool get isPayable => (gcashNumber ?? '').isNotEmpty || hasQr;
 
   factory PaymentInstructions.fromJson(Map<String, dynamic> json) => PaymentInstructions(
         method: json['method'] as String? ?? 'gcash',
@@ -54,6 +62,7 @@ class PaymentInstructions {
         amount: json['amount']?.toString() ?? '0.00',
         reference: json['reference'] as String? ?? '',
         note: json['note'] as String? ?? '',
+        qrPayload: json['qr_payload'] as String?,
       );
 }
 

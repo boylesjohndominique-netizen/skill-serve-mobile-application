@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/api_error.dart';
+import '../../../core/utils/payment_qr.dart';
+import '../../../core/widgets/buttons/outlined_app_button.dart';
 import '../../../core/utils/ph_mobile_number.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
@@ -21,6 +25,10 @@ import '../services/provider_service_service.dart';
 /// the provider's own number directly, so without these details the app can
 /// only tell them to message the provider and arrange it. The provider then
 /// owes SkillServe its commission out of what they received.
+///
+/// The provider can also add their GCash "Receive via QR" code. The app reads
+/// it on the phone and saves the code's text; each GCash booking then shows
+/// the customer a copy with the exact amount in it.
 class GcashDetailsScreen extends StatefulWidget {
   const GcashDetailsScreen({super.key});
 
@@ -36,6 +44,10 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
   bool _loading = true;
   bool _saving = false;
   String? _error;
+
+  /// The saved GCash QR as its QR Ph text, or null.
+  String? _qrPayload;
+  bool _qrBusy = false;
 
   @override
   void initState() {
@@ -61,6 +73,7 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
       setState(() {
         _number.text = PhMobileNumber.normalise(profile.gcashNumber ?? '');
         _name.text = profile.gcashName ?? '';
+        _qrPayload = profile.gcashQrPayload;
         _loading = false;
       });
     } catch (e) {
@@ -101,6 +114,49 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
       if (!mounted) return;
       setState(() => _saving = false);
       AppSnackbar.error(context, apiErrorMessage(e, 'Unable to save your payment details.'));
+    }
+  }
+
+  /// Reads the QR from a saved image on the phone and stores its text.
+  Future<void> _uploadQr() async {
+    if (_qrBusy) return;
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || !mounted) return;
+
+    setState(() => _qrBusy = true);
+    final payload = await PaymentQr.readFromImage(picked.path);
+    if (!mounted) return;
+
+    if (payload == null || !PaymentQr.looksLikeQrPh(payload)) {
+      setState(() => _qrBusy = false);
+      AppSnackbar.error(
+        context,
+        payload == null
+            ? 'No QR code was found in that picture. Choose the QR you saved from GCash.'
+            : 'That QR is not a GCash payment QR. In GCash, open Receive → Receive via QR and save that one.',
+      );
+      return;
+    }
+
+    await _storeQr(payload, 'Your GCash QR is saved. Customers now get it with the exact amount.');
+  }
+
+  Future<void> _removeQr() => _storeQr(null, 'Your GCash QR is removed.');
+
+  Future<void> _storeQr(String? payload, String done) async {
+    setState(() => _qrBusy = true);
+    try {
+      final profile = await ProviderServiceService().updateMyProfile({'gcash_qr_payload': payload});
+      if (!mounted) return;
+      setState(() {
+        _qrPayload = profile.gcashQrPayload;
+        _qrBusy = false;
+      });
+      AppSnackbar.success(context, done);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _qrBusy = false);
+      AppSnackbar.error(context, apiErrorMessage(e, 'Unable to save your GCash QR.'));
     }
   }
 
@@ -195,6 +251,50 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
                           isLoading: _saving,
                           onPressed: _saving ? null : _save,
                         ),
+
+                        // ── The GCash QR ──
+                        const SizedBox(height: AppSizes.xxl),
+                        Text('Your GCash QR', style: AppTextStyles.titleLarge),
+                        const SizedBox(height: AppSizes.xs),
+                        Text(
+                          'Add your GCash QR and each customer paying by GCash gets a QR with the '
+                          'exact amount of their booking, paid straight to you. In GCash, open '
+                          'Receive → Receive via QR, save the QR to your gallery, then upload it here.',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                        if (_qrPayload != null) ...[
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(AppSizes.sm),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                              ),
+                              child: QrImageView(
+                                data: _qrPayload!,
+                                version: QrVersions.auto,
+                                size: 160,
+                                backgroundColor: Colors.white,
+                                semanticsLabel: 'Your saved GCash QR',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                        ],
+                        OutlinedAppButton(
+                          label: _qrBusy
+                              ? 'Saving…'
+                              : _qrPayload == null
+                                  ? 'Upload my GCash QR'
+                                  : 'Replace my GCash QR',
+                          onPressed: _qrBusy ? null : _uploadQr,
+                        ),
+                        if (_qrPayload != null)
+                          TextButton(
+                            onPressed: _qrBusy ? null : _removeQr,
+                            child: const Text('Remove QR'),
+                          ),
                       ],
                     ),
                   ),

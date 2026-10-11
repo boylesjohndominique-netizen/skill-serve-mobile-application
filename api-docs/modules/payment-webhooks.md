@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `POST /api/webhooks/paymongo`
 
-Called by PayMongo, not by SkillServe clients. Verifies the `Paymongo-Signature` header (`t=<unix>,te=<test>,li=<live>`; HMAC-SHA256 of `<t>.<raw body>` under the webhook secret) against the raw request body, then applies `payment.paid` / `payment.failed` to the booking.
+Called by PayMongo, not by SkillServe clients. Verifies the `Paymongo-Signature` header (`t=<unix>,te=<test>,li=<live>`; HMAC-SHA256 of `<t>.<raw body>` under the webhook secret) against the raw request body, then applies `payment.paid` / `payment.failed` to the booking — or, for a provider's commission QR Ph payment, `payment.paid` (settles the covered commissions when the amount and currency match), `payment.failed` and `qrph.expired`.
 
 A booking is marked paid **here**, never from the customer's return redirect. Events are deduplicated by event id, because PayMongo redelivers.
 

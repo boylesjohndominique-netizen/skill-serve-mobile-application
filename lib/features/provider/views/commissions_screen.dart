@@ -180,11 +180,35 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
   }
 
   /// What the provider can do about the balance right now.
+  /// Opens a payment screen, and reloads on return: a QR code opened there
+  /// and left unpaid is still worth showing here.
+  Future<void> _open(String route) async {
+    await context.push<bool>(route);
+    if (mounted) _load();
+  }
+
+  /// What the provider can do about the balance right now.
   List<Widget> _settle(BuildContext context, CommissionSummary summary, bool isDark, String supportEmail) {
     final latest = summary.latestRemittance;
     final account = summary.paymentAccount;
 
     if (latest != null && latest.isPending) {
+      // A QR code still open: send them back to it rather than making another.
+      if (latest.isQr) {
+        return [
+          _Notice(
+            isDark: isDark,
+            icon: AppIcons.qr_code_rounded,
+            color: AppColors.warning,
+            background: AppColors.warningBg,
+            text: 'You have a QR code open for ₱${latest.amountDue}. Scan it to pay — it is confirmed '
+                'automatically.',
+          ),
+          const SizedBox(height: AppSizes.md),
+          PrimaryButton(label: 'Show QR code', onPressed: () => _open('/commissions/qr')),
+        ];
+      }
+
       return [
         _Notice(
           isDark: isDark,
@@ -197,6 +221,20 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
         ),
       ];
     }
+
+    final explanation = account.qrPaymentsAvailable
+        ? 'Pay ₱${summary.outstandingTotal} with a QR code from GCash, Maya or your bank app. It is '
+            'confirmed automatically, and new work resumes right away.'
+            '${account.configured ? ' Or send it to SkillServe\'s GCash (${account.gcashNumber}) and '
+                'submit the reference number.' : ''}'
+        : account.configured
+            ? 'Send ₱${summary.outstandingTotal} to SkillServe\'s GCash (${account.gcashNumber}, '
+                '${account.gcashAccountName}), then tap "I\'ve paid" and enter the reference number. '
+                'SkillServe confirms it once the money arrives.'
+            : 'SkillServe never holds your money: the customer pays you the full advertised price, '
+                'and the platform\'s share stays with you until you send it back. Contact support to '
+                'arrange the payment.'
+                '${supportEmail.isEmpty ? '' : ' You can also email $supportEmail.'}';
 
     return [
       if (latest != null && latest.isRejected) ...[
@@ -211,26 +249,19 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
         ),
         const SizedBox(height: AppSizes.md),
       ],
-      Text(
-        account.configured
-            ? 'Send ₱${summary.outstandingTotal} to SkillServe\'s GCash (${account.gcashNumber}, '
-                '${account.gcashAccountName}), then tap "I\'ve paid" and enter the reference number. '
-                'SkillServe confirms it once the money arrives.'
-            : 'SkillServe never holds your money: the customer pays you the full advertised price, '
-                'and the platform\'s share stays with you until you send it back. Contact support to '
-                'arrange the payment.'
-                '${supportEmail.isEmpty ? '' : ' You can also email $supportEmail.'}',
-        style: AppTextStyles.bodyMedium,
-      ),
+      Text(explanation, style: AppTextStyles.bodyMedium),
       const SizedBox(height: AppSizes.md),
+      if (account.qrPaymentsAvailable) ...[
+        PrimaryButton(label: 'Pay with QR code', onPressed: () => _open('/commissions/qr')),
+        const SizedBox(height: AppSizes.sm),
+      ],
       if (account.configured)
-        PrimaryButton(
-          label: "I've paid",
-          onPressed: () async {
-            final submitted = await context.push<bool>('/commissions/pay');
-            if (submitted == true) _load();
-          },
-        ),
+        account.qrPaymentsAvailable
+            ? OutlinedButton(
+                onPressed: () => _open('/commissions/pay'),
+                child: const Text("I've paid by GCash"),
+              )
+            : PrimaryButton(label: "I've paid", onPressed: () => _open('/commissions/pay')),
       const SizedBox(height: AppSizes.sm),
       OutlinedButton(
         onPressed: () => context.push('/support/new'),

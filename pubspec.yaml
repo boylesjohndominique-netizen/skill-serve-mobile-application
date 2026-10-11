@@ -57,6 +57,8 @@ dependencies:
   google_mlkit_text_recognition: ^0.17.1
   google_mlkit_barcode_scanning: ^0.16.1
   google_mlkit_document_scanner: ^0.6.1
+  qr_flutter: ^4.1.0
+  gal: ^2.3.3
 
 dev_dependencies:
   flutter_test:

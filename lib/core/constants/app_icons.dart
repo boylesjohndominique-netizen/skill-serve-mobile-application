@@ -136,6 +136,8 @@ abstract final class AppIcons {
   static const AppIconData add_photo_alternate_outlined = HugeIcons.strokeRoundedImageAdd01;
   static const AppIconData photo_library_outlined = HugeIcons.strokeRoundedAlbum01;
   static const AppIconData image_outlined = HugeIcons.strokeRoundedImage01;
+  static const AppIconData qr_code_rounded = HugeIcons.strokeRoundedQrCode;
+  static const AppIconData download_rounded = HugeIcons.strokeRoundedDownload01;
   static const AppIconData broken_image_outlined = HugeIcons.strokeRoundedImageNotFound01;
   static const AppIconData search_rounded = HugeIcons.strokeRoundedSearch01;
   static const AppIconData search_off_rounded = HugeIcons.strokeRoundedSearchCircle;

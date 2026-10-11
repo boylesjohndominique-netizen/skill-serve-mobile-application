@@ -1,6 +1,6 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
-Last updated: 2026-10-11 (F5 — providers pay their commission by GCash and submit the reference).
+Last updated: 2026-10-11 (F6 — QR codes with the exact amount).
 Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
 Laravel API. The master list — including backend, admin web and deployment — is
 `web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
@@ -17,6 +17,14 @@ Nothing open.
 ## High
 
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
+
+### F6 · QR codes with the exact amount (2026-10-11)
+- [ ] Booking QR on a real phone: provider uploads their GCash QR (GCash details); a customer's
+  *How to pay* shows it with the amount — scan it from another phone and confirm GCash pre-fills
+  the amount and shows the provider's name. **Save QR to gallery** then GCash → Pay QR → Upload QR
+  must also work.
+- [ ] Commission QR (after PayMongo test keys are set): *Pay with QR code* shows a code, a
+  countdown, and turns to "Payment received" by itself once paid; the block lifts.
 
 ### F5 · owner checks (2026-10-11)
 - [ ] After the backend deploy and SkillServe's GCash being set in System Settings → Commission

@@ -52,6 +52,10 @@ class ProviderModel {
   final String? gcashNumber;
   final String? gcashName;
 
+  /// The provider's GCash "Receive via QR" code as the QR Ph text it encodes;
+  /// own profile only. Each GCash booking gets a copy with its exact amount.
+  final String? gcashQrPayload;
+
   const ProviderModel({
     required this.id,
     required this.user,
@@ -75,6 +79,7 @@ class ProviderModel {
     this.reviews = const [],
     this.gcashNumber,
     this.gcashName,
+    this.gcashQrPayload,
   });
 
   /// Whether a customer choosing GCash can actually be told where to pay.
@@ -145,6 +150,7 @@ class ProviderModel {
       ],
       gcashNumber: json['gcash_number'] as String?,
       gcashName: json['gcash_name'] as String?,
+      gcashQrPayload: json['gcash_qr_payload'] as String?,
     );
   }
 

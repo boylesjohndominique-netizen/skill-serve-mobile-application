@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skillserve_mobile/core/utils/payment_qr.dart';
+import 'package:skillserve_mobile/features/booking/models/booking_model.dart';
 import 'package:skillserve_mobile/features/provider/controllers/commission_controller.dart';
 import 'package:skillserve_mobile/features/provider/models/commission_model.dart';
 import 'package:skillserve_mobile/features/provider/services/commission_service.dart';
@@ -133,6 +135,69 @@ void main() {
       controller.onAuthChanged(signedIn: false);
 
       expect(controller.summary, isNull);
+    });
+  });
+
+  group('QR payments', () {
+    test('the summary says when a QR code can be used instead', () {
+      final summary = CommissionSummary.fromJson(summaryPayload({
+        'payment_account': {'configured': false, 'qr_payments_available': true},
+      }));
+
+      expect(summary.paymentAccount.qrPaymentsAvailable, isTrue);
+      expect(summary.paymentAccount.canPay, isTrue);
+    });
+
+    test('an open QR payment carries its code and expiry', () {
+      final payment = CommissionRemittance.fromJson({
+        'id': 9,
+        'method': 'qrph',
+        'status': 'pending',
+        'reference': 'QR-ABCDEF1234',
+        'amount_due': '35.00',
+        'amount_sent': '35.00',
+        'qr_image': 'data:image/png;base64,iVBORw0KGgo=',
+        'expires_at': '2026-10-11T09:30:00+00:00',
+      });
+
+      expect(payment.isQr, isTrue);
+      expect(payment.hasPayableQr, isTrue);
+      expect(payment.expiresAt, isNotNull);
+      expect(PaymentQr.decodeImage(payment.qrImage!), isNotNull);
+    });
+
+    test('an expired or failed QR payment is closed and has no code', () {
+      for (final status in ['expired', 'failed']) {
+        final payment = CommissionRemittance.fromJson({'id': 9, 'method': 'qrph', 'status': status, 'qr_image': null});
+        expect(payment.isClosedUnpaid, isTrue);
+        expect(payment.hasPayableQr, isFalse);
+      }
+    });
+
+    test("a booking carries the provider's QR with the amount", () {
+      final instructions = PaymentInstructions.fromJson({
+        'method': 'gcash',
+        'gcash_number': null,
+        'amount': '200.00',
+        'reference': 'BK-1',
+        'note': 'n',
+        'qr_payload': '00020101021227...6304ABCD',
+      });
+
+      expect(instructions.hasQr, isTrue);
+      // A QR alone is enough to pay, even without a number.
+      expect(instructions.isPayable, isTrue);
+    });
+
+    test('a decoded image accepts PayMongo\'s data URI or bare base-64', () {
+      expect(PaymentQr.decodeImage('data:image/png;base64,iVBORw0KGgo='), isNotNull);
+      expect(PaymentQr.decodeImage('iVBORw0KGgo='), isNotNull);
+      expect(PaymentQr.decodeImage('not base64 !!'), isNull);
+    });
+
+    test('only a QR Ph code is taken for the provider\'s GCash QR', () {
+      expect(PaymentQr.looksLikeQrPh('00020101021127...6304ABCD'), isTrue);
+      expect(PaymentQr.looksLikeQrPh('https://example.com'), isFalse);
     });
   });
 }

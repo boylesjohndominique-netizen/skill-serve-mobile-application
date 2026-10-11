@@ -2,6 +2,8 @@
     <!-- Required to reach the REST API backend (https://skillserve-web-backend.onrender.com/api) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Saving a payment QR to the gallery (gal) on Android 10 and older. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
 
     <application
         android:label="SkillServe"

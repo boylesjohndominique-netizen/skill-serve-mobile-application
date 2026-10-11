@@ -12,7 +12,7 @@ Each item carries the GCash reference to look for in SkillServe's GCash history,
 
 | Name | Location | Required | Type / allowed values |
 |---|---|---:|---|
-| `status` | query | no | string (`pending`, `confirmed`, `rejected`) |
+| `status` | query | no | string (`pending`, `confirmed`, `rejected`, `expired`, `failed`) |
 | `provider_id` | query | no | integer |
 | `search` | query | no | string |
 | `direction` | query | no | string (`asc`, `desc`) |

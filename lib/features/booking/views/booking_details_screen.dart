@@ -20,6 +20,7 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/info_row.dart';
+import '../../../core/widgets/misc/payment_qr_card.dart';
 import '../models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
@@ -731,7 +732,26 @@ class _PaymentInstructionsCard extends StatelessWidget {
       isDark: isDark,
       children: [
         const SizedBox(height: AppSizes.sm),
-        if (instructions.isPayable) ...[
+        // The provider's own GCash QR with this booking's exact amount in it:
+        // scanning it pays them directly, amount filled in.
+        if (instructions.hasQr) ...[
+          Center(
+            child: PaymentQrCard(
+              payload: instructions.qrPayload,
+              amount: instructions.amount,
+              saveName: 'skillserve-${instructions.reference}',
+              caption: (instructions.gcashName ?? '').isEmpty ? null : 'To ${instructions.gcashName}',
+            ),
+          ),
+          const SizedBox(height: AppSizes.sm),
+          Text(
+            'Scan this with GCash or any QR Ph app — the amount is filled in. Paying on this phone? '
+            'Save the QR, then in GCash tap Pay QR → Upload QR and choose it.',
+            style: AppTextStyles.bodySmall,
+          ),
+          const SizedBox(height: AppSizes.md),
+        ],
+        if ((instructions.gcashNumber ?? '').isNotEmpty) ...[
           InfoRow(
               icon: AppIcons.account_balance_wallet_rounded,
               label: 'GCash number',
@@ -751,7 +771,7 @@ class _PaymentInstructionsCard extends StatelessWidget {
         ],
         const SizedBox(height: AppSizes.sm),
         Text(instructions.note, style: AppTextStyles.bodyMedium),
-        if (instructions.isPayable) ...[
+        if ((instructions.gcashNumber ?? '').isNotEmpty) ...[
           const SizedBox(height: AppSizes.md),
           OutlinedAppButton(
             label: 'Copy GCash number',

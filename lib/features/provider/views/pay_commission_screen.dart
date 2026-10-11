@@ -316,7 +316,9 @@ class _Blocked extends StatelessWidget {
     final message = !summary.hasOutstanding
         ? 'You have nothing to pay right now.'
         : summary.hasPendingRemittance
-            ? 'Your last payment is still waiting for SkillServe to confirm it.'
+            ? (summary.latestRemittance!.isQr
+                ? 'You have a QR code open for this payment. Pay it, or wait until it expires.'
+                : 'Your last payment is still waiting for SkillServe to confirm it.')
             : 'SkillServe has not set up its GCash details yet. Contact support to arrange your payment.';
 
     return ListView(

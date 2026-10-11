@@ -80,6 +80,7 @@ import '../features/identity/views/identity_verification_screen.dart';
 
 // Provider earnings
 import '../features/provider/views/commissions_screen.dart';
+import '../features/provider/views/commission_qr_screen.dart';
 import '../features/provider/views/pay_commission_screen.dart';
 import '../features/provider/views/earnings_screen.dart';
 import '../features/provider/views/gcash_details_screen.dart';
@@ -300,6 +301,9 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/commissions/pay',
       builder: (context, state) => const PayCommissionScreen()),
+  GoRoute(
+      path: '/commissions/qr',
+      builder: (context, state) => const CommissionQrScreen()),
   GoRoute(
       path: '/gcash-details',
       builder: (context, state) => const GcashDetailsScreen()),

@@ -78,18 +78,26 @@ class CommissionPaymentAccount {
   /// False until both the name and the number are set.
   final bool configured;
 
+  /// Whether a PayMongo QR Ph code can be made for the exact amount instead.
+  final bool qrPaymentsAvailable;
+
   const CommissionPaymentAccount({
     this.gcashAccountName = '',
     this.gcashNumber = '',
     this.paymentInstructions = '',
     this.configured = false,
+    this.qrPaymentsAvailable = false,
   });
+
+  /// Whether the provider has any way to pay in the app.
+  bool get canPay => configured || qrPaymentsAvailable;
 
   factory CommissionPaymentAccount.fromJson(Map<String, dynamic> json) => CommissionPaymentAccount(
         gcashAccountName: json['gcash_account_name'] as String? ?? '',
         gcashNumber: json['gcash_number'] as String? ?? '',
         paymentInstructions: json['payment_instructions'] as String? ?? '',
         configured: json['configured'] == true,
+        qrPaymentsAvailable: json['qr_payments_available'] == true,
       );
 }
 
@@ -101,6 +109,9 @@ class CommissionPaymentAccount {
 /// the reason, and the provider may submit again.
 class CommissionRemittance {
   final int id;
+
+  /// `gcash_reference` (SkillServe confirms it) or `qrph` (PayMongo does).
+  final String method;
   final String status;
   final String reference;
   final String amountDue;
@@ -109,8 +120,19 @@ class CommissionRemittance {
   final DateTime? submittedAt;
   final DateTime? reviewedAt;
 
+  /// The QR Ph code to scan, as PayMongo returns it (a base-64 image), while
+  /// it can still be paid.
+  final String? qrImage;
+
+  /// When the QR code stops working.
+  final DateTime? expiresAt;
+
+  /// Why a QR payment failed.
+  final String? failureReason;
+
   const CommissionRemittance({
     required this.id,
+    this.method = 'gcash_reference',
     this.status = 'pending',
     this.reference = '',
     this.amountDue = '0.00',
@@ -118,13 +140,25 @@ class CommissionRemittance {
     this.rejectionReason,
     this.submittedAt,
     this.reviewedAt,
+    this.qrImage,
+    this.expiresAt,
+    this.failureReason,
   });
 
   bool get isPending => status == 'pending';
   bool get isRejected => status == 'rejected';
+  bool get isConfirmed => status == 'confirmed';
+  bool get isQr => method == 'qrph';
+
+  /// A QR payment that ended without the money arriving.
+  bool get isClosedUnpaid => status == 'expired' || status == 'failed';
+
+  /// A QR code that can still be scanned.
+  bool get hasPayableQr => isQr && isPending && (qrImage ?? '').isNotEmpty;
 
   factory CommissionRemittance.fromJson(Map<String, dynamic> json) => CommissionRemittance(
         id: (json['id'] as num?)?.toInt() ?? 0,
+        method: json['method'] as String? ?? 'gcash_reference',
         status: json['status'] as String? ?? 'pending',
         reference: json['reference'] as String? ?? '',
         amountDue: json['amount_due']?.toString() ?? '0.00',
@@ -136,6 +170,11 @@ class CommissionRemittance {
         reviewedAt: json['reviewed_at'] is String
             ? DateTime.tryParse(json['reviewed_at'] as String)?.toLocal()
             : null,
+        qrImage: json['qr_image'] as String?,
+        expiresAt: json['expires_at'] is String
+            ? DateTime.tryParse(json['expires_at'] as String)?.toLocal()
+            : null,
+        failureReason: json['failure_reason'] as String?,
       );
 }
 

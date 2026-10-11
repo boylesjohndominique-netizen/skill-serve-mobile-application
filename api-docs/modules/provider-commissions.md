@@ -80,13 +80,105 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `POST /api/client/v1/provider/commission-remittances/qr`
+
+PayMongo creates a single-use dynamic QR Ph code for everything the provider owes right now; the amount is worked out by the server, never sent by the app. Scan it with GCash, Maya or a bank app. `qr_image` is the code as PayMongo returns it (a base-64 image to show as-is) and `expires_at` when it stops working (30 minutes). The payment is confirmed only by PayMongo's signed webhook, and only when its amount and currency match; then the covered commissions are settled and the provider is notified.
+
+Calling it again while a code is still payable returns that code (200) instead of making another. 503 when QR payments are not configured — pay by GCash reference instead.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 201: A new QR code
+
+Response schema: `see openapi.json`
+
+#### HTTP 200: The QR code already open
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, email-verified provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 409: A GCash-reference payment is waiting for confirmation, or a QR code is still being prepared
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Nothing is owed, or the amount is outside what PayMongo accepts
+
+Response schema: `see openapi.json`
+
+#### HTTP 429: Too many attempts
+
+Response schema: `see openapi.json`
+
+#### HTTP 502: PayMongo could not create the code; try again
+
+Response schema: `see openapi.json`
+
+#### HTTP 503: QR payments are not configured
+
+Response schema: `see openapi.json`
+
+## `GET /api/client/v1/provider/commission-remittances/{commissionRemittance}`
+
+For the app to follow a QR payment while it waits: `status` turns `confirmed` once PayMongo confirms it, or `expired` / `failed`. Only the provider's own payments; anyone else's is a 404.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `commissionRemittance` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The payment
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, email-verified provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Not found, or not this provider's
+
+Response schema: `see openapi.json`
+
 ## `GET /api/client/v1/provider/commissions`
 
 SkillServe's commission is included in the price the provider advertises, so on an on-hand job the provider collects the whole amount and owes the platform's share back. Once the block applies the provider cannot accept new jobs or publish services; declining, cancelling and finishing agreed work stay available. By default any unpaid commission blocks at once; an administrator can instead start the block at a minimum unpaid total (`block_threshold`) and/or after the oldest unpaid commission reaches an age (`block_deadline`, null when off). Whichever comes first blocks.
 
 `eligible` is false with `reason` = `outstanding_commission` when the block applies.
 
-`payment_account` is SkillServe's GCash, where the provider sends the commission (`configured` is false until an administrator sets it). `latest_remittance` is the provider's most recent GCash payment, or null: while it is `pending` the provider waits for confirmation and cannot submit another; a `rejected` one carries `rejection_reason`.
+`payment_account` is SkillServe's GCash, where the provider sends the commission (`configured` is false until an administrator sets it). `payment_account.qr_payments_available` says whether the provider can instead get a PayMongo QR Ph code for the exact amount (POST /provider/commission-remittances/qr). `latest_remittance` is the provider's most recent payment of either kind, or null: while it is `pending` they cannot start another (a QR one carries `qr_image` while it can be scanned); a `rejected` one carries `rejection_reason`.
 
 **Authentication:** Bearer token
 
@@ -120,7 +212,8 @@ No JSON request body.
             "gcash_account_name": "SkillServe Inc.",
             "gcash_number": "09171234567",
             "payment_instructions": "Send the exact amount, then submit the reference number.",
-            "configured": true
+            "configured": true,
+            "qr_payments_available": true
         },
         "latest_remittance": null,
         "outstanding": [
