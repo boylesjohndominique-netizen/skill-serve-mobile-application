@@ -26,10 +26,10 @@ import '../models/commission_model.dart';
 /// cannot accept or start jobs or publish services — declining and cancelling
 /// stay open so an existing queue can still be cleared.
 ///
-/// The app never takes the money: the provider sends it to SkillServe's GCash
-/// outside the app, then submits the reference number ("I've paid"), and an
-/// administrator confirms it once it arrives. A payment waiting for that
-/// confirmation, or one that was rejected, is shown here.
+/// It is paid only by a PayMongo QR Ph code for the exact amount ("Pay with QR
+/// code"), which PayMongo confirms. A QR code still open is offered again; a
+/// GCash-reference payment made with an older app version, still waiting for
+/// SkillServe or rejected, is shown here too.
 class CommissionsScreen extends StatefulWidget {
   const CommissionsScreen({super.key});
 
@@ -222,20 +222,6 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
       ];
     }
 
-    final explanation = account.qrPaymentsAvailable
-        ? 'Pay ₱${summary.outstandingTotal} with a QR code from GCash, Maya or your bank app. It is '
-            'confirmed automatically, and new work resumes right away.'
-            '${account.configured ? ' Or send it to SkillServe\'s GCash (${account.gcashNumber}) and '
-                'submit the reference number.' : ''}'
-        : account.configured
-            ? 'Send ₱${summary.outstandingTotal} to SkillServe\'s GCash (${account.gcashNumber}, '
-                '${account.gcashAccountName}), then tap "I\'ve paid" and enter the reference number. '
-                'SkillServe confirms it once the money arrives.'
-            : 'SkillServe never holds your money: the customer pays you the full advertised price, '
-                'and the platform\'s share stays with you until you send it back. Contact support to '
-                'arrange the payment.'
-                '${supportEmail.isEmpty ? '' : ' You can also email $supportEmail.'}';
-
     return [
       if (latest != null && latest.isRejected) ...[
         _Notice(
@@ -244,25 +230,24 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
           color: AppColors.error,
           background: AppColors.errorBg,
           text: 'Your last payment (ref. ${latest.reference}) was not confirmed'
-              '${(latest.rejectionReason ?? '').isEmpty ? '.' : ': ${latest.rejectionReason}'} '
-              'Check the details and submit it again.',
+              '${(latest.rejectionReason ?? '').isEmpty ? '.' : ': ${latest.rejectionReason}'}',
         ),
         const SizedBox(height: AppSizes.md),
       ],
-      Text(explanation, style: AppTextStyles.bodyMedium),
+      // The commission is paid only by QR code, for the exact amount.
+      Text(
+        account.qrPaymentsAvailable
+            ? 'Pay ₱${summary.outstandingTotal} with a QR code from GCash, Maya or your bank app. It is '
+                'confirmed automatically, and new work resumes right away.'
+            : 'Paying by QR code is not available right now. Contact support to settle your commission.'
+                '${supportEmail.isEmpty ? '' : ' You can also email $supportEmail.'}',
+        style: AppTextStyles.bodyMedium,
+      ),
       const SizedBox(height: AppSizes.md),
       if (account.qrPaymentsAvailable) ...[
         PrimaryButton(label: 'Pay with QR code', onPressed: () => _open('/commissions/qr')),
         const SizedBox(height: AppSizes.sm),
       ],
-      if (account.configured)
-        account.qrPaymentsAvailable
-            ? OutlinedButton(
-                onPressed: () => _open('/commissions/pay'),
-                child: const Text("I've paid by GCash"),
-              )
-            : PrimaryButton(label: "I've paid", onPressed: () => _open('/commissions/pay')),
-      const SizedBox(height: AppSizes.sm),
       OutlinedButton(
         onPressed: () => context.push('/support/new'),
         child: const Text('Contact support'),

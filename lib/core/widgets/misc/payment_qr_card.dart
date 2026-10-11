@@ -7,7 +7,7 @@ import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../utils/payment_qr.dart';
-import '../buttons/outlined_app_button.dart';
+import '../buttons/primary_button.dart';
 import '../feedback/app_snackbar.dart';
 
 /// A payment QR code with the exact amount it is for, and a button to save it
@@ -86,9 +86,12 @@ class _PaymentQrCardState extends State<PaymentQrCard> {
           Text(widget.caption!, style: AppTextStyles.bodySmall, textAlign: TextAlign.center),
         ],
         const SizedBox(height: AppSizes.md),
-        OutlinedAppButton(
-          label: _saving ? 'Saving…' : 'Save QR to gallery',
+        // Filled, so it stands out in light and dark: saving the QR is how a
+        // payment on this same phone gets into GCash.
+        PrimaryButton(
+          label: 'Save QR to gallery',
           icon: AppIcons.download_rounded,
+          isLoading: _saving,
           onPressed: _saving ? null : _save,
         ),
       ],

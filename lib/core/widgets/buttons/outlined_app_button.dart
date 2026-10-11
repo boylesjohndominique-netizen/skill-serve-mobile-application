@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_animations.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../theme/app_palette.dart';
 
 /// Low-emphasis outlined button for secondary/tertiary actions
 /// (e.g. "Cancel", "View details").
@@ -33,7 +33,8 @@ class _OutlinedAppButtonState extends State<OutlinedAppButton> {
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.color ?? AppColors.textPrimary;
+    // Follows the theme: a fixed dark ink disappeared on dark backgrounds.
+    final c = widget.color ?? context.textPrimaryColor;
     final button = GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),

@@ -26,7 +26,7 @@ Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see b
 - [ ] Commission QR (after PayMongo test keys are set): *Pay with QR code* shows a code, a
   countdown, and turns to "Payment received" by itself once paid; the block lifts.
 
-### F5 · owner checks (2026-10-11)
+### F5 · owner checks (2026-10-11) — superseded: the commission is paid by QR code only (F6)
 - [ ] After the backend deploy and SkillServe's GCash being set in System Settings → Commission
   payments, build the new APK. As a provider with an outstanding commission: Commission →
   *I've paid* shows SkillServe's GCash; submitting a reference shows "waiting for confirmation"

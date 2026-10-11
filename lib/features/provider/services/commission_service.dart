@@ -1,7 +1,4 @@
-import 'package:dio/dio.dart';
-
 import '../../../core/services/api_client.dart';
-import '../../../core/utils/image_upload.dart';
 import '../models/commission_model.dart';
 
 /// What the provider owes SkillServe, what a price would earn them, and
@@ -9,11 +6,11 @@ import '../models/commission_model.dart';
 /// provider-services.md):
 /// - GET  /api/client/v1/provider/commissions
 /// - GET  /api/client/v1/provider/commission-preview?amount=
-/// - POST /api/client/v1/provider/commission-remittances
+/// - POST /api/client/v1/provider/commission-remittances/qr
+/// - GET  /api/client/v1/provider/commission-remittances/{id}
 ///
-/// The app never takes the money: the provider sends it to SkillServe's GCash
-/// outside the app, then submits the GCash reference number here for an
-/// administrator to confirm.
+/// The commission is paid only by a PayMongo QR Ph code for the exact amount,
+/// confirmed by PayMongo — the app never takes or reports the money itself.
 class CommissionService {
   static const _path = '/client/v1/provider/commissions';
 
@@ -30,26 +27,6 @@ class CommissionService {
       queryParameters: {'amount': amount},
     );
     return CommissionSplit.fromJson(response.data['data'] as Map<String, dynamic>);
-  }
-
-  /// Submit a GCash payment covering everything owed now. [proofPath] is an
-  /// optional receipt screenshot.
-  Future<CommissionRemittance> submitRemittance({
-    required String reference,
-    required String amountSent,
-    String? proofPath,
-  }) async {
-    final form = FormData.fromMap({
-      'reference': reference,
-      'amount_sent': amountSent,
-      if (proofPath != null) 'proof': await imageMultipart(proofPath),
-    });
-
-    final response = await ApiClient.instance.dio.post(
-      '/client/v1/provider/commission-remittances',
-      data: form,
-    );
-    return CommissionRemittance.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   /// A PayMongo QR Ph code for everything owed now — or the one already open.

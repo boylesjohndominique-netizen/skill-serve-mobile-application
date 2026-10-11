@@ -65,7 +65,6 @@ final _routes = <String>[
   '/completed-jobs',
   '/earnings',
   '/commissions',
-  '/commissions/pay',
   '/commissions/qr',
   '/gcash-details',
   '/withdrawal-history',

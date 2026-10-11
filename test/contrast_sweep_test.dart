@@ -48,7 +48,7 @@ const _routes = <String>[
   '/security-activity', '/file-report', '/identity-verification',
   // Provider
   '/provider', '/statistics', '/my-services', '/portfolio', '/calendar', '/availability',
-  '/booking-requests', '/active-jobs', '/completed-jobs', '/earnings', '/commissions', '/commissions/pay', '/commissions/qr',
+  '/booking-requests', '/active-jobs', '/completed-jobs', '/earnings', '/commissions', '/commissions/qr',
   '/gcash-details', '/withdrawal-history', '/verification-status', '/provider-badges',
 ];
 
