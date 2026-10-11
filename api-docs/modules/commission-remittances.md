@@ -86,7 +86,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/commission-remittances/{commissionRemittance}/proof`
 
-Served from private storage after checking the view commissions permission, and logged to the audit trail. 404 when no receipt was attached, or once it was deleted after the retention period (System Settings → Commission payments).
+Served from private storage after checking the view commissions permission, and logged to the audit trail. 404 when no receipt was attached, or once it was deleted 180 days after the payment was decided.
 
 **Authentication:** Bearer token
 
