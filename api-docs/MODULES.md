@@ -16,6 +16,7 @@
 - [Client Reports](modules/client-reports.md)
 - [Client Reviews](modules/client-reviews.md)
 - [Client Support](modules/client-support.md)
+- [Commission Remittances](modules/commission-remittances.md)
 - [Commission Tiers](modules/commission-tiers.md)
 - [Commissions](modules/commissions.md)
 - [Conversations](modules/conversations.md)

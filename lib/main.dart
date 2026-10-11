@@ -15,6 +15,7 @@ import 'features/marketplace/controllers/marketplace_controller.dart';
 import 'features/notifications/controllers/notification_controller.dart';
 import 'features/messaging/controllers/chat_controller.dart';
 import 'features/payments/controllers/payment_controller.dart';
+import 'features/provider/controllers/commission_controller.dart';
 import 'features/provider/controllers/portfolio_controller.dart';
 import 'features/provider/controllers/provider_services_controller.dart';
 import 'features/reports/controllers/report_controller.dart';
@@ -106,6 +107,13 @@ class SkillLinkApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthController, IdentityController>(
           create: (_) => IdentityController(),
           update: (_, auth, identity) => identity!
+            ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
+        ),
+        // A provider's balance, reloaded by commission notifications; reset
+        // when the session changes for the same reason as identity.
+        ChangeNotifierProxyProvider<AuthController, CommissionController>(
+          create: (_) => CommissionController(),
+          update: (_, auth, commissions) => commissions!
             ..onAuthChanged(signedIn: auth.status == AuthStatus.authenticated),
         ),
         ChangeNotifierProvider(create: (_) => BookingController()),

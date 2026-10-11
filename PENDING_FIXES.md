@@ -1,6 +1,6 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
-Last updated: 2026-10-06 (F3 — sign-up survives the app being closed at the ID camera; 18+ only, experience ≤ age − 16).
+Last updated: 2026-10-11 (F5 — providers pay their commission by GCash and submit the reference).
 Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
 Laravel API. The master list — including backend, admin web and deployment — is
 `web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
@@ -17,6 +17,13 @@ Nothing open.
 ## High
 
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
+
+### F5 · owner checks (2026-10-11)
+- [ ] After the backend deploy and SkillServe's GCash being set in System Settings → Commission
+  payments, build the new APK. As a provider with an outstanding commission: Commission →
+  *I've paid* shows SkillServe's GCash; submitting a reference shows "waiting for confirmation"
+  and new work stays paused; once an administrator confirms, the notification opens Commission
+  and the block is gone. A rejection shows its reason and the payment can be submitted again.
 
 ### F3 · owner checks (2026-10-06)
 - [ ] Build the new APK and sign up on the low-memory phone that went back to the start after the

@@ -61,6 +61,8 @@ class NotificationModel {
     if (_rawType == 'provider_verification') return '/verification-status';
     // A decision on the National ID opens the identity screen.
     if (_rawType == 'identity_verification') return '/identity-verification';
+    // A decision on a GCash commission payment opens the Commission screen.
+    if (_rawType == 'commission_remittance') return '/commissions';
     // The outcome of something the user reported.
     if (_rawType == 'report_update' || data['report_id'] != null) return '/my-reports';
     if (ticketId != null) return '/support/tickets/$ticketId';

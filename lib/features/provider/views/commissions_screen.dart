@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/utils/api_error.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../settings/models/platform_info.dart';
 import '../../settings/services/platform_service.dart';
+import '../controllers/commission_controller.dart';
 import '../models/commission_model.dart';
-import '../services/commission_service.dart';
 
 /// What the provider owes SkillServe, and what it stops them doing.
 ///
@@ -25,8 +26,10 @@ import '../services/commission_service.dart';
 /// cannot accept or start jobs or publish services — declining and cancelling
 /// stay open so an existing queue can still be cleared.
 ///
-/// There is nothing to pay here: SkillServe never handles the money, so a
-/// remittance is arranged with support and recorded by an administrator.
+/// The app never takes the money: the provider sends it to SkillServe's GCash
+/// outside the app, then submits the reference number ("I've paid"), and an
+/// administrator confirms it once it arrives. A payment waiting for that
+/// confirmation, or one that was rejected, is shown here.
 class CommissionsScreen extends StatefulWidget {
   const CommissionsScreen({super.key});
 
@@ -35,10 +38,7 @@ class CommissionsScreen extends StatefulWidget {
 }
 
 class _CommissionsScreenState extends State<CommissionsScreen> {
-  CommissionSummary? _summary;
   PlatformInfo? _platform;
-  bool _loading = true;
-  String? _error;
 
   @override
   void initState() {
@@ -48,49 +48,34 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
 
   Future<void> _load() async {
     if (!mounted) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final summary = await CommissionService().getSummary();
-      // Where to send the remittance is platform information, and a failure to
-      // read it must not hide what is owed.
-      PlatformInfo? platform;
-      try {
-        platform = await PlatformService().get();
-      } catch (_) {
-        platform = null;
-      }
-      if (!mounted) return;
-      setState(() {
-        _summary = summary;
-        _platform = platform;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = apiErrorMessage(e, 'Unable to load your commission balance.');
-        _loading = false;
-      });
-    }
+    final commissions = context.read<CommissionController>();
+    // Where to send the remittance is platform information, and a failure to
+    // read it must not hide what is owed.
+    final platform = PlatformService().get().then<PlatformInfo?>((info) => info).catchError((_) => null);
+    await commissions.load();
+    final info = await platform;
+    if (!mounted) return;
+    setState(() => _platform = info);
   }
 
   @override
   Widget build(BuildContext context) {
-    final summary = _summary;
+    // Watched, so a confirmed or rejected GCash payment (reloaded by the
+    // notification poller) shows here without a pull to refresh.
+    final commissions = context.watch<CommissionController>();
+    final summary = commissions.summary;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Commission')),
       body: SafeArea(
-        child: _loading
+        // A reload in the background keeps the balance on screen.
+        child: commissions.isLoading && summary == null
             ? const Padding(
                 padding: EdgeInsets.all(AppSizes.pageHPad),
                 child: ShimmerCardList(itemHeight: 90),
               )
-            : _error != null
-                ? ErrorState(message: _error!, onRetry: _load)
+            : commissions.errorMessage != null && summary == null
+                ? ErrorState(message: commissions.errorMessage!, onRetry: _load)
                 : RefreshIndicator(
                     onRefresh: _load,
                     child: summary == null || !summary.hasOutstanding
@@ -179,18 +164,7 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
         const SizedBox(height: AppSizes.lg),
         Text('How to settle', style: AppTextStyles.titleLarge),
         const SizedBox(height: AppSizes.xs),
-        Text(
-          'SkillServe never holds your money: the customer pays you the full advertised price, '
-          'and the platform\'s share stays with you until you send it back. Arrange the '
-          'remittance with support and an administrator records it against these bookings.'
-          '${supportEmail.isEmpty ? '' : ' You can also email $supportEmail.'}',
-          style: AppTextStyles.bodyMedium,
-        ),
-        const SizedBox(height: AppSizes.md),
-        OutlinedButton(
-          onPressed: () => context.push('/support/new'),
-          child: const Text('Contact support'),
-        ),
+        ..._settle(context, summary, isDark, supportEmail),
 
         // ── The bookings behind the balance ──
         const SizedBox(height: AppSizes.xl),
@@ -202,6 +176,102 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
             child: _CommissionRow(item: item, isDark: isDark),
           ),
       ],
+    );
+  }
+
+  /// What the provider can do about the balance right now.
+  List<Widget> _settle(BuildContext context, CommissionSummary summary, bool isDark, String supportEmail) {
+    final latest = summary.latestRemittance;
+    final account = summary.paymentAccount;
+
+    if (latest != null && latest.isPending) {
+      return [
+        _Notice(
+          isDark: isDark,
+          icon: AppIcons.hourglass_top_rounded,
+          color: AppColors.warning,
+          background: AppColors.warningBg,
+          text: 'Your ₱${latest.amountSent} GCash payment (ref. ${latest.reference}) is waiting for '
+              'SkillServe to confirm it. New work resumes as soon as it is confirmed — you will get a '
+              'notification.',
+        ),
+      ];
+    }
+
+    return [
+      if (latest != null && latest.isRejected) ...[
+        _Notice(
+          isDark: isDark,
+          icon: AppIcons.info_outline_rounded,
+          color: AppColors.error,
+          background: AppColors.errorBg,
+          text: 'Your last payment (ref. ${latest.reference}) was not confirmed'
+              '${(latest.rejectionReason ?? '').isEmpty ? '.' : ': ${latest.rejectionReason}'} '
+              'Check the details and submit it again.',
+        ),
+        const SizedBox(height: AppSizes.md),
+      ],
+      Text(
+        account.configured
+            ? 'Send ₱${summary.outstandingTotal} to SkillServe\'s GCash (${account.gcashNumber}, '
+                '${account.gcashAccountName}), then tap "I\'ve paid" and enter the reference number. '
+                'SkillServe confirms it once the money arrives.'
+            : 'SkillServe never holds your money: the customer pays you the full advertised price, '
+                'and the platform\'s share stays with you until you send it back. Contact support to '
+                'arrange the payment.'
+                '${supportEmail.isEmpty ? '' : ' You can also email $supportEmail.'}',
+        style: AppTextStyles.bodyMedium,
+      ),
+      const SizedBox(height: AppSizes.md),
+      if (account.configured)
+        PrimaryButton(
+          label: "I've paid",
+          onPressed: () async {
+            final submitted = await context.push<bool>('/commissions/pay');
+            if (submitted == true) _load();
+          },
+        ),
+      const SizedBox(height: AppSizes.sm),
+      OutlinedButton(
+        onPressed: () => context.push('/support/new'),
+        child: const Text('Contact support'),
+      ),
+    ];
+  }
+}
+
+class _Notice extends StatelessWidget {
+  const _Notice({
+    required this.isDark,
+    required this.icon,
+    required this.color,
+    required this.background,
+    required this.text,
+  });
+
+  final bool isDark;
+  final AppIconData icon;
+  final Color color;
+  final Color background;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceAltDark : background,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIcon(icon, color: color, size: AppSizes.iconMd),
+          const SizedBox(width: AppSizes.sm),
+          Expanded(child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: color))),
+        ],
+      ),
     );
   }
 }

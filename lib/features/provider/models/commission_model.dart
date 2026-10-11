@@ -23,6 +23,12 @@ class CommissionSummary {
   final String currency;
   final List<OutstandingCommission> outstanding;
 
+  /// SkillServe's GCash, where the commission is sent.
+  final CommissionPaymentAccount paymentAccount;
+
+  /// The provider's most recent GCash payment, whatever became of it.
+  final CommissionRemittance? latestRemittance;
+
   const CommissionSummary({
     this.eligible = true,
     this.reason,
@@ -30,12 +36,18 @@ class CommissionSummary {
     this.outstandingCount = 0,
     this.currency = 'PHP',
     this.outstanding = const [],
+    this.paymentAccount = const CommissionPaymentAccount(),
+    this.latestRemittance,
   });
 
   /// Whether the commission debt in particular is what is blocking work.
   bool get isBlockedByCommission => reason == 'outstanding_commission';
 
   bool get hasOutstanding => outstandingCount > 0;
+
+  /// A payment is with SkillServe for confirmation, so another cannot be
+  /// submitted yet.
+  bool get hasPendingRemittance => latestRemittance?.isPending ?? false;
 
   factory CommissionSummary.fromJson(Map<String, dynamic> json) => CommissionSummary(
         eligible: json['eligible'] == true,
@@ -47,6 +59,83 @@ class CommissionSummary {
           for (final item in (json['outstanding'] as List? ?? const []))
             OutstandingCommission.fromJson(Map<String, dynamic>.from(item as Map)),
         ],
+        paymentAccount: json['payment_account'] is Map
+            ? CommissionPaymentAccount.fromJson(Map<String, dynamic>.from(json['payment_account'] as Map))
+            : const CommissionPaymentAccount(),
+        latestRemittance: json['latest_remittance'] is Map
+            ? CommissionRemittance.fromJson(Map<String, dynamic>.from(json['latest_remittance'] as Map))
+            : null,
+      );
+}
+
+/// SkillServe's GCash account, as an administrator set it in System
+/// Settings → Commission payments.
+class CommissionPaymentAccount {
+  final String gcashAccountName;
+  final String gcashNumber;
+  final String paymentInstructions;
+
+  /// False until both the name and the number are set.
+  final bool configured;
+
+  const CommissionPaymentAccount({
+    this.gcashAccountName = '',
+    this.gcashNumber = '',
+    this.paymentInstructions = '',
+    this.configured = false,
+  });
+
+  factory CommissionPaymentAccount.fromJson(Map<String, dynamic> json) => CommissionPaymentAccount(
+        gcashAccountName: json['gcash_account_name'] as String? ?? '',
+        gcashNumber: json['gcash_number'] as String? ?? '',
+        paymentInstructions: json['payment_instructions'] as String? ?? '',
+        configured: json['configured'] == true,
+      );
+}
+
+/// A GCash commission payment the provider submitted, from
+/// `POST`/`GET /api/client/v1/provider/commission-remittances`.
+///
+/// `pending` until an administrator finds the reference in SkillServe's GCash
+/// history; `confirmed` settled the bookings it covered; `rejected` carries
+/// the reason, and the provider may submit again.
+class CommissionRemittance {
+  final int id;
+  final String status;
+  final String reference;
+  final String amountDue;
+  final String amountSent;
+  final String? rejectionReason;
+  final DateTime? submittedAt;
+  final DateTime? reviewedAt;
+
+  const CommissionRemittance({
+    required this.id,
+    this.status = 'pending',
+    this.reference = '',
+    this.amountDue = '0.00',
+    this.amountSent = '0.00',
+    this.rejectionReason,
+    this.submittedAt,
+    this.reviewedAt,
+  });
+
+  bool get isPending => status == 'pending';
+  bool get isRejected => status == 'rejected';
+
+  factory CommissionRemittance.fromJson(Map<String, dynamic> json) => CommissionRemittance(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        status: json['status'] as String? ?? 'pending',
+        reference: json['reference'] as String? ?? '',
+        amountDue: json['amount_due']?.toString() ?? '0.00',
+        amountSent: json['amount_sent']?.toString() ?? '0.00',
+        rejectionReason: json['rejection_reason'] as String?,
+        submittedAt: json['submitted_at'] is String
+            ? DateTime.tryParse(json['submitted_at'] as String)?.toLocal()
+            : null,
+        reviewedAt: json['reviewed_at'] is String
+            ? DateTime.tryParse(json['reviewed_at'] as String)?.toLocal()
+            : null,
       );
 }
 

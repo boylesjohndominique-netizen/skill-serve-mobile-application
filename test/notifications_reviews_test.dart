@@ -96,6 +96,15 @@ void main() {
         expect(notification.destination, '/edit-service/7');
       });
 
+      test('a GCash commission payment decision opens the Commission screen', () {
+        final notification = NotificationModel.fromJson(notificationPayload({
+          'type': 'commission_remittance',
+          'data': {'type': 'commission_remittance', 'action': 'confirmed', 'remittance_id': 7},
+        }));
+
+        expect(notification.destination, '/commissions');
+      });
+
       test('a verification decision opens the verification screen', () {
         final notification = NotificationModel.fromJson(notificationPayload({
           'type': 'provider_verification',

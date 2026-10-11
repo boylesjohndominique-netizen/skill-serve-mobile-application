@@ -12,6 +12,7 @@ import 'package:skillserve_mobile/features/marketplace/controllers/discovery_con
 import 'package:skillserve_mobile/features/marketplace/controllers/marketplace_controller.dart';
 import 'package:skillserve_mobile/features/notifications/controllers/notification_controller.dart';
 import 'package:skillserve_mobile/features/payments/controllers/payment_controller.dart';
+import 'package:skillserve_mobile/features/provider/controllers/commission_controller.dart';
 import 'package:skillserve_mobile/features/provider/controllers/portfolio_controller.dart';
 import 'package:skillserve_mobile/features/provider/controllers/provider_services_controller.dart';
 import 'package:skillserve_mobile/features/booking/controllers/provider_booking_controller.dart';
@@ -64,6 +65,7 @@ final _routes = <String>[
   '/completed-jobs',
   '/earnings',
   '/commissions',
+  '/commissions/pay',
   '/gcash-details',
   '/withdrawal-history',
   '/verification-status',
@@ -86,6 +88,7 @@ Widget _app(String route) {
       ChangeNotifierProvider(create: (_) => ProviderBookingController()),
       ChangeNotifierProvider(create: (_) => NotificationController()),
       ChangeNotifierProvider(create: (_) => ChatController()),
+      ChangeNotifierProvider(create: (_) => CommissionController()),
       ChangeNotifierProvider(create: (_) => PortfolioController()),
       ChangeNotifierProvider(create: (_) => ProviderServicesController()),
       ChangeNotifierProvider(create: (_) => PaymentController()),

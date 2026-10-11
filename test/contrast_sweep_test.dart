@@ -18,6 +18,7 @@ import 'package:skillserve_mobile/features/marketplace/controllers/marketplace_c
 import 'package:skillserve_mobile/features/messaging/controllers/chat_controller.dart';
 import 'package:skillserve_mobile/features/notifications/controllers/notification_controller.dart';
 import 'package:skillserve_mobile/features/payments/controllers/payment_controller.dart';
+import 'package:skillserve_mobile/features/provider/controllers/commission_controller.dart';
 import 'package:skillserve_mobile/features/provider/controllers/portfolio_controller.dart';
 import 'package:skillserve_mobile/features/provider/controllers/provider_services_controller.dart';
 import 'package:skillserve_mobile/features/reports/controllers/report_controller.dart';
@@ -47,7 +48,7 @@ const _routes = <String>[
   '/security-activity', '/file-report', '/identity-verification',
   // Provider
   '/provider', '/statistics', '/my-services', '/portfolio', '/calendar', '/availability',
-  '/booking-requests', '/active-jobs', '/completed-jobs', '/earnings', '/commissions',
+  '/booking-requests', '/active-jobs', '/completed-jobs', '/earnings', '/commissions', '/commissions/pay',
   '/gcash-details', '/withdrawal-history', '/verification-status', '/provider-badges',
 ];
 
@@ -67,6 +68,7 @@ Widget _app(String route, ThemeData theme) {
       ChangeNotifierProvider(create: (_) => ProviderBookingController()),
       ChangeNotifierProvider(create: (_) => NotificationController()),
       ChangeNotifierProvider(create: (_) => ChatController()),
+      ChangeNotifierProvider(create: (_) => CommissionController()),
       ChangeNotifierProvider(create: (_) => PortfolioController()),
       ChangeNotifierProvider(create: (_) => ProviderServicesController()),
       ChangeNotifierProvider(create: (_) => PaymentController()),

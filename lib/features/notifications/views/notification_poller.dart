@@ -8,6 +8,7 @@ import '../../booking/controllers/booking_controller.dart';
 import '../../booking/controllers/provider_booking_controller.dart';
 import '../../identity/controllers/identity_controller.dart';
 import '../../messaging/controllers/chat_controller.dart';
+import '../../provider/controllers/commission_controller.dart';
 import '../../provider/controllers/provider_services_controller.dart';
 import '../../settings/controllers/preferences_controller.dart';
 import '../controllers/notification_controller.dart';
@@ -145,6 +146,13 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       final identity = context.read<IdentityController>();
       identity.refreshEligibility();
       identity.load();
+    }
+
+    // A commission settled, waived, or a GCash payment confirmed or rejected:
+    // what the provider owes and whether they may take new work both moved.
+    if (_auth.isProvider && (rawType == 'commission_remittance' || rawType == 'booking_commission')) {
+      context.read<IdentityController>().refreshEligibility();
+      context.read<CommissionController>().load();
     }
 
     // Service moderation (approved, rejected, …) changes the provider's list.

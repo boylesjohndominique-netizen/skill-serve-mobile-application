@@ -95,7 +95,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/dashboard/attention`
 
-For the sidebar badges: support tickets still `open` (nobody has replied) and reports still `pending` (nobody has picked them up). Needs no dashboard permission; each count is null when the viewer may not view that list. The admin web refetches it on every realtime change.
+For the sidebar badges: support tickets still `open` (nobody has replied), reports still `pending` (nobody has picked them up) and GCash commission payments still `pending` (nobody has confirmed them). Needs no dashboard permission; each count is null when the viewer may not view that list. The admin web refetches it on every realtime change.
 
 **Authentication:** Bearer token
 
@@ -117,7 +117,8 @@ No JSON request body.
     "message": "Attention counts retrieved.",
     "data": {
         "open_support_tickets": 3,
-        "pending_reports": null
+        "pending_reports": null,
+        "pending_commission_remittances": 1
     }
 }
 ```
