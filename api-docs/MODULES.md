@@ -1,5 +1,6 @@
 # API Modules
 
+- [Admin Authentication](modules/admin-authentication.md)
 - [Administrators](modules/administrators.md)
 - [Authentication](modules/authentication.md)
 - [Booking Disputes](modules/booking-disputes.md)
