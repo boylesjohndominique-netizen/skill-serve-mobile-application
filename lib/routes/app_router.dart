@@ -23,6 +23,7 @@ import '../features/marketplace/views/provider_preview_screen.dart';
 import '../features/marketplace/views/provider_profile_screen.dart';
 import '../features/marketplace/views/service_details_screen.dart';
 import '../features/marketplace/views/portfolio_gallery_screen.dart';
+import '../features/marketplace/views/portfolio_item_screen.dart';
 import '../features/marketplace/views/favorites_screen.dart';
 
 // Booking
@@ -164,6 +165,14 @@ final List<RouteBase> appRoutes = [
         ServiceDetailsScreen(serviceId: state.pathParameters['id']!),
   ),
   GoRoute(
+    // A customer's view of one piece of work.
+    path: '/portfolio-item/:providerId/:itemId',
+    builder: (context, state) => PortfolioItemScreen.public(
+      providerId: state.pathParameters['providerId']!,
+      itemId: state.pathParameters['itemId']!,
+    ),
+  ),
+  GoRoute(
     path: '/portfolio-gallery/:id',
     builder: (context, state) =>
         PortfolioGalleryScreen(providerId: state.pathParameters['id']!),
@@ -289,7 +298,16 @@ final List<RouteBase> appRoutes = [
   ),
   GoRoute(
       path: '/upload-portfolio',
-      builder: (context, state) => const UploadPortfolioScreen()),
+      builder: (context, state) => const PortfolioFormScreen()),
+  GoRoute(
+    path: '/edit-portfolio/:itemId',
+    builder: (context, state) => PortfolioFormScreen(itemId: state.pathParameters['itemId']!),
+  ),
+  GoRoute(
+    // The provider's own piece of work, with Edit and Delete.
+    path: '/my-portfolio/:itemId',
+    builder: (context, state) => PortfolioItemScreen.mine(itemId: state.pathParameters['itemId']!),
+  ),
   GoRoute(
       path: '/calendar', builder: (context, state) => const CalendarScreen()),
   GoRoute(
@@ -413,6 +431,8 @@ const _providerOnly = <String>{
   'availability',
   'portfolio',
   'upload-portfolio',
+  'edit-portfolio',
+  'my-portfolio',
   'provider-badges',
   'verification-status',
   'statistics',
@@ -433,6 +453,7 @@ const _marketplace = <String>{
   'service-reviews',
   'provider-profile',
   'portfolio-gallery',
+  'portfolio-item',
 };
 
 /// Screens that only make sense before signing in.

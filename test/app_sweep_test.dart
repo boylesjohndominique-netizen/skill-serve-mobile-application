@@ -36,6 +36,8 @@ final _routes = <String>[
   // Client
   '/client',
   '/service-details/SV-1',
+  '/service-reviews/SV-1',
+  '/portfolio-item/PV-100/1',
   '/provider-profile/PV-100',
   '/booking-history',
   '/favorites',
@@ -58,6 +60,9 @@ final _routes = <String>[
   '/statistics',
   '/my-services',
   '/portfolio',
+  '/upload-portfolio',
+  '/edit-portfolio/1',
+  '/my-portfolio/1',
   '/calendar',
   '/availability',
   '/booking-requests',

@@ -2,6 +2,7 @@ import '../../auth/models/user_model.dart';
 import '../../reviews/models/review_model.dart';
 import 'service_model.dart';
 import '../../provider/models/badge_model.dart';
+import '../../provider/models/portfolio_model.dart';
 import '../../provider/models/provider_availability_model.dart';
 
 /// A public provider from `GET /api/client/v1/providers` (list) or
@@ -23,7 +24,13 @@ class ProviderModel {
   final int reviewCount;
   final int completedBookings;
   final String categoryName;
+
+  /// The covers of [portfolio], for carousels and thumbnails.
   final List<String> portfolioImages;
+
+  /// The provider's pieces of work with all their photos, on the detail
+  /// payload.
+  final List<PortfolioModel> portfolio;
 
   /// Skills the provider lists on their profile, shown on the public profile.
   final List<String> skills;
@@ -70,6 +77,7 @@ class ProviderModel {
     this.completedBookings = 0,
     required this.categoryName,
     this.portfolioImages = const [],
+    this.portfolio = const [],
     this.skills = const [],
     this.isFeatured = false,
     this.badges = const [],
@@ -144,6 +152,11 @@ class ProviderModel {
           (services.isNotEmpty ? services.first.categoryName : null) ??
           (json['specialization'] as String? ?? ''),
       portfolioImages: _imageUrls(json['portfolio']),
+      portfolio: [
+        for (final item in (json['portfolio'] as List? ?? const []))
+          if (item is Map && item['portfolio_id'] != null)
+            PortfolioModel.fromJson(item.cast<String, dynamic>()),
+      ],
       skills: _strings(json['skills']),
       isFeatured: json['is_featured'] == true,
       badges: [

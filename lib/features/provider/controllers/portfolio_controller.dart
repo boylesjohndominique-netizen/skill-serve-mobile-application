@@ -38,26 +38,61 @@ class PortfolioController extends ChangeNotifier {
     }
   }
 
-  /// Adds a work sample and puts it at the top, matching the API's order.
+  /// The item with [id], if loaded.
+  PortfolioModel? find(String id) {
+    for (final item in items) {
+      if (item.id == id) return item;
+    }
+    return null;
+  }
+
+  /// Adds a piece of work and puts it at the top, matching the API's order.
   Future<bool> add({
     required String title,
     required String description,
-    required String imagePath,
-  }) async {
+    required List<String> imagePaths,
+  }) =>
+      _save(
+        () => _service.uploadPortfolioItem(title: title, description: description, imagePaths: imagePaths),
+        'We could not upload that item.',
+        insert: true,
+      );
+
+  /// Saves an edit in one go: the new text, then added photos, then the
+  /// removed ones — in that order, so the item never drops to no photos.
+  Future<bool> saveChanges(
+    PortfolioModel item, {
+    required String title,
+    required String description,
+    List<String> addedPaths = const [],
+    List<String> removedPhotoIds = const [],
+  }) =>
+      _save(() async {
+        var saved = item;
+        if (title != item.title || description != item.description) {
+          saved = await _service.updatePortfolioItem(item.id, title: title, description: description);
+        }
+        if (addedPaths.isNotEmpty) saved = await _service.addPhotos(item.id, addedPaths);
+        for (final photoId in removedPhotoIds) {
+          saved = await _service.removePhoto(item.id, photoId);
+        }
+        return saved;
+      }, 'We could not save your changes.');
+
+  Future<bool> _save(Future<PortfolioModel> Function() request, String fallback, {bool insert = false}) async {
     isSaving = true;
     errorMessage = null;
     notifyListeners();
     try {
-      final created = await _service.uploadPortfolioItem(
-        title: title,
-        description: description,
-        imagePath: imagePath,
-      );
-      items = [created, ...items];
+      final saved = await request();
+      items = insert
+          ? [saved, ...items]
+          : [for (final item in items) item.id == saved.id ? saved : item];
       return true;
     } catch (e) {
-      errorMessage =
-          apiErrorMessage(e, 'We could not upload that item.');
+      errorMessage = apiErrorMessage(e, fallback);
+      // A partly applied edit is re-read, so the screen shows what was saved.
+      if (!insert) await loadMine();
       return false;
     } finally {
       isSaving = false;

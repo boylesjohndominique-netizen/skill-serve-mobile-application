@@ -32,22 +32,70 @@ class _FakePortfolioService implements PortfolioService {
     return stored;
   }
 
+  /// The calls an edit made, in order.
+  final List<String> calls = [];
+
   @override
   Future<PortfolioModel> uploadPortfolioItem({
     required String title,
     required String description,
-    required String imagePath,
+    required List<String> imagePaths,
   }) async {
     if (failWrites) throw Exception('offline');
+    final photos = [
+      for (var i = 0; i < imagePaths.length; i++)
+        PortfolioPhoto(id: 'ph-$i', url: 'https://example.test/$title-$i.jpg'),
+    ];
     final created = PortfolioModel(
       id: '${stored.length + 1}',
       providerId: 'PV-1',
-      image: 'https://example.test/$title.jpg',
+      image: photos.first.url,
       title: title,
       description: description,
+      images: photos,
     );
     stored = [created, ...stored];
     return created;
+  }
+
+  PortfolioModel _replace(String id, PortfolioModel Function(PortfolioModel) change) {
+    final updated = change(stored.firstWhere((item) => item.id == id));
+    stored = [for (final item in stored) item.id == id ? updated : item];
+    return updated;
+  }
+
+  PortfolioModel _with(PortfolioModel item, {String? title, String? description, List<PortfolioPhoto>? images}) =>
+      PortfolioModel(
+        id: item.id,
+        providerId: item.providerId,
+        image: (images ?? item.images).isEmpty ? item.image : (images ?? item.images).first.url,
+        title: title ?? item.title,
+        description: description ?? item.description,
+        images: images ?? item.images,
+      );
+
+  @override
+  Future<PortfolioModel> updatePortfolioItem(String id, {required String title, required String description}) async {
+    calls.add('update');
+    return _replace(id, (item) => _with(item, title: title, description: description));
+  }
+
+  @override
+  Future<PortfolioModel> addPhotos(String id, List<String> imagePaths) async {
+    calls.add('add ${imagePaths.length}');
+    return _replace(id, (item) => _with(item, images: [
+          ...item.images,
+          for (var i = 0; i < imagePaths.length; i++) PortfolioPhoto(id: 'new-$i', url: 'https://example.test/new-$i.jpg'),
+        ]));
+  }
+
+  @override
+  Future<PortfolioModel> removePhoto(String id, String photoId) async {
+    calls.add('remove $photoId');
+    return _replace(id, (item) {
+      if (item.images.length <= 1) throw Exception('An item keeps at least one photo');
+      return _with(item, images: [for (final photo in item.images) if (photo.id != photoId) photo]);
+    });
   }
 
   @override
@@ -93,7 +141,7 @@ void main() {
       await controller.loadMine();
 
       final added = await controller.add(
-          title: 'Kitchen sink', description: '', imagePath: '/tmp/a.jpg');
+          title: 'Kitchen sink', description: '', imagePaths: ['/tmp/a.jpg']);
 
       expect(added, isTrue);
       expect(controller.items.first.title, 'Kitchen sink');
@@ -106,11 +154,73 @@ void main() {
       await controller.loadMine();
 
       final added = await controller.add(
-          title: 'Kitchen sink', description: '', imagePath: '/tmp/a.jpg');
+          title: 'Kitchen sink', description: '', imagePaths: ['/tmp/a.jpg']);
 
       expect(added, isFalse);
       expect(controller.items, hasLength(1));
       expect(controller.errorMessage, isNotNull);
+    });
+
+    test('a piece of work keeps every photo, cover first', () async {
+      final controller = PortfolioController(service: _FakePortfolioService());
+
+      await controller.add(title: 'Kitchen remodel', description: 'Before and after', imagePaths: ['/a.jpg', '/b.jpg', '/c.jpg']);
+
+      final item = controller.items.single;
+      expect(item.photoCount, 3);
+      expect(item.photoUrls.first, item.image);
+    });
+
+    test('an edit adds the new photos before removing old ones, so the item never empties', () async {
+      final service = _FakePortfolioService(stored: [
+        const PortfolioModel(
+          id: '1',
+          providerId: 'PV-1',
+          image: 'https://example.test/old.jpg',
+          title: 'Repipe',
+          images: [PortfolioPhoto(id: 'old', url: 'https://example.test/old.jpg')],
+        ),
+      ]);
+      final controller = PortfolioController(service: service);
+      await controller.loadMine();
+
+      // Replace the only photo: remove "old", add one new.
+      final saved = await controller.saveChanges(
+        controller.items.single,
+        title: 'Full repipe',
+        description: '',
+        addedPaths: ['/new.jpg'],
+        removedPhotoIds: ['old'],
+      );
+
+      expect(saved, isTrue);
+      expect(service.calls, ['update', 'add 1', 'remove old']);
+      expect(controller.items.single.title, 'Full repipe');
+      expect(controller.items.single.photoUrls, ['https://example.test/new-0.jpg']);
+    });
+
+    test('a payload from before albums still shows its one photo', () {
+      final item = PortfolioModel.fromJson({
+        'portfolio_id': 4,
+        'provider_id': 2,
+        'title': 'Old work',
+        'image': 'https://example.test/cover.jpg',
+      });
+      expect(item.photoUrls, ['https://example.test/cover.jpg']);
+
+      final album = PortfolioModel.fromJson({
+        'portfolio_id': 5,
+        'provider_id': 2,
+        'title': 'Album',
+        'image': 'https://example.test/1.jpg',
+        'images': [
+          {'id': 1, 'url': 'https://example.test/1.jpg'},
+          {'id': 2, 'url': 'https://example.test/2.jpg'},
+        ],
+        'created_at': '2026-10-13T08:00:00+00:00',
+      });
+      expect(album.photoCount, 2);
+      expect(album.createdAt, isNotNull);
     });
 
     test('a refused delete puts the item back', () async {

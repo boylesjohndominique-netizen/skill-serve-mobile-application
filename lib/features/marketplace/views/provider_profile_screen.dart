@@ -1,6 +1,5 @@
 import '../../reports/views/report_content_sheet.dart';
 import '../../auth/controllers/auth_controller.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -30,7 +29,7 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../marketplace/services/catalog_updates.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
-import '../../../core/widgets/feedback/shimmer_placeholder.dart';
+import '../../../core/widgets/cards/portfolio_card.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
@@ -366,20 +365,31 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const SectionHeaderLocal(title: 'Portfolio'),
-                  if (p.portfolioImages.isNotEmpty)
+                  if (p.portfolio.isNotEmpty)
                     TextButton(
                       onPressed: () => context.push('/portfolio-gallery/${p.id}'),
-                      child: Text('View all (${p.portfolioImages.length})'),
+                      child: Text('View all (${p.portfolio.length})'),
                     ),
                 ],
               ),
               const SizedBox(height: 6),
-              if (p.portfolioImages.isEmpty)
-                Text('No work samples uploaded yet.', style: AppTextStyles.bodyMedium)
+              if (p.portfolio.isEmpty)
+                Text('No work added yet.', style: AppTextStyles.bodyMedium)
               else
-                _PortfolioPreview(
-                  images: p.portfolioImages,
-                  onTap: () => context.push('/portfolio-gallery/${p.id}'),
+                SizedBox(
+                  height: 200,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: p.portfolio.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: AppSizes.md),
+                    itemBuilder: (context, i) => SizedBox(
+                      width: 160,
+                      child: PortfolioCard(
+                        item: p.portfolio[i],
+                        onTap: () => context.push('/portfolio-item/${p.id}/${p.portfolio[i].id}'),
+                      ),
+                    ),
+                  ),
                 ),
 
               // ── Reviews ──
@@ -757,70 +767,6 @@ class _ServiceRow extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// The first few work samples as a strip of thumbnails; any tap opens the
-/// full gallery.
-class _PortfolioPreview extends StatelessWidget {
-  final List<String> images;
-  final VoidCallback onTap;
-  const _PortfolioPreview({required this.images, required this.onTap});
-
-  static const _shown = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    final shown = images.take(_shown).toList();
-    final more = images.length - shown.length;
-
-    return Row(
-      children: [
-        for (var i = 0; i < _shown; i++) ...[
-          if (i > 0) const SizedBox(width: AppSizes.sm),
-          Expanded(
-            child: i >= shown.length
-                ? const SizedBox.shrink()
-                : Semantics(
-                    button: true,
-                    label: 'Open portfolio',
-                    child: GestureDetector(
-                      onTap: onTap,
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              CachedNetworkImage(
-                                imageUrl: shown[i],
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => const ShimmerPlaceholder(),
-                                errorWidget: (_, __, ___) => Container(
-                                  color: context.accentSoftColor,
-                                  child: AppIcon(AppIcons.photo_library_outlined, color: context.onAccentSoftColor),
-                                ),
-                              ),
-                              if (more > 0 && i == shown.length - 1)
-                                Container(
-                                  color: Colors.black.withValues(alpha: 0.45),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    '+$more',
-                                    style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-        ],
-      ],
     );
   }
 }
