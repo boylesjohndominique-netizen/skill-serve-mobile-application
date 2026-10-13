@@ -799,8 +799,8 @@ class _PortfolioPreview extends StatelessWidget {
                                 fit: BoxFit.cover,
                                 placeholder: (_, __) => const ShimmerPlaceholder(),
                                 errorWidget: (_, __, ___) => Container(
-                                  color: AppColors.secondarySoft,
-                                  child: const AppIcon(AppIcons.photo_library_outlined, color: AppColors.secondaryDeep),
+                                  color: context.accentSoftColor,
+                                  child: AppIcon(AppIcons.photo_library_outlined, color: context.onAccentSoftColor),
                                 ),
                               ),
                               if (more > 0 && i == shown.length - 1)

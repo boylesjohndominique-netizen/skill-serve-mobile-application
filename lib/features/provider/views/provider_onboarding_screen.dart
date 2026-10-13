@@ -22,6 +22,7 @@ import 'verification_upload_panel.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// P2 — Provider onboarding & verification gate.
 /// Step 1: professional profile · Step 2: upload documents ·
@@ -316,24 +317,8 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
         VerificationStatusHeader(verification: verification),
         if (!_verified) ...[
           const SizedBox(height: AppSizes.xl),
-          Container(
-            padding: const EdgeInsets.all(AppSizes.md),
-            decoration: BoxDecoration(
-              color: AppColors.secondarySoft,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            ),
-            child: Row(
-              children: [
-                const AppIcon(AppIcons.info_outline_rounded, color: AppColors.secondaryDeep, size: 18),
-                const SizedBox(width: AppSizes.sm),
-                Expanded(
-                  child: Text(
-                    'You can explore the app while your documents are reviewed; follow the status under Verification.',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.secondaryDeep),
-                  ),
-                ),
-              ],
-            ),
+          const AppNotice(
+            message: 'You can explore the app while your documents are reviewed; follow the status under Verification.',
           ),
         ],
       ],
@@ -367,7 +352,7 @@ class _OnboardStepper extends StatelessWidget {
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: i <= current ? context.accentInk : AppColors.neutral100,
+                    color: i <= current ? context.accentInk : context.neutralSoftColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

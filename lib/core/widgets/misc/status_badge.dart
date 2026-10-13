@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../theme/app_palette.dart';
 
 /// Small pill badge for statuses (booking status, verification status, etc.)
 /// Mirrors the color logic used on the Admin Web Application for consistency:
@@ -98,7 +98,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _colorsFor(tone);
+    final colors = _colorsFor(context, tone);
     Widget badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
@@ -135,21 +135,23 @@ class StatusBadge extends StatelessWidget {
     return badge;
   }
 
-  (Color, Color) _colorsFor(StatusTone tone) {
+  /// (fill, foreground) for [tone], from the theme-aware palette so a
+  /// badge never shows as a pale pill on a dark screen.
+  (Color, Color) _colorsFor(BuildContext context, StatusTone tone) {
     switch (tone) {
       case StatusTone.success:
-        return (AppColors.successBg, AppColors.success);
+        return (context.successBgColor, context.successColor);
       case StatusTone.warning:
         // Brass (not amber) — pending/confirmed/resubmission per the design spec.
-        return (AppColors.secondarySoft, AppColors.secondaryDeep);
+        return (context.accentSoftColor, context.onAccentSoftColor);
       case StatusTone.error:
-        return (AppColors.errorBg, AppColors.error);
+        return (context.errorBgColor, context.errorColor);
       case StatusTone.info:
-        return (AppColors.infoBg, AppColors.info);
+        return (context.infoBgColor, context.infoColor);
       case StatusTone.orange:
-        return (AppColors.warningBg, AppColors.warning);
+        return (context.warningBgColor, context.warningColor);
       case StatusTone.neutral:
-        return (AppColors.neutral100, AppColors.neutral400);
+        return (context.neutralSoftColor, context.onNeutralSoftColor);
     }
   }
 }

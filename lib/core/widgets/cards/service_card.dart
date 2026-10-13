@@ -52,10 +52,10 @@ class ServiceCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.secondarySoft,
+                    color: context.accentSoftColor,
                     borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                   ),
-                  child: const AppIcon(AppIcons.design_services_rounded, size: 20, color: AppColors.secondaryDeep),
+                  child: AppIcon(AppIcons.design_services_rounded, size: 20, color: context.onAccentSoftColor),
                 ),
                 const SizedBox(width: AppSizes.md),
                 Expanded(

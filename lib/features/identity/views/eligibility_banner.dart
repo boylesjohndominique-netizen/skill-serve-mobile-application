@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../controllers/identity_controller.dart';
 import '../models/identity_verification_model.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// Why this account cannot currently book or take on work, and where to fix it.
 ///
@@ -42,7 +42,7 @@ class _EligibilityBannerState extends State<EligibilityBanner> {
     final prompt = _promptFor(eligibility);
     if (prompt == null) return const SizedBox.shrink();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tint = AppNotice.colorFor(context, prompt.tone);
 
     return Padding(
       // The banner owns the space below it, so an eligible account renders
@@ -60,20 +60,20 @@ class _EligibilityBannerState extends State<EligibilityBanner> {
             width: double.infinity,
             padding: const EdgeInsets.all(AppSizes.md),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceAltDark : prompt.background,
+              color: AppNotice.backgroundFor(context, prompt.tone),
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-              border: Border.all(color: prompt.tint.withValues(alpha: 0.35), width: 0.8),
+              border: Border.all(color: tint.withValues(alpha: 0.35), width: 0.8),
             ),
             child: Row(
               children: [
-                AppIcon(prompt.icon, color: prompt.tint, size: AppSizes.iconMd),
+                AppIcon(prompt.icon, color: tint, size: AppSizes.iconMd),
                 const SizedBox(width: AppSizes.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(prompt.title,
-                          style: AppTextStyles.titleMedium.copyWith(color: prompt.tint)),
+                          style: AppTextStyles.titleMedium.copyWith(color: tint)),
                       const SizedBox(height: 2),
                       Text(prompt.message, style: AppTextStyles.bodySmall),
                     ],
@@ -81,7 +81,7 @@ class _EligibilityBannerState extends State<EligibilityBanner> {
                 ),
                 const SizedBox(width: AppSizes.sm),
                 AppIcon(AppIcons.chevron_right_rounded,
-                    color: prompt.tint, size: AppSizes.iconMd),
+                    color: tint, size: AppSizes.iconMd),
               ],
             ),
           ),
@@ -99,40 +99,35 @@ class _EligibilityBannerState extends State<EligibilityBanner> {
           message: 'Submit your Philippine National ID to start booking and working.',
           route: '/identity-verification',
           icon: AppIcons.badge_outlined,
-          tint: AppColors.warning,
-          background: AppColors.warningBg,
+          tone: NoticeTone.warning,
         ),
       'identity_pending' => const _EligibilityPrompt(
           title: 'National ID under review',
           message: 'We are checking your ID. You can transact as soon as it is approved.',
           route: '/identity-verification',
           icon: AppIcons.hourglass_top_rounded,
-          tint: AppColors.info,
-          background: AppColors.infoBg,
+          tone: NoticeTone.info,
         ),
       'identity_rejected' => const _EligibilityPrompt(
           title: 'National ID not accepted',
           message: 'Have a look at why, then send it again.',
           route: '/identity-verification',
           icon: AppIcons.info_outline_rounded,
-          tint: AppColors.error,
-          background: AppColors.errorBg,
+          tone: NoticeTone.error,
         ),
       'outstanding_commission' => _EligibilityPrompt(
           title: 'Commission outstanding',
           message: 'You owe ₱${eligibility.outstandingTotal}. Settle it to take on new work.',
           route: '/commissions',
           icon: AppIcons.receipt_long_outlined,
-          tint: AppColors.error,
-          background: AppColors.errorBg,
+          tone: NoticeTone.error,
         ),
       'no_provider_profile' => const _EligibilityPrompt(
           title: 'Finish setting up your business',
           message: 'Complete your provider profile before you can take bookings.',
           route: '/provider-onboarding',
           icon: AppIcons.work_outline_rounded,
-          tint: AppColors.warning,
-          background: AppColors.warningBg,
+          tone: NoticeTone.warning,
         ),
       _ => null,
     };
@@ -144,15 +139,13 @@ class _EligibilityPrompt {
   final String message;
   final String route;
   final AppIconData icon;
-  final Color tint;
-  final Color background;
+  final NoticeTone tone;
 
   const _EligibilityPrompt({
     required this.title,
     required this.message,
     required this.route,
     required this.icon,
-    required this.tint,
-    required this.background,
+    required this.tone,
   });
 }

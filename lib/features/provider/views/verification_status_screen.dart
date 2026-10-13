@@ -14,6 +14,7 @@ import '../../../core/widgets/misc/verification_seal.dart';
 import '../controllers/verification_controller.dart';
 import '../models/verification_document_model.dart';
 import 'verification_upload_panel.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// The provider's verification: where the review stands, what the reviewer
 /// said, the documents already sent, and — while allowed — the upload.
@@ -121,31 +122,10 @@ class VerificationStatusHeader extends StatelessWidget {
         ],
         if (reviewerNote != null && reviewerNote.isNotEmpty) ...[
           const SizedBox(height: AppSizes.lg),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSizes.lg),
-            decoration: BoxDecoration(
-              color: verification.isRejected ? AppColors.errorBg : AppColors.secondarySoft,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  verification.isRejected ? 'Reason' : 'What the reviewer asked for',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: verification.isRejected ? AppColors.error : AppColors.secondaryDeep,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  reviewerNote,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: verification.isRejected ? AppColors.error : AppColors.secondaryDeep,
-                  ),
-                ),
-              ],
-            ),
+          AppNotice(
+            tone: verification.isRejected ? NoticeTone.error : NoticeTone.warning,
+            title: verification.isRejected ? 'Reason' : 'What the reviewer asked for',
+            message: reviewerNote,
           ),
         ],
       ],

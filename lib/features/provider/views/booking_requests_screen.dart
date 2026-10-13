@@ -305,7 +305,7 @@ class _RequestCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.infoBg,
+                          color: context.infoBgColor,
                           borderRadius: BorderRadius.circular(AppSizes.radiusPill),
                         ),
                         child: Text('Rescheduled',

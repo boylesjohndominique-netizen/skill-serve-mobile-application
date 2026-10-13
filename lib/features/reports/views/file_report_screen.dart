@@ -22,6 +22,7 @@ import '../../reports/models/report_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// File a complaint about the other party on a booking.
 ///
@@ -229,8 +230,8 @@ class _FileReportScreenState extends State<FileReportScreen> {
             Container(
               width: 64,
               height: 64,
-              decoration: const BoxDecoration(color: AppColors.successBg, shape: BoxShape.circle),
-              child: const AppIcon(AppIcons.check_rounded, color: AppColors.success, size: 32),
+              decoration: BoxDecoration(color: context.successBgColor, shape: BoxShape.circle),
+              child: AppIcon(AppIcons.check_rounded, color: context.successColor, size: 32),
             ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
             const SizedBox(height: AppSizes.lg),
             Text('Report submitted', style: AppTextStyles.titleLarge),
@@ -272,25 +273,9 @@ class _LinkedBookingNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        color: AppColors.infoBg,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-      ),
-      child: Row(
-        children: [
-          AppIcon(AppIcons.link_rounded, size: 16, color: context.infoColor),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(
-            child: Text(
-              'Linked to booking $bookingId',
-              style: AppTextStyles.label.copyWith(color: context.infoColor, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 150.ms, duration: 300.ms);
+    return AppNotice(icon: AppIcons.link_rounded, message: 'Linked to booking $bookingId')
+        .animate()
+        .fadeIn(delay: 150.ms, duration: 300.ms);
   }
 }
 

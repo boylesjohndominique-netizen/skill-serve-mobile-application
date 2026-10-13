@@ -384,10 +384,10 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final inputBg = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
     final bubbleColor = message.hasFailed
-        ? AppColors.errorBg
+        ? context.errorBgColor
         : (fromMe ? AppColors.secondary : inputBg);
     final textColor = message.hasFailed
-        ? AppColors.error
+        ? context.errorColor
         : (fromMe ? AppColors.primary : (isDark ? AppColors.textOnDark : AppColors.textPrimary));
 
     final bubble = Container(

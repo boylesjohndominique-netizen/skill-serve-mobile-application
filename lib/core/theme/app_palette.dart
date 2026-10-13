@@ -31,4 +31,21 @@ extension AppPalette on BuildContext {
   Color get warningColor => isDarkMode ? AppColors.warningOnDark : AppColors.warning;
   Color get errorColor => isDarkMode ? AppColors.errorOnDark : AppColors.error;
   Color get infoColor => isDarkMode ? AppColors.infoOnDark : AppColors.info;
+
+  /// The matching tinted backgrounds for notices, soft badges and chips —
+  /// pale in light mode, deep in dark mode — so the colour above always sits
+  /// on its own tint. Never pair a fixed `AppColors.*Bg` with these.
+  Color get successBgColor => isDarkMode ? AppColors.successBgDark : AppColors.successBg;
+  Color get warningBgColor => isDarkMode ? AppColors.warningBgDark : AppColors.warningBg;
+  Color get errorBgColor => isDarkMode ? AppColors.errorBgDark : AppColors.errorBg;
+  Color get infoBgColor => isDarkMode ? AppColors.infoBgDark : AppColors.infoBg;
+
+  /// The brand's soft lime tint (icon discs, chips, "pending" badges) and the
+  /// colour to put on it.
+  Color get accentSoftColor => isDarkMode ? AppColors.secondarySoftDark : AppColors.secondarySoft;
+  Color get onAccentSoftColor => isDarkMode ? AppColors.secondary : AppColors.secondaryDeep;
+
+  /// A quiet grey tint (inactive steps, "not due" badges) and its foreground.
+  Color get neutralSoftColor => isDarkMode ? AppColors.surfaceAltDark : AppColors.neutral100;
+  Color get onNeutralSoftColor => isDarkMode ? AppColors.textMutedDark : AppColors.neutral400;
 }

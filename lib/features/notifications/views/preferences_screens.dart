@@ -11,6 +11,7 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// The three Settings sub-screens. All of them read one account-scoped
 /// [PreferencesController], so a change made on any of them is stored
@@ -180,20 +181,10 @@ class _PreferenceNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        color: AppColors.warningBg,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-      ),
-      child: Row(
-        children: [
-          const AppIcon(AppIcons.error_rounded, size: 20),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(child: Text(message, style: AppTextStyles.bodySmall)),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
+    return AppNotice(
+      tone: NoticeTone.warning,
+      message: message,
+      action: TextButton(onPressed: onRetry, child: const Text('Retry')),
     );
   }
 }

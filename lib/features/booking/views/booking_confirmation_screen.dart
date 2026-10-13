@@ -39,11 +39,11 @@ class BookingConfirmationScreen extends StatelessWidget {
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  color: AppColors.successBg,
+                  color: context.successBgColor,
                   shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: AppColors.success.withValues(alpha: 0.25), blurRadius: 20, spreadRadius: 2)],
+                  boxShadow: [BoxShadow(color: context.successColor.withValues(alpha: 0.25), blurRadius: 20, spreadRadius: 2)],
                 ),
-                child: const AppIcon(AppIcons.check_rounded, color: AppColors.success, size: 44),
+                child: AppIcon(AppIcons.check_rounded, color: context.successColor, size: 44),
               ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack),
               const SizedBox(height: AppSizes.xl),
               Text(

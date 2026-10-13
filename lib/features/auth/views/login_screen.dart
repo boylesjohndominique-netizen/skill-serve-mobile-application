@@ -16,6 +16,7 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -112,15 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   AccountRestrictionCard(restriction: auth.restriction!),
                   const SizedBox(height: AppSizes.lg),
                 ] else if (auth.sessionExpired) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSizes.md),
-                    decoration: BoxDecoration(
-                      color: AppColors.warningBg,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                    ),
-                    child: const Text(
-                        'You were signed out by the server. Please sign in again.'),
+                  const AppNotice(
+                    tone: NoticeTone.warning,
+                    message: 'You were signed out by the server. Please sign in again.',
                   ),
                   const SizedBox(height: AppSizes.lg),
                 ],

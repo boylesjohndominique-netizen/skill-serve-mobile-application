@@ -92,6 +92,8 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // A light disc on the dark hero card in both modes, so these stay the
+    // fixed light tints rather than the theme-aware ones.
     final (tint, fg, icon) = switch (p.status) {
       PaymentStatus.paid => (AppColors.successBg, AppColors.success, AppIcons.check_rounded),
       PaymentStatus.refunded ||

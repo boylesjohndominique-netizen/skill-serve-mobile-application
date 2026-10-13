@@ -112,9 +112,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     ? Container(
                         height: 200,
                         width: double.infinity,
-                        color: AppColors.secondarySoft,
+                        color: context.accentSoftColor,
                         alignment: Alignment.center,
-                        child: const AppIcon(AppIcons.design_services_rounded, color: AppColors.secondaryDeep, size: 48),
+                        child: AppIcon(AppIcons.design_services_rounded, color: context.onAccentSoftColor, size: 48),
                       )
                     : CachedNetworkImage(
                         imageUrl: s.coverImage,

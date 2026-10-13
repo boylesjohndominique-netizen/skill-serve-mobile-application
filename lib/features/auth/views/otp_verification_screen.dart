@@ -169,14 +169,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               Container(
                 width: 84,
                 height: 84,
-                decoration: const BoxDecoration(
-                  color: AppColors.secondarySoft,
+                decoration: BoxDecoration(
+                  color: context.accentSoftColor,
                   shape: BoxShape.circle,
                 ),
-                child: const AppIcon(
+                child: AppIcon(
                   AppIcons.mail_outline_rounded,
                   size: 36,
-                  color: AppColors.secondaryDeep,
+                  color: context.onAccentSoftColor,
                 ),
               ).animate().scale(duration: 450.ms, curve: Curves.easeOutBack).fadeIn(),
               const SizedBox(height: AppSizes.lg),

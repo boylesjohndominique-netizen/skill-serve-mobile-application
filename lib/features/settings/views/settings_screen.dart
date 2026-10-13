@@ -12,10 +12,9 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/cards/profile_card.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
-import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
+import 'settings_menu.dart';
 import '../../../core/constants/app_icons.dart';
-import '../../../core/theme/app_palette.dart';
 
 /// Client's Profile / Settings tab. Reused as a template pattern for the
 /// Provider settings screen (see provider/settings_screen.dart).
@@ -52,220 +51,97 @@ class SettingsScreen extends StatelessWidget {
               AccountStatusCard(user: user),
             ],
             const SizedBox(height: AppSizes.xl),
-            const _SectionLabel('Account')
-                .animate()
-                .fadeIn(delay: 180.ms, duration: 300.ms),
-            _Tile(
-                    icon: AppIcons.person_outline_rounded,
-                    label: 'Edit profile',
-                    onTap: () => context.push('/edit-profile'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 220.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.badge_outlined,
-                    label: 'Identity verification',
-                    onTap: () => context.push('/identity-verification'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 240.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.lock_outline_rounded,
-                    label: 'Change password',
-                    onTap: () => context.push('/change-password'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 260.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.favorite_border_rounded,
-                    label: 'Favorite providers',
-                    onTap: () => context.push('/favorites'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 300.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.notifications_none_rounded,
-                    label: 'Notifications',
-                    onTap: () => context.push('/notifications'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 340.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.receipt_long_outlined,
-                    label: 'Payments & receipts',
-                    onTap: () => context.push('/payments'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 360.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.history_rounded,
-                    label: 'Activity history',
-                    onTap: () => context.push('/activity-history'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 380.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.flag_outlined,
-                    label: 'My reports',
-                    onTap: () => context.push('/my-reports'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 380.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.star_outline_rounded,
-                    label: 'My reviews',
-                    onTap: () => context.push('/my-reviews'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 385.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.support_agent_rounded,
-                    label: 'Support tickets',
-                    onTap: () => context.push('/support/tickets'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 390.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            const SizedBox(height: AppSizes.lg),
-            const _SectionLabel('Data & Account Control')
-                .animate()
-                .fadeIn(delay: 400.ms, duration: 300.ms),
-            _Tile(
-                    icon: AppIcons.description_outlined,
-                    label: 'View account data',
-                    onTap: () => context.push('/account-data'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 420.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.delete_outline_rounded,
-                    label: 'Delete account',
-                    danger: true,
-                    onTap: () => context.push('/account-deletion'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 460.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            const SizedBox(height: AppSizes.lg),
-            const _SectionLabel('Preferences')
-                .animate()
-                .fadeIn(delay: 480.ms, duration: 300.ms),
-            _SwitchTile(
-              icon: AppIcons.dark_mode_outlined,
-              label: 'Dark mode',
-              value: isDark,
-              onChanged: (dark) async => preferences.setDarkMode(dark,
-                  phoneIsDark: MediaQuery.platformBrightnessOf(context) ==
-                      Brightness.dark),
-              isDark: isDark,
-            )
-                .animate()
-                .fadeIn(delay: 420.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                icon: AppIcons.notifications_none_rounded,
-                label: 'Notification preferences',
-                onTap: () => context.push('/notification-preferences'),
-                isDark: isDark),
-            _Tile(
-                icon: AppIcons.privacy_tip_outlined,
-                label: 'Privacy settings',
-                onTap: () => context.push('/privacy-settings'),
-                isDark: isDark),
-            _Tile(
-                icon: AppIcons.apps_rounded,
-                label: 'Application preferences',
-                onTap: () => context.push('/application-preferences'),
-                isDark: isDark),
-            _Tile(
-                icon: AppIcons.verified_user_outlined,
-                label: 'Security activity',
-                onTap: () => context.push('/security-activity'),
-                isDark: isDark),
-            const SizedBox(height: AppSizes.lg),
-            const _SectionLabel('Support')
-                .animate()
-                .fadeIn(delay: 480.ms, duration: 300.ms),
-            _Tile(
-                    icon: AppIcons.help_outline_rounded,
-                    label: 'Help Center',
-                    onTap: () => context.push('/help-center'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 500.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.info_outline_rounded,
-                    label: 'About SkillServe',
-                    onTap: () => context.push('/about'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 540.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.description_outlined,
-                    label: 'Terms & Conditions',
-                    onTap: () => context.push('/terms'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 580.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.privacy_tip_outlined,
-                    label: 'Privacy Policy',
-                    onTap: () => context.push('/privacy'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 620.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            _Tile(
-                    icon: AppIcons.groups_outlined,
-                    label: 'Community Guidelines',
-                    onTap: () => context.push('/community-guidelines'),
-                    isDark: isDark)
-                .animate()
-                .fadeIn(delay: 660.ms, duration: 300.ms)
-                .slideX(begin: 0.04, end: 0),
-            const SizedBox(height: AppSizes.xl),
+            // Each category opens to show its items, so the tab stays short.
+            // A guest has no account, activity or data to manage yet.
+            if (user != null) ...[
+              SettingsGroup(
+                icon: AppIcons.person_outline_rounded,
+                title: 'Account',
+                summary: 'Profile, ID verification, password',
+                children: [
+                  SettingsTile(icon: AppIcons.person_outline_rounded, label: 'Edit profile', onTap: () => context.push('/edit-profile')),
+                  SettingsTile(icon: AppIcons.badge_outlined, label: 'Identity verification', onTap: () => context.push('/identity-verification')),
+                  SettingsTile(icon: AppIcons.lock_outline_rounded, label: 'Change password', onTap: () => context.push('/change-password')),
+                ],
+              ),
+              SettingsGroup(
+                icon: AppIcons.history_rounded,
+                title: 'Activity',
+                summary: 'Favorites, payments, reviews, reports',
+                children: [
+                  SettingsTile(icon: AppIcons.notifications_none_rounded, label: 'Notifications', onTap: () => context.push('/notifications')),
+                  SettingsTile(icon: AppIcons.favorite_border_rounded, label: 'Favorite providers', onTap: () => context.push('/favorites')),
+                  SettingsTile(icon: AppIcons.receipt_long_outlined, label: 'Payments & receipts', onTap: () => context.push('/payments')),
+                  SettingsTile(icon: AppIcons.star_outline_rounded, label: 'My reviews', onTap: () => context.push('/my-reviews')),
+                  SettingsTile(icon: AppIcons.flag_outlined, label: 'My reports', onTap: () => context.push('/my-reports')),
+                  SettingsTile(icon: AppIcons.history_rounded, label: 'Activity history', onTap: () => context.push('/activity-history')),
+                ],
+              ),
+            ],
+            SettingsGroup(
+              icon: AppIcons.tune_rounded,
+              title: 'Preferences',
+              summary: 'Dark mode, notifications, privacy',
+              children: [
+                SettingsSwitchTile(
+                  icon: AppIcons.dark_mode_outlined,
+                  label: 'Dark mode',
+                  value: isDark,
+                  onChanged: (dark) => preferences.setDarkMode(dark,
+                      phoneIsDark: MediaQuery.platformBrightnessOf(context) == Brightness.dark),
+                ),
+                SettingsTile(icon: AppIcons.notifications_none_rounded, label: 'Notification preferences', onTap: () => context.push('/notification-preferences')),
+                SettingsTile(icon: AppIcons.privacy_tip_outlined, label: 'Privacy settings', onTap: () => context.push('/privacy-settings')),
+                SettingsTile(icon: AppIcons.apps_rounded, label: 'Application preferences', onTap: () => context.push('/application-preferences')),
+                SettingsTile(icon: AppIcons.verified_user_outlined, label: 'Security activity', onTap: () => context.push('/security-activity')),
+              ],
+            ),
+            SettingsGroup(
+              icon: AppIcons.help_outline_rounded,
+              title: 'Help & support',
+              summary: 'Support tickets, help center, policies',
+              children: [
+                if (user != null)
+                  SettingsTile(icon: AppIcons.support_agent_rounded, label: 'Support tickets', onTap: () => context.push('/support/tickets')),
+                SettingsTile(icon: AppIcons.help_outline_rounded, label: 'Help Center', onTap: () => context.push('/help-center')),
+                SettingsTile(icon: AppIcons.info_outline_rounded, label: 'About SkillServe', onTap: () => context.push('/about')),
+                SettingsTile(icon: AppIcons.description_outlined, label: 'Terms & Conditions', onTap: () => context.push('/terms')),
+                SettingsTile(icon: AppIcons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => context.push('/privacy')),
+                SettingsTile(icon: AppIcons.groups_outlined, label: 'Community Guidelines', onTap: () => context.push('/community-guidelines')),
+              ],
+            ),
             if (user != null)
-              _Tile(
-                icon: AppIcons.logout_rounded,
-                label: 'Log out',
-                danger: true,
-                isDark: isDark,
-                onTap: () async {
-                  final confirmed = await AppDialog.confirm(
-                    context,
-                    title: 'Log out?',
-                    message:
-                        'You\'ll need to log in again to book services or view your history.',
-                    confirmLabel: 'Log out',
-                    danger: true,
-                  );
-                  if (confirmed) {
-                    await auth.logout();
-                    if (context.mounted) context.go('/welcome');
-                  }
-                },
-              ).animate().fadeIn(delay: 660.ms, duration: 300.ms)
-            else
-              _Tile(
-                      icon: AppIcons.login_rounded,
-                      label: 'Log in',
-                      onTap: () => context.go('/login'),
-                      isDark: isDark)
-                  .animate()
-                  .fadeIn(delay: 660.ms, duration: 300.ms),
+              SettingsGroup(
+                icon: AppIcons.description_outlined,
+                title: 'Your data',
+                summary: 'View or delete your account data',
+                children: [
+                  SettingsTile(icon: AppIcons.description_outlined, label: 'View account data', onTap: () => context.push('/account-data')),
+                  SettingsTile(icon: AppIcons.delete_outline_rounded, label: 'Delete account', danger: true, onTap: () => context.push('/account-deletion')),
+                ],
+              ),
+            const SizedBox(height: AppSizes.md),
+            SettingsSessionButton(
+              signedIn: user != null,
+              onPressed: () async {
+                if (user == null) {
+                  context.go('/login');
+                  return;
+                }
+                final confirmed = await AppDialog.confirm(
+                  context,
+                  title: 'Log out?',
+                  message: 'You\'ll need to log in again to book services or view your history.',
+                  confirmLabel: 'Log out',
+                  danger: true,
+                );
+                if (confirmed) {
+                  await auth.logout();
+                  if (context.mounted) context.go('/welcome');
+                }
+              },
+            ),
+            const SizedBox(height: AppSizes.lg),
           ],
         ),
       ),
@@ -317,81 +193,5 @@ class _GuestCard extends StatelessWidget {
         .animate()
         .fadeIn(delay: 80.ms, duration: 350.ms)
         .slideY(begin: 0.06, end: 0);
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.sm, top: AppSizes.sm),
-      child: Text(label.toUpperCase(), style: AppTextStyles.overline),
-    );
-  }
-}
-
-class _Tile extends StatelessWidget {
-  final AppIconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool danger;
-  final bool isDark;
-  const _Tile(
-      {required this.icon,
-      required this.label,
-      required this.onTap,
-      this.danger = false,
-      this.isDark = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = danger
-        ? AppColors.error
-        : (isDark ? AppColors.textOnDark : AppColors.textPrimary);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: AppIcon(icon,
-          color: danger
-              ? AppColors.error
-              : (isDark ? AppColors.textMutedDark : AppColors.textSecondary),
-          size: 21),
-      title: Text(label, style: AppTextStyles.bodyLarge.copyWith(color: color)),
-      trailing: danger
-          ? null
-          : AppIcon(AppIcons.chevron_right_rounded,
-              color: context.textMutedColor),
-      onTap: onTap,
-    );
-  }
-}
-
-class _SwitchTile extends StatelessWidget {
-  final AppIconData icon;
-  final String label;
-  final bool value;
-  final void Function(bool) onChanged;
-  final bool isDark;
-  const _SwitchTile(
-      {required this.icon,
-      required this.label,
-      required this.value,
-      required this.onChanged,
-      this.isDark = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: AppIcon(icon,
-          color: isDark ? AppColors.textMutedDark : AppColors.textSecondary,
-          size: 21),
-      title: Text(label,
-          style: AppTextStyles.bodyLarge.copyWith(
-              color: isDark ? AppColors.textOnDark : AppColors.textPrimary)),
-      trailing: Switch(value: value, onChanged: onChanged),
-    );
   }
 }

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/api_error.dart';
@@ -15,9 +13,9 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
-import '../../../core/widgets/misc/app_icon.dart';
 import '../../marketplace/models/provider_model.dart';
 import '../services/provider_service_service.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// Where customers send a GCash payment for this provider's jobs.
 ///
@@ -162,7 +160,6 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('GCash details')),
@@ -179,29 +176,11 @@ class _GcashDetailsScreenState extends State<GcashDetailsScreen> {
                     child: ListView(
                       padding: const EdgeInsets.all(AppSizes.pageHPad),
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.md),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.surfaceAltDark : AppColors.infoBg,
-                            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const AppIcon(AppIcons.info_outline_rounded,
-                                  color: AppColors.info, size: AppSizes.iconMd),
-                              const SizedBox(width: AppSizes.sm),
-                              Expanded(
-                                child: Text(
-                                  'Customers who choose GCash pay you directly on this number. '
-                                  'SkillServe never holds the money, so keep these details '
-                                  'correct — and remember the commission stays owed out of '
-                                  'what you receive.',
-                                  style: AppTextStyles.bodySmall,
-                                ),
-                              ),
-                            ],
-                          ),
+                        const AppNotice(
+                          message: 'Customers who choose GCash pay you directly on this number. '
+                              'SkillServe never holds the money, so keep these details '
+                              'correct — and remember the commission stays owed out of '
+                              'what you receive.',
                         ),
                         const SizedBox(height: AppSizes.xl),
                         AppTextField(

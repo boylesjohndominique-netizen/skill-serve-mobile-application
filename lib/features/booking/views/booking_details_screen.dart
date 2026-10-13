@@ -25,6 +25,7 @@ import '../models/booking_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 class BookingDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -254,8 +255,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     message: isProviderView
                         ? 'The customer moved this booking to ${Formatters.dateShort(booking.bookingDate)}, ${booking.schedule}. Accept or decline the new time.'
                         : 'You moved this booking. It is confirmed once the provider accepts the new time.',
-                    color: AppColors.info,
-                    background: AppColors.infoBg,
+                    tone: NoticeTone.info,
                   )
                       .animate()
                       .fadeIn(delay: 130.ms, duration: 350.ms)
@@ -673,53 +673,24 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 }
 
-/// Full-width tinted notice used for the dispute, cancellation and
-/// reschedule banners.
+/// Full-width notice for the dispute, cancellation and reschedule states —
+/// the shared [AppNotice], so it reads the same in light and dark mode.
 class _Banner extends StatelessWidget {
   final AppIconData icon;
   final String title;
   final String message;
-  final Color color;
-  final Color background;
+  final NoticeTone tone;
 
   const _Banner({
     required this.icon,
     required this.title,
     required this.message,
-    this.color = AppColors.error,
-    this.background = AppColors.errorBg,
+    this.tone = NoticeTone.error,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.lg),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Row(
-        children: [
-          AppIcon(icon, color: color, size: 22),
-          const SizedBox(width: AppSizes.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: AppTextStyles.titleMedium.copyWith(color: color)),
-                const SizedBox(height: 2),
-                Text(message,
-                    style: AppTextStyles.bodySmall.copyWith(color: color)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      AppNotice(tone: tone, icon: icon, title: title, message: message);
 }
 
 class _SectionCard extends StatelessWidget {

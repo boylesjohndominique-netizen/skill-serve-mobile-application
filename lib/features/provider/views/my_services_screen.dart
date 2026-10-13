@@ -169,11 +169,11 @@ class _ServiceCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.secondarySoft,
+                color: context.accentSoftColor,
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
               alignment: Alignment.center,
-              child: const AppIcon(AppIcons.design_services_rounded, color: AppColors.secondaryDeep, size: 22),
+              child: AppIcon(AppIcons.design_services_rounded, color: context.onAccentSoftColor, size: 22),
             ),
             const SizedBox(width: AppSizes.md),
             Expanded(

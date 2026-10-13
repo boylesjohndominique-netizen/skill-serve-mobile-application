@@ -12,6 +12,7 @@ import '../buttons/primary_button.dart';
 import '../buttons/outlined_app_button.dart';
 import '../misc/app_icon.dart';
 import '../../constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Global connectivity monitor.
 ///
@@ -97,14 +98,14 @@ class ConnectivityGate {
                     Container(
                       width: 72,
                       height: 72,
-                      decoration: const BoxDecoration(
-                        color: AppColors.errorBg,
+                      decoration: BoxDecoration(
+                        color: context.errorBgColor,
                         shape: BoxShape.circle,
                       ),
-                      child: const AppIcon(
+                      child: AppIcon(
                         AppIcons.wifi_off_rounded,
                         size: 30,
-                        color: AppColors.error,
+                        color: context.errorColor,
                       ),
                     ),
                     const SizedBox(height: AppSizes.lg),

@@ -15,6 +15,7 @@ import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// One support ticket and its conversation with staff.
 class TicketDetailScreen extends StatefulWidget {
@@ -128,29 +129,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
         if (ticket.resolutionNote != null && ticket.resolutionNote!.isNotEmpty) ...[
           const SizedBox(height: AppSizes.md),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSizes.lg),
-            decoration: BoxDecoration(
-              color: AppColors.successBg,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const AppIcon(AppIcons.task_alt_rounded, size: 16, color: AppColors.success),
-                    const SizedBox(width: 6),
-                    Text('Resolution',
-                        style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(ticket.resolutionNote!,
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.success)),
-              ],
-            ),
+          AppNotice(
+            tone: NoticeTone.success,
+            icon: AppIcons.task_alt_rounded,
+            title: 'Resolution',
+            message: ticket.resolutionNote!,
           ).animate().fadeIn(duration: 300.ms),
         ],
       ],

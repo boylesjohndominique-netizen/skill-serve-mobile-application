@@ -4,9 +4,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../../auth/models/user_model.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// The account's standing (M 2.4): active, and for providers the verification
 /// state and any suspension an administrator applied (M 9.6).
@@ -37,28 +37,12 @@ class AccountStatusCard extends StatelessWidget {
           ],
           if (isProvider && user.providerSuspended) ...[
             const SizedBox(height: AppSizes.md),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSizes.md),
-              decoration: BoxDecoration(
-                color: AppColors.errorBg,
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AppIcon(AppIcons.cancel_outlined, color: AppColors.error, size: 18),
-                  const SizedBox(width: AppSizes.sm),
-                  Expanded(
-                    child: Text(
-                      'Your provider account is suspended: you are hidden from the marketplace and '
-                      'cannot take new bookings.'
-                      '${(user.providerSuspensionReason ?? '').isNotEmpty ? ' Reason: ${user.providerSuspensionReason}' : ''}',
-                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-                    ),
-                  ),
-                ],
-              ),
+            AppNotice(
+              tone: NoticeTone.error,
+              icon: AppIcons.cancel_outlined,
+              message: 'Your provider account is suspended: you are hidden from the marketplace and '
+                  'cannot take new bookings.'
+                  '${(user.providerSuspensionReason ?? '').isNotEmpty ? ' Reason: ${user.providerSuspensionReason}' : ''}',
             ),
           ],
         ],

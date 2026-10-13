@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -19,6 +18,7 @@ import '../models/provider_service_model.dart';
 import '../services/commission_service.dart';
 import '../services/provider_service_service.dart';
 import '../../../core/theme/app_palette.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 const _priceTypes = {'fixed': 'Fixed price', 'hourly': 'Per hour', 'custom': 'Custom quote'};
 
@@ -161,27 +161,10 @@ class _ServiceFormState extends State<ServiceForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppSizes.md),
-            decoration: BoxDecoration(
-              color: AppColors.infoBg,
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppIcon(AppIcons.info_outline_rounded, color: context.infoColor, size: 18),
-                const SizedBox(width: AppSizes.sm),
-                Expanded(
-                  child: Text(
-                    widget.existing == null
-                        ? 'An administrator reviews every new service before customers can see it.'
-                        : 'Saving changes sends this service back for administrator approval. It is hidden from customers until approved.',
-                    style: AppTextStyles.bodySmall.copyWith(color: context.infoColor),
-                  ),
-                ),
-              ],
-            ),
+          AppNotice(
+            message: widget.existing == null
+                ? 'An administrator reviews every new service before customers can see it.'
+                : 'Saving changes sends this service back for administrator approval. It is hidden from customers until approved.',
           ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: AppSizes.lg),
           AppTextField(label: 'Service title', hint: 'e.g. Aircon Cleaning', controller: _title, validator: Validators.required)

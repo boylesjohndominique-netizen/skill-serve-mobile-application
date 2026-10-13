@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../buttons/outlined_app_button.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// Shown when a request fails — pairs with a retry action.
 /// Features shake animation on the error icon and fade-in entrance.
@@ -26,8 +26,8 @@ class ErrorState extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(color: AppColors.errorBg, shape: BoxShape.circle),
-              child: const AppIcon(AppIcons.wifi_off_rounded, size: 30, color: AppColors.error),
+              decoration: BoxDecoration(color: context.errorBgColor, shape: BoxShape.circle),
+              child: AppIcon(AppIcons.wifi_off_rounded, size: 30, color: context.errorColor),
             )
                 .animate()
                 .fadeIn(duration: 300.ms)

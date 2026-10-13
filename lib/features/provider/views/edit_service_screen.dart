@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../core/widgets/feedback/app_dialog.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
@@ -15,6 +13,7 @@ import '../controllers/provider_services_controller.dart';
 import '../models/provider_service_model.dart';
 import '../services/provider_service_service.dart';
 import 'service_form.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 class EditServiceScreen extends StatefulWidget {
   final String serviceId;
@@ -107,16 +106,10 @@ class _EditServiceScreenState extends State<EditServiceScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (service.isRejected && (service.rejectionReason ?? '').isNotEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.all(AppSizes.md),
-                            decoration: BoxDecoration(
-                              color: AppColors.errorBg,
-                              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                            ),
-                            child: Text(
-                              'Rejected: ${service.rejectionReason}',
-                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-                            ),
+                          AppNotice(
+                            tone: NoticeTone.error,
+                            title: 'Not approved',
+                            message: service.rejectionReason,
                           ),
                           const SizedBox(height: AppSizes.lg),
                         ],

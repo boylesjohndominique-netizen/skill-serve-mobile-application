@@ -439,7 +439,7 @@ class _DiscoverHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const VerificationSeal(status: 'verified', size: 34),
+                  const VerificationSeal(status: 'verified', size: 34, onDark: true),
                 ],
               ),
               const SizedBox(height: AppSizes.lg),

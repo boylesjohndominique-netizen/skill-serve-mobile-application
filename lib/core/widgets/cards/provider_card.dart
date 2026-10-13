@@ -200,8 +200,8 @@ class _Avatar extends StatelessWidget {
           initials: provider.user.initials,
           photoUrl: provider.user.profilePicture,
           radius: 26,
-          backgroundColor: AppColors.secondarySoft,
-          foregroundColor: AppColors.secondaryDeep,
+          backgroundColor: context.accentSoftColor,
+          foregroundColor: context.onAccentSoftColor,
         ),
         if (provider.isVerified)
           Positioned(

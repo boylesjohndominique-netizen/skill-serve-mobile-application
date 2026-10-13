@@ -12,11 +12,11 @@ import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
-import '../../../core/widgets/misc/app_icon.dart';
 import '../../settings/models/platform_info.dart';
 import '../../settings/services/platform_service.dart';
 import '../controllers/commission_controller.dart';
 import '../models/commission_model.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 
 /// What the provider owes SkillServe, and what it stops them doing.
 ///
@@ -134,29 +134,12 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
 
         if (summary.isBlockedByCommission) ...[
           const SizedBox(height: AppSizes.lg),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSizes.md),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceAltDark : AppColors.errorBg,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AppIcon(AppIcons.block_rounded,
-                    color: AppColors.error, size: AppSizes.iconMd),
-                const SizedBox(width: AppSizes.sm),
-                Expanded(
-                  child: Text(
-                    'New work is paused: you cannot accept new bookings, start a service or publish services '
-                    'until this is settled. Bookings you have already accepted are unaffected — '
-                    'you can still decline and cancel.',
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-                  ),
-                ),
-              ],
-            ),
+          const AppNotice(
+            tone: NoticeTone.error,
+            icon: AppIcons.block_rounded,
+            message: 'New work is paused: you cannot accept new bookings, start a service or publish services '
+                'until this is settled. Bookings you have already accepted are unaffected — '
+                'you can still decline and cancel.',
           ),
         ],
 
@@ -205,8 +188,7 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
           _Notice(
             isDark: isDark,
             icon: AppIcons.qr_code_rounded,
-            color: AppColors.warning,
-            background: AppColors.warningBg,
+            tone: NoticeTone.warning,
             text: 'You have a QR code open for ₱${latest.amountDue}. Scan it to pay — it is confirmed '
                 'automatically.',
           ),
@@ -219,8 +201,7 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
         _Notice(
           isDark: isDark,
           icon: AppIcons.hourglass_top_rounded,
-          color: AppColors.warning,
-          background: AppColors.warningBg,
+          tone: NoticeTone.warning,
           text: 'Your ₱${latest.amountSent} GCash payment (ref. ${latest.reference}) is waiting for '
               'SkillServe to confirm it. New work resumes as soon as it is confirmed — you will get a '
               'notification.',
@@ -233,8 +214,7 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
         _Notice(
           isDark: isDark,
           icon: AppIcons.info_outline_rounded,
-          color: AppColors.error,
-          background: AppColors.errorBg,
+          tone: NoticeTone.error,
           text: 'Your last payment (ref. ${latest.reference}) was not confirmed'
               '${(latest.rejectionReason ?? '').isEmpty ? '.' : ': ${latest.rejectionReason}'}',
         ),
@@ -266,36 +246,17 @@ class _Notice extends StatelessWidget {
   const _Notice({
     required this.isDark,
     required this.icon,
-    required this.color,
-    required this.background,
+    required this.tone,
     required this.text,
   });
 
   final bool isDark;
   final AppIconData icon;
-  final Color color;
-  final Color background;
+  final NoticeTone tone;
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceAltDark : background,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppIcon(icon, color: color, size: AppSizes.iconMd),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(child: Text(text, style: AppTextStyles.bodySmall.copyWith(color: color))),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppNotice(tone: tone, icon: icon, message: text);
 }
 
 class _CommissionRow extends StatelessWidget {
@@ -359,35 +320,17 @@ class _BlockWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark ? AppColors.warningOnDark : AppColors.warning;
     final deadline = summary.blockDeadline;
     final rules = [
       if (deadline != null) 'on ${Formatters.dateTime(deadline)}',
       if (summary.hasBlockThreshold) 'once it reaches ₱${summary.blockThreshold}',
     ];
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceAltDark : AppColors.warningBg,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppIcon(AppIcons.schedule_rounded, color: color, size: AppSizes.iconMd),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(
-            child: Text(
-              'Pay it in time to keep taking work: new bookings and services pause '
-              '${rules.join(', or ')}, whichever comes first.',
-              style: AppTextStyles.bodySmall.copyWith(color: color),
-            ),
-          ),
-        ],
-      ),
+    return AppNotice(
+      tone: NoticeTone.warning,
+      icon: AppIcons.schedule_rounded,
+      message: 'Pay it in time to keep taking work: new bookings and services pause '
+          '${rules.join(', or ')}, whichever comes first.',
     );
   }
 }

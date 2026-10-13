@@ -55,11 +55,12 @@ class AppColors {
   static const Color textMutedDark = Color(0xFF9DA3AF);
 
   // ---- Semantic ----
-  static const Color success = Color(0xFF12896A); // emerald
+  // Deep enough for small text on white and on their own tint (4.5:1+).
+  static const Color success = Color(0xFF107D60); // emerald
   static const Color successBg = Color(0xFFEBF7F2);
-  static const Color warning = Color(0xFF9E6D0F); // warm amber
+  static const Color warning = Color(0xFF93650E); // warm amber
   static const Color warningBg = Color(0xFFFAF4E6);
-  static const Color error = Color(0xFFD1453B); // soft red
+  static const Color error = Color(0xFFC1372D); // soft red
   static const Color errorBg = Color(0xFFFBEAE9);
   static const Color info = Color(0xFF1F5F8B); // soft blue
   static const Color infoBg = Color(0xFFEBF3F8);
@@ -70,6 +71,18 @@ class AppColors {
   static const Color warningOnDark = Color(0xFFE8B84A);
   static const Color errorOnDark = Color(0xFFF08A82);
   static const Color infoOnDark = Color(0xFF7DB8E8);
+
+  // Semantic tints for notices and soft badges on dark surfaces: the hue
+  // laid over the dark card colour, so the matching *OnDark text reads at
+  // 5.5:1 or better. The light tints above glare white on a dark screen.
+  static const Color successBgDark = Color(0xFF173A35);
+  static const Color warningBgDark = Color(0xFF3A3220);
+  static const Color errorBgDark = Color(0xFF3F2528);
+  static const Color infoBgDark = Color(0xFF1C3248);
+
+  /// The lime tint (chips, icon discs, "pending" badges) on dark surfaces;
+  /// lime text on it reads at 9:1. [secondarySoft] glares on a dark screen.
+  static const Color secondarySoftDark = Color(0xFF2C3912);
 
   // ---- Neutral scale ----
   static const Color neutral50 = Color(0xFFF8F9F3);

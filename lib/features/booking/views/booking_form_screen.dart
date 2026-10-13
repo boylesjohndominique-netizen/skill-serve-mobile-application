@@ -550,7 +550,7 @@ class _WizardStepper extends StatelessWidget {
                   height: 2,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: i <= current ? context.accentInk : AppColors.neutral100,
+                    color: i <= current ? context.accentInk : context.neutralSoftColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

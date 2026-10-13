@@ -2,11 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../theme/app_palette.dart';
 
 /// The signature VERIFICATION SEAL — a dashed circular "stamp" used
 /// everywhere trust is shown (verified provider, approved document,
@@ -24,43 +24,48 @@ class VerificationSeal extends StatelessWidget {
   final double size;
   final bool showLabel;
 
+  /// Drawn on a surface that is dark in both modes (the hero card), so the
+  /// seal takes its dark-mode colours even when the app is in light mode.
+  final bool onDark;
+
   const VerificationSeal({
     super.key,
     required this.status,
     this.size = 44,
     this.showLabel = false,
+    this.onDark = false,
   });
 
-  ({Color color, Color soft, AppIconData icon, String label}) get _state {
+  ({Color color, Color soft, AppIconData icon, String label}) _stateFor(BuildContext context) {
     switch (status.toLowerCase()) {
       case 'verified':
       case 'approved':
         return (
-          color: AppColors.success,
-          soft: AppColors.successBg,
+          color: context.successColor,
+          soft: context.successBgColor,
           icon: AppIcons.verified_rounded,
           label: 'Verified',
         );
       case 'rejected':
       case 'suspended':
         return (
-          color: AppColors.error,
-          soft: AppColors.errorBg,
+          color: context.errorColor,
+          soft: context.errorBgColor,
           icon: AppIcons.close_rounded,
           label: 'Rejected',
         );
       case 'resubmission_requested':
         return (
-          color: AppColors.secondaryInk,
-          soft: AppColors.secondarySoft,
+          color: context.accentInk,
+          soft: context.accentSoftColor,
           icon: AppIcons.rotate_left_rounded,
           label: 'Resubmit',
         );
       case 'pending':
       default:
         return (
-          color: AppColors.secondaryInk,
-          soft: AppColors.secondarySoft,
+          color: context.accentInk,
+          soft: context.accentSoftColor,
           icon: AppIcons.hourglass_top_rounded,
           label: 'Under review',
         );
@@ -71,7 +76,18 @@ class VerificationSeal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = _state;
+    if (onDark && !context.isDarkMode) {
+      final theme = Theme.of(context);
+      return Theme(
+        data: theme.copyWith(colorScheme: theme.colorScheme.copyWith(brightness: Brightness.dark)),
+        child: Builder(builder: _buildSeal),
+      );
+    }
+    return _buildSeal(context);
+  }
+
+  Widget _buildSeal(BuildContext context) {
+    final state = _stateFor(context);
     final stroke = size >= 44 ? 2.2 : (size >= 34 ? 1.8 : 1.5);
 
     Widget seal = SizedBox(
