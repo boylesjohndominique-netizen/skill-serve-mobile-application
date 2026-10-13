@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -14,6 +14,10 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/identity_controller.dart';
 import '../models/identity_verification_model.dart';
+import '../services/id_photo_quality.dart';
+import '../services/national_id_camera.dart';
+import '../services/national_id_parser.dart';
+import '../services/national_id_reader.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// Capture the Philippine National ID, front and back, and send it for review.
@@ -40,6 +44,9 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
   final _idNumber = TextEditingController();
   final _fullName = TextEditingController();
   DateTime? _birthdate;
+
+  /// The side whose new photo is being checked, or null.
+  String? _checking;
 
   @override
   void initState() {
@@ -143,7 +150,7 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'Both sides are required. Make sure the whole card is in frame and the text is readable.',
+                'Both sides are required. Lay the card flat in good, even light with no flash glare, and hold steady until the text is sharp. Photos are taken with the camera and sent as is — no filters or edits.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor),
               ),
               const SizedBox(height: 14),
@@ -152,7 +159,8 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
                 type: PendingIdentityDocument.frontType,
                 title: 'Front of card',
                 document: identity.captured[PendingIdentityDocument.frontType],
-                onCapture: () => _capture(PendingIdentityDocument.frontType),
+                checking: _checking == PendingIdentityDocument.frontType,
+                onCapture: _checking != null ? null : () => _capture(PendingIdentityDocument.frontType),
                 onRemove: () => identity.remove(PendingIdentityDocument.frontType),
               ),
               const SizedBox(height: 12),
@@ -160,7 +168,8 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
                 type: PendingIdentityDocument.backType,
                 title: 'Back of card',
                 document: identity.captured[PendingIdentityDocument.backType],
-                onCapture: () => _capture(PendingIdentityDocument.backType),
+                checking: _checking == PendingIdentityDocument.backType,
+                onCapture: _checking != null ? null : () => _capture(PendingIdentityDocument.backType),
                 onRemove: () => identity.remove(PendingIdentityDocument.backType),
               ),
 
@@ -193,52 +202,56 @@ class _IdentityVerificationScreenState extends State<IdentityVerificationScreen>
     );
   }
 
+  /// Photographs one side with the same no-filter scanner as sign-up (no
+  /// gallery: an edited or filtered picture cannot be told from a real one),
+  /// then checks it before keeping it.
   Future<void> _capture(String type) async {
     final identity = context.read<IdentityController>();
 
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const AppIcon(AppIcons.camera_alt_rounded),
-              title: const Text('Take a photo'),
-              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const AppIcon(AppIcons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
-              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-
-    XFile? file;
+    String? path;
     try {
-      file = await ImagePicker().pickImage(
-        source: source,
-        imageQuality: 85,
-        maxWidth: 2400,
-      );
+      path = await captureNationalIdPhoto();
     } catch (_) {
       if (mounted) AppSnackbar.error(context, 'The camera could not be opened.');
       return;
     }
-    if (file == null || !mounted) return;
+    if (path == null || !mounted) return;
 
-    final Uint8List bytes = await file.readAsBytes();
+    final Uint8List bytes = await File(path).readAsBytes();
     if (!mounted) return;
 
-    final name = file.name.contains('.') ? file.name : '${file.name}.jpg';
+    setState(() => _checking = type);
+    final issue = await _review(path, bytes);
+    if (!mounted) return;
+    setState(() => _checking = null);
+    if (issue != null) {
+      AppSnackbar.error(context, issue.message);
+      return;
+    }
+
+    final base = path.split(RegExp(r'[/\\]')).last;
     final error = identity.capture(
-      PendingIdentityDocument(type: type, fileName: name, bytes: bytes),
+      PendingIdentityDocument(type: type, fileName: base.contains('.') ? base : '$base.jpg', bytes: bytes),
     );
     if (error != null && mounted) AppSnackbar.error(context, error);
+  }
+
+  /// The photo's problem, if any. A photo that measures as blurry passes when
+  /// its text or QR code can still be read — then it is sharp enough.
+  Future<IdPhotoIssue?> _review(String path, Uint8List bytes) async {
+    final issue = await IdPhotoQuality.check(bytes);
+    if (issue != IdPhotoIssue.blurry) return issue;
+
+    final reader = MlKitNationalIdReader();
+    try {
+      final text = NationalIdParser.parseFront(await reader.readText(path));
+      if (!text.isEmpty) return null;
+      return (await reader.readQrCodes(path)).isEmpty ? issue : null;
+    } catch (_) {
+      return issue;
+    } finally {
+      await reader.close();
+    }
   }
 
   Future<void> _submit() async {
@@ -416,12 +429,16 @@ class _CaptureTile extends StatelessWidget {
     required this.document,
     required this.onCapture,
     required this.onRemove,
+    this.checking = false,
   });
 
   final String type;
   final String title;
   final PendingIdentityDocument? document;
-  final VoidCallback onCapture;
+  final VoidCallback? onCapture;
+
+  /// A new photo of this side is being checked.
+  final bool checking;
   final VoidCallback onRemove;
 
   @override
@@ -469,7 +486,7 @@ class _CaptureTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    captured ? 'Tap to retake' : 'Tap to capture',
+                    checking ? 'Checking the photo…' : (captured ? 'Tap to retake' : 'Tap to capture'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor),
                   ),
                 ],

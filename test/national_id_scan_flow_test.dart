@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skillserve_mobile/core/theme/app_theme.dart';
 import 'package:skillserve_mobile/features/identity/controllers/identity_controller.dart';
 import 'package:skillserve_mobile/features/identity/models/scanned_national_id.dart';
+import 'package:skillserve_mobile/features/identity/services/id_photo_quality.dart';
 import 'package:skillserve_mobile/features/identity/services/national_id_camera.dart';
 import 'package:skillserve_mobile/features/identity/services/national_id_reader.dart';
 import 'package:skillserve_mobile/features/identity/services/sign_up_scan_store.dart';
@@ -49,6 +50,7 @@ Widget _flow(
   ValueChanged<ScannedNationalId> onComplete, {
   CaptureIdPhoto? capturePhoto,
   String? lostPhoto,
+  IdPhotoIssue? quality,
 }) {
   return ChangeNotifierProvider<IdentityController>.value(
     value: identity,
@@ -67,6 +69,7 @@ Widget _flow(
                 return Uint8List.fromList([1, 2, 3]);
               },
               recoverLostPhoto: () async => lostPhoto,
+              checkQuality: (_) async => quality,
             ),
           ),
         ),
@@ -91,6 +94,45 @@ Future<void> _waitForBackScan(WidgetTester tester) async {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  group('photo quality', () {
+    testWidgets('a dark or washed-out photo is refused before it is read or kept', (tester) async {
+      final identity = IdentityController();
+      final reader = _FakeReader(frontText: 'Apelyido/Last Name\nDELA CRUZ\nMga Pangalan/Given Names\nJUAN');
+
+      await tester.pumpWidget(_flow(identity, reader, (_) {}, quality: IdPhotoIssue.tooDark));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Scan the front');
+
+      expect(find.text(IdPhotoIssue.tooDark.message), findsOneWidget);
+      expect(identity.hasFront, isFalse);
+      expect(find.text('Front of your National ID'), findsOneWidget);
+    });
+
+    testWidgets('a blurry photo nothing can be read from is refused', (tester) async {
+      final identity = IdentityController();
+
+      await tester.pumpWidget(_flow(identity, _FakeReader(), (_) {}, quality: IdPhotoIssue.blurry));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Scan the front');
+
+      expect(find.text(IdPhotoIssue.blurry.message), findsOneWidget);
+      expect(identity.hasFront, isFalse);
+    });
+
+    testWidgets('a photo that measures soft but still reads is kept', (tester) async {
+      final identity = IdentityController();
+      final reader = _FakeReader(frontText: 'Apelyido/Last Name\nDELA CRUZ\nMga Pangalan/Given Names\nJUAN');
+
+      await tester.pumpWidget(_flow(identity, reader, (_) {}, quality: IdPhotoIssue.blurry, capturePhoto: () async => '/scans/front.jpg'));
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Scan the front');
+
+      expect(identity.hasFront, isTrue);
+      expect(find.text('Now the back of your National ID'), findsOneWidget);
+      await _waitForBackScan(tester);
+    });
+  });
 
   testWidgets('scan the front and the back opens by itself, then the details', (tester) async {
     final identity = IdentityController();

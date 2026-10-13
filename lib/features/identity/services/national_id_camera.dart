@@ -7,11 +7,15 @@ import 'package:image_picker/image_picker.dart';
 /// null when the user backs out.
 typedef CaptureIdPhoto = Future<String?> Function();
 
-/// The camera used at sign-up: Google's ML Kit Document Scanner, the same
-/// kind of screen KYC apps use. It finds the card's edges by itself,
-/// captures when the card is steady, straightens and crops it, and cleans up
-/// glare and shadows — so the text and QR code are read from a flat, sharp
-/// image of the card alone rather than a photo of a table with a card on it.
+/// The camera for the National ID: Google's ML Kit Document Scanner, the
+/// same kind of screen KYC apps use. It finds the card's edges by itself,
+/// captures when the card is steady, and straightens and crops it — so the
+/// text and QR code are read from a flat image of the card alone rather than
+/// a photo of a table with a card on it.
+///
+/// It runs in the base mode: crop and rotate only. The other modes offer
+/// colour filters and erase "stains" and fingers, and a reviewer must see
+/// the card exactly as the camera did.
 ///
 /// Phones without Google Play services cannot run it; they fall back to the
 /// plain camera so sign-up still works.
@@ -20,7 +24,7 @@ Future<String?> captureNationalIdPhoto() async {
     options: DocumentScannerOptions(
       documentFormats: {DocumentFormat.jpeg},
       pageLimit: 1,
-      mode: ScannerMode.full,
+      mode: ScannerMode.base,
       isGalleryImport: false,
     ),
   );

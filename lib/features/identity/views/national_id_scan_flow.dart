@@ -10,6 +10,7 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../controllers/identity_controller.dart';
 import '../models/identity_verification_model.dart';
 import '../models/scanned_national_id.dart';
+import '../services/id_photo_quality.dart';
 import '../services/national_id_camera.dart';
 import '../services/national_id_parser.dart';
 import '../services/national_id_reader.dart';
@@ -39,6 +40,7 @@ class NationalIdScanFlow extends StatefulWidget {
     this.capturePhoto,
     this.readFile,
     this.recoverLostPhoto,
+    this.checkQuality,
   });
 
   final ValueChanged<ScannedNationalId> onComplete;
@@ -51,6 +53,10 @@ class NationalIdScanFlow extends StatefulWidget {
   /// A photo the camera took while the app was closed; Android's unless a
   /// test supplies one.
   final CaptureIdPhoto? recoverLostPhoto;
+
+  /// Judges a photo before it is kept; [IdPhotoQuality.check] unless a test
+  /// supplies a verdict.
+  final Future<IdPhotoIssue?> Function(Uint8List bytes)? checkQuality;
 
   @override
   State<NationalIdScanFlow> createState() => _NationalIdScanFlowState();
@@ -121,8 +127,13 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
     await _accept(path, side, openBack: true);
   }
 
-  /// Keeps the photo of [side] at [path] and reads it. Returns false when the
-  /// photo could not be kept, so the side has to be taken again.
+  /// Checks the photo of [side] at [path], reads it and keeps it. Returns
+  /// false when the photo is unusable or could not be kept, so the side has
+  /// to be taken again.
+  ///
+  /// A photo that is too small, too dark or washed out is refused at once. A
+  /// photo that measures as blurry is refused only when nothing could be read
+  /// from it either — if its text or QR code reads, it is sharp enough.
   Future<bool> _accept(String path, _Side side, {required bool openBack}) async {
     final identity = context.read<IdentityController>();
     final type = side == _Side.front ? PendingIdentityDocument.frontType : PendingIdentityDocument.backType;
@@ -136,6 +147,24 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
       return false;
     }
     if (!mounted) return false;
+
+    setState(() => _reading = true);
+    final issue = await (widget.checkQuality ?? IdPhotoQuality.check)(bytes);
+    if (!mounted) return false;
+    if (issue != null && issue != IdPhotoIssue.blurry) {
+      setState(() => _reading = false);
+      AppSnackbar.error(context, issue.message);
+      return false;
+    }
+
+    final (text, qr) = await _read(path, side);
+    if (!mounted) return false;
+    if (issue == IdPhotoIssue.blurry && text.isEmpty && qr.isEmpty) {
+      setState(() => _reading = false);
+      AppSnackbar.error(context, issue!.message);
+      return false;
+    }
+
     final base = path.split(RegExp(r'[/\\]')).last;
     final error = identity.capture(PendingIdentityDocument(
       type: type,
@@ -143,13 +172,11 @@ class _NationalIdScanFlowState extends State<NationalIdScanFlow> {
       bytes: bytes,
     ));
     if (error != null) {
+      setState(() => _reading = false);
       AppSnackbar.error(context, error);
       return false;
     }
     await SignUpScanStore.saveSide(type, path);
-
-    setState(() => _reading = true);
-    final (text, qr) = await _read(path, side);
     if (!mounted) return false;
 
     if (side == _Side.front) {
@@ -305,7 +332,12 @@ class _Tips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tips = ['Lay the card flat in good light', 'Fill the frame, no glare on the text', 'Only SkillServe reviewers see these photos'];
+    const tips = [
+      'Lay the card flat in good, even light — no flash glare',
+      'Hold steady until the text is sharp, and fill the frame',
+      'No filters or edits: the photo is sent exactly as taken',
+      'Only SkillServe reviewers see these photos',
+    ];
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: context.textSecondaryColor);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

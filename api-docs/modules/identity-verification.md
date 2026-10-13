@@ -54,7 +54,7 @@ Allowed while unverified or rejected; a pending or verified account is refused w
 
 A National ID can back only one active SkillServe account: submitting one already linked to another live account returns 422 without revealing which account holds it. An ID becomes available again only once the original account is permanently deleted.
 
-Files are private (JPG, PNG or PDF, up to 10 MB each) and are never served directly; an administrator opens them through an authorised download.
+Files are private (JPG, PNG or PDF, up to 10 MB each) and are never served directly; an administrator opens them through an authorised download. A photo of the front or back must be at least 800 × 500 pixels (either orientation), or that file gets a 422 asking for a retake.
 
 **Authentication:** Bearer token
 
