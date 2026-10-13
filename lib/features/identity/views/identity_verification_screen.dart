@@ -432,7 +432,9 @@ class _CaptureTile extends StatelessWidget {
       onTap: onCapture,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: 96,
+        // A minimum, not a fixed height: on a narrow phone the title wraps
+        // and the card grows instead of clipping it.
+        constraints: const BoxConstraints(minHeight: 96),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
@@ -459,7 +461,12 @@ class _CaptureTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     captured ? 'Tap to retake' : 'Tap to capture',
