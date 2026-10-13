@@ -8,6 +8,13 @@ class MessageModel {
   final DateTime sentAt;
   final DateTime? readAt;
 
+  /// The attached photo — private, read with the user's token — or null.
+  final String? imageUrl;
+
+  /// The picked photo on this phone, shown while the message is sending (or
+  /// after it failed, so a retry can upload it again).
+  final String? localImagePath;
+
   /// True while an optimistically shown message has not been accepted by the
   /// API yet — the bubble renders as "Sending…" until the real one replaces it.
   final bool isPending;
@@ -23,11 +30,19 @@ class MessageModel {
     required this.content,
     required this.sentAt,
     this.readAt,
+    this.imageUrl,
+    this.localImagePath,
     this.isPending = false,
     this.hasFailed = false,
   });
 
   bool get isRead => readAt != null;
+
+  bool get hasImage => imageUrl != null || localImagePath != null;
+
+  /// One line for the inbox — the text, or "📷 Photo" for a photo alone
+  /// (the same wording the API uses).
+  String get preview => content.isNotEmpty ? content : (hasImage ? '📷 Photo' : '');
 
   MessageModel copyWith({bool? isPending, bool? hasFailed}) => MessageModel(
         id: id,
@@ -37,6 +52,8 @@ class MessageModel {
         content: content,
         sentAt: sentAt,
         readAt: readAt,
+        imageUrl: imageUrl,
+        localImagePath: localImagePath,
         isPending: isPending ?? this.isPending,
         hasFailed: hasFailed ?? this.hasFailed,
       );
@@ -53,11 +70,11 @@ class MessageModel {
       content: json['content'] as String? ?? '',
       sentAt: _date(json['created_at']) ?? DateTime.now(),
       readAt: _date(json['read_at']),
+      imageUrl: json['image_url'] as String?,
     );
   }
 
-  static DateTime? _date(Object? value) =>
-      value is String ? DateTime.tryParse(value)?.toLocal() : null;
+  static DateTime? _date(Object? value) => value is String ? DateTime.tryParse(value)?.toLocal() : null;
 }
 
 /// One booking thread in the Messages inbox, as `Conversation` returns it.
@@ -104,9 +121,8 @@ class ConversationModel {
   });
 
   /// What the inbox row shows under the name.
-  String get preview => lastMessage.isEmpty
-      ? 'No messages yet'
-      : (lastMessageIsMine ? 'You: $lastMessage' : lastMessage);
+  String get preview =>
+      lastMessage.isEmpty ? 'No messages yet' : (lastMessageIsMine ? 'You: $lastMessage' : lastMessage);
 
   /// Everything a row can be matched against by the search box.
   bool matches(String query) {

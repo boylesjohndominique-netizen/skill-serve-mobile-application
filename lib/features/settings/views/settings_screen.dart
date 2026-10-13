@@ -39,8 +39,8 @@ class SettingsScreen extends StatelessWidget {
                 .slideY(begin: 0.08, end: 0),
             const SizedBox(height: AppSizes.lg),
             if (user != null)
-              ProfileCard(
-                      user: user, onEdit: () => context.push('/edit-profile'))
+              // No edit button here: Edit profile is in the Account group.
+              ProfileCard(user: user)
                   .animate()
                   .fadeIn(delay: 80.ms, duration: 350.ms)
                   .slideY(begin: 0.06, end: 0)
@@ -69,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Activity',
                 summary: 'Favorites, payments, reviews, reports',
                 children: [
-                  SettingsTile(icon: AppIcons.notifications_none_rounded, label: 'Notifications', onTap: () => context.push('/notifications')),
+                  // Notifications open from the bell on Home.
                   SettingsTile(icon: AppIcons.favorite_border_rounded, label: 'Favorite providers', onTap: () => context.push('/favorites')),
                   SettingsTile(icon: AppIcons.receipt_long_outlined, label: 'Payments & receipts', onTap: () => context.push('/payments')),
                   SettingsTile(icon: AppIcons.star_outline_rounded, label: 'My reviews', onTap: () => context.push('/my-reviews')),

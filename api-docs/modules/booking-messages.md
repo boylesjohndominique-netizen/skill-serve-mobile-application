@@ -39,7 +39,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/bookings/{booking}/messages`
 
-Send a message to the other booking participant
+Text, a photo, or both. Send JSON for text only, or multipart/form-data with `image` (JPG, PNG or WebP, at most 5 MB) and an optional `content` caption. The photo is private: the message carries an `image_url` to GET .../messages/{message}/image, readable by the two parties only.
 
 **Authentication:** Bearer token
 
@@ -117,6 +117,41 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 404: Booking not found
+
+Response schema: `see openapi.json`
+
+## `GET /api/client/v1/bookings/{booking}/messages/{message}/image`
+
+Streamed from private storage to the booking's two parties only.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+| `message` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The image file
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Booking participant access required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: No such photo in this booking's chat
 
 Response schema: `see openapi.json`
 

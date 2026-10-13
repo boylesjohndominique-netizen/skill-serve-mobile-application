@@ -24,8 +24,7 @@ class ChatController extends ChangeNotifier {
   bool isSending = false;
 
   /// Conversations matching the inbox search box.
-  List<ConversationModel> search(String query) =>
-      conversations.where((c) => c.matches(query)).toList();
+  List<ConversationModel> search(String query) => conversations.where((c) => c.matches(query)).toList();
 
   /// The conversation for [bookingId] if the inbox has been loaded, so the
   /// thread screen can title itself before its messages arrive.
@@ -90,14 +89,15 @@ class ChatController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sends a message, showing it immediately and reconciling with the API.
+  /// Sends a message — text, a photo ([imagePath]) or both — showing it
+  /// immediately and reconciling with the API.
   ///
   /// The optimistic bubble carries a temporary id and is replaced by the stored
   /// message on success, or flagged as failed so the user can retry — it is
   /// never silently dropped or left looking sent.
-  Future<bool> send(String bookingId, String content, {required String myUserId}) async {
+  Future<bool> send(String bookingId, String content, {required String myUserId, String? imagePath}) async {
     final text = content.trim();
-    if (text.isEmpty) return false;
+    if (text.isEmpty && imagePath == null) return false;
 
     final temporaryId = 'pending-${DateTime.now().microsecondsSinceEpoch}';
     final pending = MessageModel(
@@ -105,6 +105,7 @@ class ChatController extends ChangeNotifier {
       senderId: myUserId,
       content: text,
       sentAt: DateTime.now(),
+      localImagePath: imagePath,
       isPending: true,
     );
 
@@ -116,11 +117,13 @@ class ChatController extends ChangeNotifier {
       final sent = await _service.sendMessage(
         bookingId,
         text,
+        imagePath: imagePath,
         // The temporary id doubles as the idempotency key, so a retry after a
         // timeout cannot post the same message twice.
         idempotencyKey: temporaryId,
       );
       _replaceMessage(temporaryId, sent);
+      _bumpConversation(bookingId, sent, countAsUnread: false, mine: true);
       return true;
     } catch (e) {
       errorMessage = apiErrorMessage(e, 'Unable to send this message.');
@@ -136,7 +139,7 @@ class ChatController extends ChangeNotifier {
   Future<bool> retry(String bookingId, MessageModel failed, {required String myUserId}) async {
     activeMessages = activeMessages.where((m) => m.id != failed.id).toList();
     notifyListeners();
-    return send(bookingId, failed.content, myUserId: myUserId);
+    return send(bookingId, failed.content, myUserId: myUserId, imagePath: failed.localImagePath);
   }
 
   /// A message pushed over the realtime channel.
@@ -175,14 +178,14 @@ class ChatController extends ChangeNotifier {
 
   /// Moves a conversation to the top of the inbox with [message] as its
   /// preview. Returns false when the inbox does not have that conversation.
-  bool _bumpConversation(String bookingId, MessageModel message, {required bool countAsUnread}) {
+  bool _bumpConversation(String bookingId, MessageModel message, {required bool countAsUnread, bool mine = false}) {
     final index = conversations.indexWhere((c) => c.bookingId == bookingId);
     if (index == -1) return false;
 
     final current = conversations[index];
     final updated = current.copyWith(
-      lastMessage: message.content,
-      lastMessageIsMine: false,
+      lastMessage: message.preview,
+      lastMessageIsMine: mine,
       lastMessageAt: message.sentAt,
       unreadCount: countAsUnread ? current.unreadCount + 1 : 0,
     );
@@ -210,8 +213,7 @@ class ChatController extends ChangeNotifier {
     final cleared = conversations[index].unreadCount;
     if (cleared == 0) return;
 
-    conversations = [...conversations]..[index] =
-        conversations[index].copyWith(unreadCount: 0);
+    conversations = [...conversations]..[index] = conversations[index].copyWith(unreadCount: 0);
     unreadCount = (unreadCount - cleared).clamp(0, unreadCount);
   }
 
@@ -220,5 +222,4 @@ class ChatController extends ChangeNotifier {
     if (index == -1) return;
     activeMessages = [...activeMessages]..[index] = replacement;
   }
-
 }

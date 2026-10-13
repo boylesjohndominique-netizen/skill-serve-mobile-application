@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/message_model.dart';
 import '../../../core/services/api_client.dart';
+import '../../../core/utils/image_upload.dart';
 
 /// Service for booking conversations and messages — live API only.
 ///
@@ -20,8 +21,7 @@ class MessageService {
   /// GET /api/client/v1/conversations — the Messages inbox. Reading it does
   /// not mark anything read.
   Future<List<ConversationModel>> getConversations() async {
-    final response = await ApiClient.instance.dio
-        .get(_conversations, queryParameters: {'per_page': 100});
+    final response = await ApiClient.instance.dio.get(_conversations, queryParameters: {'per_page': 100});
     return [
       for (final item in response.data['data'] as List? ?? const [])
         ConversationModel.fromJson(item as Map<String, dynamic>),
@@ -38,27 +38,31 @@ class MessageService {
   /// GET /api/client/v1/bookings/{booking}/messages — the thread, oldest
   /// first. Opening it marks the messages addressed to the caller as read.
   Future<List<MessageModel>> getMessages(String bookingId) async {
-    final response =
-        await ApiClient.instance.dio.get('/client/v1/bookings/$bookingId/messages');
+    final response = await ApiClient.instance.dio.get('/client/v1/bookings/$bookingId/messages');
     return [
       for (final item in response.data['data'] as List? ?? const [])
         MessageModel.fromJson(item as Map<String, dynamic>),
     ];
   }
 
-  /// POST /api/client/v1/bookings/{booking}/messages. [idempotencyKey] makes a
+  /// POST /api/client/v1/bookings/{booking}/messages — text, a photo
+  /// ([imagePath], sent as multipart), or both. [idempotencyKey] makes a
   /// retried send return the message already stored instead of a duplicate.
   Future<MessageModel> sendMessage(
     String bookingId,
     String content, {
+    String? imagePath,
     String? idempotencyKey,
   }) async {
     final response = await ApiClient.instance.dio.post(
       '/client/v1/bookings/$bookingId/messages',
-      data: {'content': content},
-      options: idempotencyKey == null
-          ? null
-          : Options(headers: {'Idempotency-Key': idempotencyKey}),
+      data: imagePath == null
+          ? {'content': content}
+          : FormData.fromMap({
+              if (content.isNotEmpty) 'content': content,
+              'image': await imageMultipart(imagePath),
+            }),
+      options: idempotencyKey == null ? null : Options(headers: {'Idempotency-Key': idempotencyKey}),
     );
     return MessageModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
@@ -67,8 +71,7 @@ class MessageService {
   /// thread's unread state without re-reading it. Returns the unread total
   /// left across every thread, for the Messages badge.
   Future<int> markThreadRead(String bookingId) async {
-    final response =
-        await ApiClient.instance.dio.post('/client/v1/bookings/$bookingId/messages/read');
+    final response = await ApiClient.instance.dio.post('/client/v1/bookings/$bookingId/messages/read');
     final data = response.data['data'] as Map<String, dynamic>?;
     return (data?['unread_count'] as num?)?.toInt() ?? 0;
   }

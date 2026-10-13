@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../messaging/controllers/chat_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -11,11 +13,13 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/realtime_client.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
+import '../../../core/widgets/misc/private_image.dart';
 import '../models/message_model.dart';
 import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_icons.dart';
@@ -35,6 +39,10 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   int _renderedCount = 0;
+
+  /// A photo picked for the next message, shown above the composer until it
+  /// is sent or removed.
+  String? _attachment;
 
   /// Captured in initState so dispose can still reach it: the controller
   /// outlives this screen, but its context does not.
@@ -132,13 +140,54 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
   Future<void> _send() async {
     final text = _controller.text.trim();
-    if (text.isEmpty) return;
+    final photo = _attachment;
+    if (text.isEmpty && photo == null) return;
     final chat = context.read<ChatController>();
     final myId = context.read<AuthController>().currentUser?.id ?? '';
 
     _controller.clear();
+    setState(() => _attachment = null);
     _stoppedTyping();
-    await chat.send(widget.bookingId, text, myUserId: myId);
+    await chat.send(widget.bookingId, text, myUserId: myId, imagePath: photo);
+  }
+
+  /// Picks a photo for the next message — taken now, or from the gallery.
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const AppIcon(AppIcons.camera_alt_rounded),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const AppIcon(AppIcons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    XFile? file;
+    try {
+      // Re-encoded as a JPEG no wider than 2048px, well inside the API's 5 MB.
+      file = await ImagePicker().pickImage(source: source, imageQuality: 85, maxWidth: 2048);
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.error(context,
+            source == ImageSource.camera ? 'The camera could not be opened.' : 'The gallery could not be opened.');
+      }
+      return;
+    }
+    if (file == null || !mounted) return;
+    setState(() => _attachment = file!.path);
   }
 
   Future<void> _retry(MessageModel failed) async {
@@ -159,9 +208,8 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
     // A customer opens the provider's full profile from the header; the
     // provider's side has no public profile to open for a customer.
-    final providerProfileId = context.select<AuthController, bool>((auth) => auth.isClient)
-        ? conversation?.providerProfileId
-        : null;
+    final providerProfileId =
+        context.select<AuthController, bool>((auth) => auth.isClient) ? conversation?.providerProfileId : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -183,9 +231,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      conversation?.participantName.isNotEmpty == true
-                          ? conversation!.participantName
-                          : 'Conversation',
+                      conversation?.participantName.isNotEmpty == true ? conversation!.participantName : 'Conversation',
                       style: const TextStyle(fontSize: 15),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -269,6 +315,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
           fromMe: fromMe,
           isDark: isDark,
           onRetry: message.hasFailed ? () => _retry(message) : null,
+          onOpenPhoto: message.imageUrl != null || message.localImagePath != null ? () => _openPhoto(message) : null,
           // Only a message you received can be reported.
           onReport: fromMe || message.isPending
               ? null
@@ -285,7 +332,16 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     );
   }
 
+  void _openPhoto(MessageModel message) {
+    Navigator.of(context).push(PageRouteBuilder<void>(
+      opaque: false,
+      barrierColor: Colors.black,
+      pageBuilder: (_, __, ___) => _FullScreenPhoto(message: message),
+    ));
+  }
+
   Widget _buildComposer(ChatController chat, bool isDark, Color inputBg) {
+    final attachment = _attachment;
     return SafeArea(
       top: false,
       child: Container(
@@ -296,68 +352,166 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
             top: BorderSide(color: isDark ? AppColors.lineDark : AppColors.line, width: 0.5),
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-                decoration: BoxDecoration(
-                  color: inputBg,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+            if (attachment != null)
+              _AttachmentPreview(path: attachment, onRemove: () => setState(() => _attachment = null)),
+            Row(
+              children: [
+                IconButton(
+                  tooltip: 'Send a photo',
+                  onPressed: chat.isSending ? null : _pickPhoto,
+                  icon: AppIcon(AppIcons.add_photo_alternate_outlined, color: context.accentInk),
                 ),
-                child: TextField(
-                  controller: _controller,
-                  // The API caps a message at 5000 characters; stop at the
-                  // limit rather than let the server reject the send.
-                  maxLength: 5000,
-                  maxLines: 4,
-                  minLines: 1,
-                  textInputAction: TextInputAction.send,
-                  decoration: const InputDecoration(
-                    hintText: 'Type a message…',
-                    border: InputBorder.none,
-                    counterText: '',
-                  ),
-                  onChanged: _onComposerChanged,
-                  onSubmitted: (_) => _send(),
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSizes.sm),
-            Semantics(
-              button: true,
-              label: 'Send message',
-              child: InkWell(
-                onTap: chat.isSending ? null : _send,
-                borderRadius: BorderRadius.circular(999),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: chat.isSending ? AppColors.neutral300 : AppColors.secondary,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.secondary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
+                    decoration: BoxDecoration(
+                      color: inputBg,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+                    ),
+                    child: TextField(
+                      controller: _controller,
+                      // The API caps a message at 5000 characters; stop at the
+                      // limit rather than let the server reject the send.
+                      maxLength: 5000,
+                      maxLines: 4,
+                      minLines: 1,
+                      textInputAction: TextInputAction.send,
+                      decoration: InputDecoration(
+                        hintText: attachment != null ? 'Add a caption…' : 'Type a message…',
+                        border: InputBorder.none,
+                        counterText: '',
                       ),
-                    ],
+                      onChanged: _onComposerChanged,
+                      onSubmitted: (_) => _send(),
+                    ),
                   ),
-                  child: chat.isSending
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
+                ),
+                const SizedBox(width: AppSizes.sm),
+                Semantics(
+                  button: true,
+                  label: 'Send message',
+                  child: InkWell(
+                    onTap: chat.isSending ? null : _send,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: chat.isSending ? AppColors.neutral300 : AppColors.secondary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.secondary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                        )
-                      : const AppIcon(AppIcons.send_rounded, color: AppColors.primary, size: 18),
+                        ],
+                      ),
+                      child: chat.isSending
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
+                            )
+                          : const AppIcon(AppIcons.send_rounded, color: AppColors.primary, size: 18),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The photo waiting to go with the next message, with a button to drop it.
+class _AttachmentPreview extends StatelessWidget {
+  final String path;
+  final VoidCallback onRemove;
+  const _AttachmentPreview({required this.path, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.sm),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              child: Image.file(File(path), width: 96, height: 96, fit: BoxFit.cover),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Semantics(
+                button: true,
+                label: 'Remove photo',
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                    child: const AppIcon(AppIcons.close_rounded, size: 14, color: Colors.white),
+                  ),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A message's photo — on this phone while sending, else from the API.
+class _MessagePhoto extends StatelessWidget {
+  final MessageModel message;
+  final BoxFit fit;
+  final double? width;
+  final double? height;
+  const _MessagePhoto({required this.message, this.fit = BoxFit.cover, this.width, this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final local = message.localImagePath;
+    if (message.imageUrl == null && local != null) {
+      return Image.file(File(local), fit: fit, width: width, height: height);
+    }
+    return PrivateImage(url: message.imageUrl!, fit: fit, width: width, height: height);
+  }
+}
+
+/// A chat photo on its own, full screen, with pinch to zoom.
+class _FullScreenPhoto extends StatelessWidget {
+  final MessageModel message;
+  const _FullScreenPhoto({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        title: Text(
+          message.senderName.isEmpty ? 'Photo' : message.senderName,
+          style: const TextStyle(color: Colors.white, fontSize: 15),
+        ),
+      ),
+      body: InteractiveViewer(
+        maxScale: 4,
+        child: Center(child: _MessagePhoto(message: message, fit: BoxFit.contain)),
       ),
     );
   }
@@ -369,6 +523,9 @@ class _Bubble extends StatelessWidget {
   final bool isDark;
   final VoidCallback? onRetry;
 
+  /// Opens the message's photo full screen; null when it has none.
+  final VoidCallback? onOpenPhoto;
+
   /// Long-press action on a received message.
   final VoidCallback? onReport;
 
@@ -377,45 +534,68 @@ class _Bubble extends StatelessWidget {
     required this.fromMe,
     required this.isDark,
     this.onRetry,
+    this.onOpenPhoto,
     this.onReport,
   });
 
   @override
   Widget build(BuildContext context) {
     final inputBg = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
-    final bubbleColor = message.hasFailed
-        ? context.errorBgColor
-        : (fromMe ? AppColors.secondary : inputBg);
+    final bubbleColor = message.hasFailed ? context.errorBgColor : (fromMe ? AppColors.secondary : inputBg);
     final textColor = message.hasFailed
         ? context.errorColor
         : (fromMe ? AppColors.primary : (isDark ? AppColors.textOnDark : AppColors.textPrimary));
 
     final bubble = Container(
-        margin: const EdgeInsets.only(bottom: AppSizes.sm),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(AppSizes.radiusMd),
-            topRight: const Radius.circular(AppSizes.radiusMd),
-            bottomLeft: Radius.circular(fromMe ? AppSizes.radiusMd : 2),
-            bottomRight: Radius.circular(fromMe ? 2 : AppSizes.radiusMd),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (fromMe ? AppColors.secondary : Colors.black).withValues(alpha: 0.08),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+      margin: const EdgeInsets.only(bottom: AppSizes.sm),
+      padding: message.hasImage
+          ? const EdgeInsets.fromLTRB(4, 4, 4, 8)
+          : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+      decoration: BoxDecoration(
+        color: bubbleColor,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(AppSizes.radiusMd),
+          topRight: const Radius.circular(AppSizes.radiusMd),
+          bottomLeft: Radius.circular(fromMe ? AppSizes.radiusMd : 2),
+          bottomRight: Radius.circular(fromMe ? 2 : AppSizes.radiusMd),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(message.content, style: AppTextStyles.bodyLarge.copyWith(color: textColor)),
-            const SizedBox(height: 4),
-            Row(
+        boxShadow: [
+          BoxShadow(
+            color: (fromMe ? AppColors.secondary : Colors.black).withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.hasImage)
+            Semantics(
+              button: true,
+              label: 'Photo. Open full screen',
+              child: GestureDetector(
+                onTap: onOpenPhoto,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMd - 2),
+                  child: _MessagePhoto(
+                    message: message,
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    height: 220,
+                  ),
+                ),
+              ),
+            ),
+          if (message.content.isNotEmpty)
+            Padding(
+              padding: message.hasImage ? const EdgeInsets.fromLTRB(10, 8, 10, 0) : EdgeInsets.zero,
+              child: Text(message.content, style: AppTextStyles.bodyLarge.copyWith(color: textColor)),
+            ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: message.hasImage ? const EdgeInsets.symmetric(horizontal: 10) : EdgeInsets.zero,
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
@@ -427,9 +607,7 @@ class _Bubble extends StatelessWidget {
                   style: AppTextStyles.caption.copyWith(
                     color: message.hasFailed
                         ? AppColors.error
-                        : (fromMe
-                            ? AppColors.primary.withValues(alpha: 0.65)
-                            : context.textMutedColor),
+                        : (fromMe ? AppColors.primary.withValues(alpha: 0.65) : context.textMutedColor),
                   ),
                 ),
                 // A read receipt only makes sense on a message you sent.
@@ -463,9 +641,10 @@ class _Bubble extends StatelessWidget {
                 ],
               ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
 
     return Align(
       alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,

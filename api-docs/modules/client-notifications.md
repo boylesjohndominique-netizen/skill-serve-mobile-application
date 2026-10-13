@@ -14,6 +14,7 @@ List the authenticated customer notification inbox
 |---|---|---:|---|
 | `per_page` | query | no | integer |
 | `page` | query | no | integer |
+| `archived` | query | no | boolean |
 
 ### Request body and validation
 
@@ -34,6 +35,36 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 422: Invalid pagination
+
+Response schema: `see openapi.json`
+
+## `POST /api/client/v1/notifications/archive`
+
+Moves them out of the feed (and the unread count) into the archive, marking them read. Ids that are not the user's own are ignored. Other open sessions are told on the user's private channel (`client.notifications.changed`).
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `ids` | yes | array |
+
+### Responses
+
+#### HTTP 200: How many were archived (updated_count)
+
+Response schema: `#/components/schemas/ClientReadAllEnvelope`
+
+#### HTTP 403: Active, verified customer or provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
 
 Response schema: `see openapi.json`
 
@@ -110,6 +141,36 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `POST /api/client/v1/notifications/delete`
+
+Ids that are not the user's own are ignored, never deleted. Other open sessions are told (`client.notifications.changed`).
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `ids` | yes | array |
+
+### Responses
+
+#### HTTP 200: How many were deleted (updated_count)
+
+Response schema: `#/components/schemas/ClientReadAllEnvelope`
+
+#### HTTP 403: Active, verified customer or provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `see openapi.json`
+
 ## `POST /api/client/v1/notifications/read-all`
 
 Mark all owned notifications as read
@@ -134,6 +195,36 @@ Response schema: `#/components/schemas/ClientReadAllEnvelope`
 
 Response schema: `see openapi.json`
 
+## `POST /api/client/v1/notifications/unarchive`
+
+Move archived notifications back to the feed
+
+**Authentication:** Bearer token
+
+### Parameters
+
+None.
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `ids` | yes | array |
+
+### Responses
+
+#### HTTP 200: How many were restored (updated_count)
+
+Response schema: `#/components/schemas/ClientReadAllEnvelope`
+
+#### HTTP 403: Active, verified customer or provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `see openapi.json`
+
 ## `GET /api/client/v1/notifications/unread-count`
 
 Count unread customer notifications
@@ -155,6 +246,36 @@ No JSON request body.
 Response schema: `#/components/schemas/ClientUnreadCountEnvelope`
 
 #### HTTP 403: Active, verified customer or provider account required
+
+Response schema: `see openapi.json`
+
+## `DELETE /api/client/v1/notifications/{notification}`
+
+Delete one notification
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `notification` | path | yes | string |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Deleted
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 403: Active, verified customer or provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Notification not found
 
 Response schema: `see openapi.json`
 

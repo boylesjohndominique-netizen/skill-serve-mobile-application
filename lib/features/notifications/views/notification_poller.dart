@@ -97,6 +97,10 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       _realtime.listen('App.Models.User.$userId', 'client.notification.created', (_) {
         _notifications.onRealtimeNotification();
       });
+      // Archived, restored or deleted on another of the user's devices.
+      _realtime.listen('App.Models.User.$userId', 'client.notifications.changed', (_) {
+        _notifications.onRemoteChange();
+      });
       // Chat content rides the same channel, so an open conversation updates
       // the moment the other party sends something. Deliberately separate from
       // the notification above: muting message alerts must not stop a
@@ -174,9 +178,7 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
 
     if (!_enabledInPreferences(notification.type)) return;
 
-    final text = notification.message.isEmpty
-        ? notification.title
-        : '${notification.title}: ${notification.message}';
+    final text = notification.message.isEmpty ? notification.title : '${notification.title}: ${notification.message}';
     AppSnackbar.success(context, text);
   }
 

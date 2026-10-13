@@ -172,6 +172,75 @@ void main() {
       controller.dispose();
     });
 
+    test('archiving moves notifications to the archive as read and recounts unread', () async {
+      final service = _FakeNotificationService(unread: 2)
+        ..feed = [_notification('n2', 'Newer', read: false), _notification('n1', 'Older', read: false)];
+      final controller = NotificationController(service: service);
+      await controller.load();
+      await controller.loadArchived();
+
+      expect(await controller.archive({'n1'}), isTrue);
+
+      expect(service.calls, ['archive n1']);
+      expect(controller.notifications.map((n) => n.id), ['n2']);
+      expect(controller.archived.single.id, 'n1');
+      expect(controller.archived.single.isRead, isTrue);
+      expect(controller.unreadCount, 1);
+
+      expect(await controller.unarchive({'n1'}), isTrue);
+      expect(controller.notifications.map((n) => n.id), unorderedEquals(['n2', 'n1']));
+      expect(controller.archived, isEmpty);
+      controller.dispose();
+    });
+
+    test('deleting removes notifications from the feed and the archive', () async {
+      final service = _FakeNotificationService(unread: 1)
+        ..feed = [_notification('n2', 'Unread', read: false)]
+        ..archivedFeed = [_notification('n1', 'Archived', read: true)];
+      final controller = NotificationController(service: service);
+      await controller.load();
+      await controller.loadArchived();
+
+      expect(await controller.delete({'n1', 'n2'}), isTrue);
+
+      expect(controller.notifications, isEmpty);
+      expect(controller.archived, isEmpty);
+      expect(controller.unreadCount, 0);
+      controller.dispose();
+    });
+
+    test('a refused archive or delete puts everything back', () async {
+      final service = _FakeNotificationService(unread: 1)..feed = [_notification('n1', 'Unread', read: false)];
+      final controller = NotificationController(service: service);
+      await controller.load();
+      service.fail = true;
+
+      expect(await controller.archive({'n1'}), isFalse);
+      expect(controller.notifications.single.id, 'n1');
+      expect(controller.archived, isEmpty);
+      expect(controller.unreadCount, 1);
+
+      expect(await controller.delete({'n1'}), isFalse);
+      expect(controller.notifications.single.id, 'n1');
+      expect(controller.unreadCount, 1);
+      expect(controller.errorMessage, isNotNull);
+      controller.dispose();
+    });
+
+    test('a change on another device re-reads the feed quietly', () async {
+      final service = _FakeNotificationService(unread: 1)..feed = [_notification('n1', 'Unread', read: false)];
+      final controller = NotificationController(service: service);
+      await controller.load();
+
+      service.feed = [];
+      await controller.onRemoteChange();
+
+      expect(controller.notifications, isEmpty);
+      expect(controller.unreadCount, 0);
+      expect(controller.isLoading, isFalse);
+      controller.dispose();
+    });
+
     test('reset clears state and stops polling', () async {
       final controller = NotificationController(service: _FakeNotificationService(unread: 1));
       controller.startPolling();
@@ -209,6 +278,24 @@ class _FakeNotificationService extends NotificationService {
     return unread;
   }
 
+  List<NotificationModel> archivedFeed = [];
+  bool fail = false;
+  final calls = <String>[];
+
   @override
-  Future<List<NotificationModel>> getNotifications() async => feed;
+  Future<List<NotificationModel>> getNotifications({bool archived = false}) async => archived ? archivedFeed : feed;
+
+  Future<void> _record(String call, List<String> ids) async {
+    calls.add('$call ${ids.join(',')}');
+    if (fail) throw Exception('offline');
+  }
+
+  @override
+  Future<void> archive(List<String> ids) => _record('archive', ids);
+
+  @override
+  Future<void> unarchive(List<String> ids) => _record('unarchive', ids);
+
+  @override
+  Future<void> delete(List<String> ids) => _record('delete', ids);
 }

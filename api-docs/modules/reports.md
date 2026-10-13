@@ -202,6 +202,40 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `GET /api/reports/{report}/message-image`
+
+Streamed from private storage so a moderator can see what was reported. Only for a report about a message that carries a photo.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `report` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The image file
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Unauthorized
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: The report is not about a message with a photo
+
+Response schema: `see openapi.json`
+
 ## `PATCH /api/reports/{report}/notes`
 
 PATCH /api/reports/{report}/notes — append an investigation note.

@@ -66,8 +66,8 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             const SizedBox(height: AppSizes.lg),
             if (user != null)
               ProfileCard(
+                // No edit button here: Edit profile is in the Account group.
                 user: user,
-                onEdit: () => context.push('/edit-profile'),
                 trailingBadge:
                     // The live account status, refreshed by verification
                     // notifications; the profile loaded on open is a fallback.
@@ -132,9 +132,9 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             SettingsGroup(
               icon: AppIcons.history_rounded,
               title: 'Activity',
-              summary: 'Notifications, history, reports',
+              summary: 'Activity history, reports',
               children: [
-                SettingsTile(icon: AppIcons.notifications_none_rounded, label: 'Notifications', onTap: () => context.push('/notifications')),
+                // Notifications open from the bell on the dashboard.
                 SettingsTile(icon: AppIcons.history_rounded, label: 'Activity history', onTap: () => context.push('/activity-history')),
                 SettingsTile(icon: AppIcons.flag_outlined, label: 'File a report', onTap: () => context.push('/file-report')),
                 SettingsTile(icon: AppIcons.receipt_long_outlined, label: 'My reports', onTap: () => context.push('/my-reports')),

@@ -16,6 +16,12 @@ class NotificationController extends ChangeNotifier {
 
   List<NotificationModel> notifications = [];
   bool isLoading = false;
+
+  /// The archive, loaded when the user opens it.
+  List<NotificationModel> archived = [];
+  bool isLoadingArchived = false;
+  bool hasLoadedArchived = false;
+  String? archiveError;
   int unreadCount = 0;
 
   /// Set when the feed itself could not be loaded, so the screen can offer a
@@ -52,10 +58,12 @@ class NotificationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The feed narrowed to [types]; an empty list means everything.
-  List<NotificationModel> withTypes(List<NotificationType> types) => types.isEmpty
-      ? notifications
-      : notifications.where((n) => types.contains(n.type)).toList();
+  /// The feed (or the archive, when [archive]) narrowed to [types]; an empty
+  /// list means everything.
+  List<NotificationModel> withTypes(List<NotificationType> types, {bool archive = false}) {
+    final source = archive ? archived : notifications;
+    return types.isEmpty ? source : source.where((n) => types.contains(n.type)).toList();
+  }
 
   Future<void> markAsRead(String id) async {
     // Shown as read at once; the request confirms it. An already-read
@@ -103,6 +111,117 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
+  Future<void> loadArchived() async {
+    isLoadingArchived = true;
+    archiveError = null;
+    notifyListeners();
+    try {
+      archived = await _service.getNotifications(archived: true);
+      hasLoadedArchived = true;
+    } catch (e) {
+      archiveError = apiErrorMessage(e, 'Unable to load the archive.');
+    }
+    isLoadingArchived = false;
+    notifyListeners();
+  }
+
+  /// Archives [ids] from the feed. Shown at once; put back if refused.
+  Future<bool> archive(Set<String> ids) => _move(
+        ids,
+        request: _service.archive,
+        fromArchive: false,
+        failure: 'Unable to archive those notifications.',
+      );
+
+  /// Moves archived [ids] back to the feed.
+  Future<bool> unarchive(Set<String> ids) => _move(
+        ids,
+        request: _service.unarchive,
+        fromArchive: true,
+        failure: 'Unable to restore those notifications.',
+      );
+
+  /// Deletes [ids] from the feed or the archive for good.
+  Future<bool> delete(Set<String> ids) async {
+    final previousFeed = notifications;
+    final previousArchive = archived;
+    notifications = [
+      for (final n in notifications)
+        if (!ids.contains(n.id)) n
+    ];
+    archived = [
+      for (final n in archived)
+        if (!ids.contains(n.id)) n
+    ];
+    _recount();
+    try {
+      await _service.delete(ids.toList());
+      return true;
+    } catch (e) {
+      notifications = previousFeed;
+      archived = previousArchive;
+      errorMessage = apiErrorMessage(e, 'Unable to delete those notifications.');
+      _recount();
+      return false;
+    }
+  }
+
+  Future<bool> _move(
+    Set<String> ids, {
+    required Future<void> Function(List<String>) request,
+    required bool fromArchive,
+    required String failure,
+  }) async {
+    final previousFeed = notifications;
+    final previousArchive = archived;
+    final source = fromArchive ? archived : notifications;
+    final moving = [
+      for (final n in source)
+        if (ids.contains(n.id)) fromArchive ? n : n.copyWith(isRead: true),
+    ];
+    if (fromArchive) {
+      archived = [
+        for (final n in archived)
+          if (!ids.contains(n.id)) n
+      ];
+      notifications = [...moving, ...notifications]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    } else {
+      notifications = [
+        for (final n in notifications)
+          if (!ids.contains(n.id)) n
+      ];
+      archived = [...moving, ...archived]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    _recount();
+    try {
+      await request(ids.toList());
+      return true;
+    } catch (e) {
+      notifications = previousFeed;
+      archived = previousArchive;
+      errorMessage = apiErrorMessage(e, failure);
+      _recount();
+      return false;
+    }
+  }
+
+  void _recount() {
+    unreadCount = notifications.where((n) => !n.isRead).length;
+    notifyListeners();
+  }
+
+  /// Another of the user's sessions archived, restored or deleted
+  /// notifications: re-read what this one shows.
+  Future<void> onRemoteChange() async {
+    try {
+      notifications = await _service.getNotifications();
+      if (hasLoadedArchived) archived = await _service.getNotifications(archived: true);
+      _recount();
+    } catch (_) {
+      // Quiet: the next pull-to-refresh or check catches up.
+    }
+  }
+
   /// Starts checking for new notifications (idempotent).
   void startPolling() {
     if (_timer != null) return;
@@ -122,6 +241,9 @@ class NotificationController extends ChangeNotifier {
   void reset() {
     stopPolling();
     notifications = [];
+    archived = [];
+    hasLoadedArchived = false;
+    archiveError = null;
     unreadCount = 0;
     incoming = null;
     errorMessage = null;

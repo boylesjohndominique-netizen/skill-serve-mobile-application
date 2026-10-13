@@ -38,6 +38,41 @@ Map<String, dynamic> conversationPayload([Map<String, dynamic> overrides = const
 
 void main() {
   group('MessageModel', () {
+    test('a photo message carries its private image url and previews as a photo', () {
+      final photo = MessageModel.fromJson(messagePayload({
+        'content': null,
+        'image_url': 'https://api.test/api/client/v1/bookings/42/messages/17/image',
+      }));
+
+      expect(photo.hasImage, isTrue);
+      expect(photo.imageUrl, endsWith('/messages/17/image'));
+      expect(photo.content, '');
+      expect(photo.preview, '📷 Photo');
+
+      final captioned = MessageModel.fromJson(messagePayload({'image_url': 'https://api.test/x'}));
+      expect(captioned.preview, 'On my way.');
+
+      final text = MessageModel.fromJson(messagePayload());
+      expect(text.hasImage, isFalse);
+      expect(text.imageUrl, isNull);
+    });
+
+    test('a photo being sent keeps its local file through a failed send', () {
+      final pending = MessageModel(
+        id: 'pending-1',
+        senderId: '5',
+        content: '',
+        sentAt: DateTime(2026, 10, 13),
+        localImagePath: '/tmp/photo.jpg',
+        isPending: true,
+      );
+
+      final failed = pending.copyWith(isPending: false, hasFailed: true);
+      expect(failed.localImagePath, '/tmp/photo.jpg');
+      expect(failed.hasImage, isTrue);
+      expect(failed.preview, '📷 Photo');
+    });
+
     test('parses a booking message payload', () {
       final message = MessageModel.fromJson(messagePayload());
 

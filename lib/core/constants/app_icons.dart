@@ -52,6 +52,9 @@ abstract final class AppIcons {
   static const AppIconData chat_bubble_outline_rounded = HugeIcons.strokeRoundedMessage01;
   static const AppIconData chat_bubble_rounded = HugeIcons.strokeRoundedMessage02;
   static const AppIconData inbox_outlined = HugeIcons.strokeRoundedInbox;
+  static const AppIconData archive_outlined = HugeIcons.strokeRoundedArchive02;
+  static const AppIconData unarchive_outlined = HugeIcons.strokeRoundedArchiveRestore;
+  static const AppIconData checklist_rounded = HugeIcons.strokeRoundedCheckList;
   static const AppIconData mail_outline_rounded = HugeIcons.strokeRoundedMail01;
   static const AppIconData send_rounded = HugeIcons.strokeRoundedTelegram;
   static const AppIconData support_agent_rounded = HugeIcons.strokeRoundedHeadset;
