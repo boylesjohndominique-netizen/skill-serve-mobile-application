@@ -39,7 +39,7 @@ Response schema: `see openapi.json`
 
 ## `GET /api/health`
 
-Public. Reports whether the database and the upload storage (storage/app, the Render persistent disk in production) are usable. Never includes error details; those go to the server log. `otp` says whether the 6-digit codes can be sent (Twilio Verify configured, or a real mailer) without failing the check. With the brevo-api mailer it also asks Brevo (answer cached 5 minutes) and is `down`, with a plain-language `error`, when Brevo refuses the key or the server's IP, the sending allowance is used up, or emails were accepted in the last two days but none delivered (a suspended account).
+Public. Reports whether the database and the upload storage (storage/app, the Render persistent disk in production) are usable. `storage.persistent` says whether storage/app is a separate mount (a persistent disk); in production a `false` comes with a `warning`, because uploads would be lost on the next restart or deploy. Never includes error details; those go to the server log. `otp` says whether the 6-digit codes can be sent (Twilio Verify configured, or a real mailer) without failing the check. With the brevo-api mailer it also asks Brevo (answer cached 5 minutes) and is `down`, with a plain-language `error`, when Brevo refuses the key or the server's IP, the sending allowance is used up, or emails were accepted in the last two days but none delivered (a suspended account).
 
 **Authentication:** Public
 
@@ -64,7 +64,8 @@ No JSON request body.
             "status": "up"
         },
         "storage": {
-            "status": "up"
+            "status": "up",
+            "persistent": true
         },
         "otp": {
             "status": "up",

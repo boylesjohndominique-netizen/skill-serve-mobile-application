@@ -93,7 +93,7 @@ No JSON request body.
 
 ## `POST /api/administrators`
 
-POST /api/administrators — create a new administrator account.
+Every new administrator gets the `admin` role — SkillServe has exactly one super administrator, which is never granted. `role` may be omitted; if sent it must be `admin`.
 
 **Authentication:** Bearer token
 
@@ -110,7 +110,7 @@ None.
 | `email` | yes | string, format=email |
 | `password` | yes | string, format=password, minLength=8 |
 | `password_confirmation` | no | string, format=password |
-| `role` | yes | string |
+| `role` | no | string, one of: `admin` |
 
 Example request body:
 
@@ -120,8 +120,7 @@ Example request body:
     "last_name": "Doe",
     "email": "jane.doe@skillserve.test",
     "password": "Secret#2026",
-    "password_confirmation": "Secret#2026",
-    "role": "admin"
+    "password_confirmation": "Secret#2026"
 }
 ```
 
