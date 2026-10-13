@@ -11,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
+import '../../../core/widgets/inputs/photo_attachments_field.dart';
 
 /// Report a review, a message, a service listing or a provider: pick a
 /// reason, say why, send.
@@ -82,6 +83,7 @@ class _ReportContentSheet extends StatefulWidget {
 class _ReportContentSheetState extends State<_ReportContentSheet> {
   final _details = TextEditingController();
   ReportReason? _reason;
+  List<String> _photos = const [];
 
   @override
   void dispose() {
@@ -100,6 +102,7 @@ class _ReportContentSheetState extends State<_ReportContentSheet> {
       providerId: widget.providerId,
       reason: _reason!,
       details: _details.text.trim(),
+      photoPaths: _photos,
     );
     if (!mounted) return;
 
@@ -158,6 +161,13 @@ class _ReportContentSheetState extends State<_ReportContentSheet> {
               maxLines: 3,
               maxLength: 2000,
               onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: AppSizes.sm),
+            PhotoAttachmentsField(
+              paths: _photos,
+              enabled: !submitting,
+              helper: 'Photos as proof · optional · up to 5',
+              onChanged: (photos) => setState(() => _photos = photos),
             ),
             const SizedBox(height: AppSizes.lg),
             PrimaryButton(

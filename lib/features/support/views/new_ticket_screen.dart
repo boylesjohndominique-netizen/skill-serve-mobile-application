@@ -11,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
+import '../../../core/widgets/inputs/photo_attachments_field.dart';
 import '../../../core/constants/app_icons.dart';
 
 /// Raise a new support ticket.
@@ -25,6 +26,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
   final _subjectController = TextEditingController();
   final _descriptionController = TextEditingController();
   TicketCategory _category = TicketCategory.general;
+  List<String> _photos = const [];
 
   @override
   void dispose() {
@@ -43,6 +45,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
       subject: _subjectController.text.trim(),
       description: _descriptionController.text.trim(),
       category: _category,
+      photoPaths: _photos,
     );
     if (!mounted) return;
 
@@ -114,6 +117,15 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
                 maxLength: 10000,
                 onChanged: (_) => setState(() {}),
               ).animate().fadeIn(delay: 300.ms, duration: 350.ms).slideY(begin: 0.05, end: 0),
+              const SizedBox(height: AppSizes.lg),
+              Text('Photos', style: AppTextStyles.titleLarge),
+              const SizedBox(height: 4),
+              PhotoAttachmentsField(
+                paths: _photos,
+                enabled: !support.isSubmitting,
+                helper: 'Optional · screenshots or photos that show the problem · up to 5',
+                onChanged: (photos) => setState(() => _photos = photos),
+              ),
               const SizedBox(height: AppSizes.xxl),
             ],
           ),

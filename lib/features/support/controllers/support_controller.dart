@@ -55,6 +55,7 @@ class SupportController extends ChangeNotifier {
     required String subject,
     required String description,
     required TicketCategory category,
+    List<String> photoPaths = const [],
   }) async {
     isSubmitting = true;
     errorMessage = null;
@@ -64,6 +65,7 @@ class SupportController extends ChangeNotifier {
         subject: subject,
         description: description,
         category: category,
+        photoPaths: photoPaths,
       );
       tickets = [ticket, ...tickets];
       return ticket;
@@ -76,15 +78,16 @@ class SupportController extends ChangeNotifier {
     }
   }
 
-  /// Adds a reply to the open ticket. The API returns the whole ticket, so the
-  /// thread and the inbox row are both refreshed from one response.
-  Future<bool> reply(String id, String body) async {
-    if (body.trim().isEmpty) return false;
+  /// Adds a reply — text, [photoPaths], or both — to the open ticket. The API
+  /// returns the whole ticket, so the thread and the inbox row are both
+  /// refreshed from one response.
+  Future<bool> reply(String id, String body, {List<String> photoPaths = const []}) async {
+    if (body.trim().isEmpty && photoPaths.isEmpty) return false;
     isSubmitting = true;
     errorMessage = null;
     notifyListeners();
     try {
-      final updated = await _service.reply(id, body.trim());
+      final updated = await _service.reply(id, body.trim(), photoPaths: photoPaths);
       activeTicket = updated;
       final index = tickets.indexWhere((t) => t.id == updated.id);
       if (index != -1) {

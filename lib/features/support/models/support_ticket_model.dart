@@ -32,12 +32,16 @@ class TicketReply {
   final String authorId;
   final DateTime createdAt;
 
+  /// Photos sent with this reply — private, read with the user's token.
+  final List<String> photoUrls;
+
   const TicketReply({
     required this.id,
     required this.body,
     this.authorName = '',
     this.authorId = '',
     required this.createdAt,
+    this.photoUrls = const [],
   });
 
   factory TicketReply.fromJson(Map<String, dynamic> json) {
@@ -48,6 +52,7 @@ class TicketReply {
       authorName: author?['name'] as String? ?? '',
       authorId: author?['id']?.toString() ?? '',
       createdAt: SupportTicketModel.parseDate(json['created_at']) ?? DateTime.now(),
+      photoUrls: SupportTicketModel.photoUrlsFrom(json['attachments']),
     );
   }
 }
@@ -68,6 +73,9 @@ class SupportTicketModel {
   /// The conversation. Only loaded on the detail endpoint, so a list row shows
   /// an empty thread rather than a wrong count.
   final List<TicketReply> replies;
+
+  /// Photos sent with the ticket itself.
+  final List<String> photoUrls;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -81,6 +89,7 @@ class SupportTicketModel {
     required this.status,
     this.resolutionNote,
     this.replies = const [],
+    this.photoUrls = const [],
     required this.createdAt,
     this.updatedAt,
   });
@@ -103,9 +112,16 @@ class SupportTicketModel {
           for (final item in (json['messages'] as List? ?? const []))
             TicketReply.fromJson(item as Map<String, dynamic>),
         ],
+        photoUrls: photoUrlsFrom(json['attachments']),
         createdAt: parseDate(json['created_at']) ?? DateTime.now(),
         updatedAt: parseDate(json['updated_at']),
       );
+
+  /// The `url` of each item in an `attachments` list.
+  static List<String> photoUrlsFrom(Object? attachments) => [
+        for (final item in attachments is List ? attachments : const [])
+          if (item is Map && item['url'] is String) item['url'] as String,
+      ];
 
   /// An unknown status reads as open rather than crashing the list.
   static TicketStatus statusFromApi(String? status) => switch (status) {

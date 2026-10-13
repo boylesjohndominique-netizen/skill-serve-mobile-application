@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../messaging/controllers/chat_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -13,7 +12,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/realtime_client.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/feedback/app_snackbar.dart';
+import '../../../core/utils/photo_picker.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
@@ -153,41 +152,8 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
   /// Picks a photo for the next message — taken now, or from the gallery.
   Future<void> _pickPhoto() async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const AppIcon(AppIcons.camera_alt_rounded),
-              title: const Text('Take a photo'),
-              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const AppIcon(AppIcons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
-              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-
-    XFile? file;
-    try {
-      // Re-encoded as a JPEG no wider than 2048px, well inside the API's 5 MB.
-      file = await ImagePicker().pickImage(source: source, imageQuality: 85, maxWidth: 2048);
-    } catch (_) {
-      if (mounted) {
-        AppSnackbar.error(context,
-            source == ImageSource.camera ? 'The camera could not be opened.' : 'The gallery could not be opened.');
-      }
-      return;
-    }
-    if (file == null || !mounted) return;
-    setState(() => _attachment = file!.path);
+    final picked = await pickPhotos(context);
+    if (picked.isNotEmpty && mounted) setState(() => _attachment = picked.first);
   }
 
   Future<void> _retry(MessageModel failed) async {

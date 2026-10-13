@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skillserve_mobile/features/reports/controllers/report_controller.dart';
 import 'package:skillserve_mobile/features/reports/models/report_model.dart';
+import 'package:skillserve_mobile/features/reports/services/report_service.dart';
 import 'package:skillserve_mobile/features/support/models/support_ticket_model.dart';
 
 Map<String, dynamic> reportPayload([Map<String, dynamic> overrides = const {}]) => {
@@ -51,8 +53,80 @@ Map<String, dynamic> ticketPayload([Map<String, dynamic> overrides = const {}]) 
       ...overrides,
     };
 
+/// Raises disputes and takes evidence; [failPhotos] refuses that many uploads.
+class _FakeReportService extends ReportService {
+  _FakeReportService({this.failPhotos = 0});
+
+  int failPhotos;
+  final uploaded = <String>[];
+
+  @override
+  Future<DisputeModel> raiseDispute({required String bookingId, required String reason}) async =>
+      DisputeModel.fromJson(disputePayload({'booking_id': int.parse(bookingId), 'reason': reason}));
+
+  @override
+  Future<DisputeModel> uploadDisputeEvidence({required String bookingId, required String filePath, String? caption}) async {
+    if (failPhotos > 0) {
+      failPhotos--;
+      throw Exception('offline');
+    }
+    uploaded.add(filePath);
+    return DisputeModel.fromJson(disputePayload({
+      'booking_id': int.parse(bookingId),
+      'evidence': [
+        for (var i = 0; i < uploaded.length; i++) {'id': 'e$i', 'label': 'Photo', 'is_mine': true},
+      ],
+    }));
+  }
+}
+
 void main() {
+  group('raising a dispute with photos', () {
+    test('the photos are attached as evidence after the dispute is raised', () async {
+      final service = _FakeReportService();
+      final controller = ReportController(service: service);
+
+      final dispute = await controller.raiseDispute(
+        bookingId: '42',
+        reason: 'The unit still leaks.',
+        photoPaths: ['/p/leak.jpg', '/p/floor.jpg'],
+      );
+
+      expect(service.uploaded, ['/p/leak.jpg', '/p/floor.jpg']);
+      expect(dispute?.evidence, hasLength(2));
+      expect(controller.unsentDisputePhotos, 0);
+      expect(controller.disputes.single.evidence, hasLength(2));
+    });
+
+    test('a photo that fails does not undo the dispute; the screen is told', () async {
+      final controller = ReportController(service: _FakeReportService(failPhotos: 1));
+
+      final dispute = await controller.raiseDispute(
+        bookingId: '42',
+        reason: 'The unit still leaks.',
+        photoPaths: ['/p/leak.jpg', '/p/floor.jpg'],
+      );
+
+      expect(dispute, isNotNull);
+      expect(controller.unsentDisputePhotos, 1);
+      expect(dispute!.evidence, hasLength(1));
+    });
+  });
+
   group('ReportModel', () {
+    test('a report carries the reporter\'s proof photos', () {
+      final report = ReportModel.fromJson(reportPayload({
+        'attachments': [
+          {'id': 1, 'url': 'https://api.test/api/client/v1/reports/8/attachments/1'},
+          {'id': 2, 'url': 'https://api.test/api/client/v1/reports/8/attachments/2'},
+        ],
+      }));
+
+      expect(report.photoUrls, hasLength(2));
+      expect(report.photoUrls.first, endsWith('/reports/8/attachments/1'));
+      expect(ReportModel.fromJson(reportPayload()).photoUrls, isEmpty);
+    });
+
     test('a provider reported from their profile is offered no booking-only reasons', () {
       // There is no job behind a profile report, so nothing about one.
       expect(ReportReason.forProviders, isNot(contains(ReportReason.noShow)));
@@ -187,6 +261,30 @@ void main() {
   });
 
   group('SupportTicketModel', () {
+    test('photos are kept with the ticket and with the reply they came with', () {
+      final ticket = SupportTicketModel.fromJson(ticketPayload({
+        'attachments': [
+          {'id': 1, 'url': 'https://api.test/api/client/v1/support/tickets/3/attachments/1'},
+        ],
+        'messages': [
+          {
+            'id': 12,
+            'body': '',
+            'attachments': [
+              {'id': 2, 'url': 'https://api.test/api/client/v1/support/tickets/3/attachments/2'},
+            ],
+            'author': {'id': 5, 'name': 'Maria'},
+            'created_at': '2026-10-01T12:00:00+08:00',
+          },
+        ],
+      }));
+
+      expect(ticket.photoUrls.single, endsWith('/attachments/1'));
+      expect(ticket.replies.single.body, '');
+      expect(ticket.replies.single.photoUrls.single, endsWith('/attachments/2'));
+      expect(SupportTicketModel.fromJson(ticketPayload()).replies.single.photoUrls, isEmpty);
+    });
+
     test('parses a ticket and its thread', () {
       final ticket = SupportTicketModel.fromJson(ticketPayload());
 

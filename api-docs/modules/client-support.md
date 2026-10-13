@@ -36,7 +36,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/support/tickets`
 
-Raise a support ticket as a customer or provider
+Send JSON, or multipart/form-data to attach up to 5 photos (screenshots, proof) in `images[]` — JPG, PNG or WebP, 5 MB each. Support staff see them with the ticket.
 
 **Authentication:** Bearer token
 
@@ -96,9 +96,40 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `GET /api/client/v1/support/tickets/{ticket}/attachments/{attachment}`
+
+Streamed from private storage to the requester only. The URLs come from the ticket's and each message's `attachments`.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `ticket` | path | yes | integer |
+| `attachment` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The photo
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Not the caller's ticket, or no such photo
+
+Response schema: `see openapi.json`
+
 ## `POST /api/client/v1/support/tickets/{ticket}/replies`
 
-Reply to a support ticket the account raised
+Text, photos, or both: `body` is required unless `images[]` (multipart, up to 5 JPG/PNG/WebP photos of 5 MB) is sent.
 
 **Authentication:** Bearer token
 

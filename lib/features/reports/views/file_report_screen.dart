@@ -18,6 +18,7 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
+import '../../../core/widgets/inputs/photo_attachments_field.dart';
 import '../../reports/models/report_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
@@ -41,6 +42,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
   final _detailsController = TextEditingController();
   ReportReason? _reason;
   String? _bookingId;
+  List<String> _photos = const [];
   bool _loadingBookings = false;
 
   bool get _isProvider => context.read<AuthController>().isProvider;
@@ -90,6 +92,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
       bookingId: _bookingId!,
       reason: _reason!,
       details: _detailsController.text.trim(),
+      photoPaths: _photos,
     );
     if (!mounted) return;
 
@@ -159,6 +162,17 @@ class _FileReportScreenState extends State<FileReportScreen> {
                       // The API needs at least 10 characters to act on a report.
                       onChanged: (_) => setState(() {}),
                     ).animate().fadeIn(delay: 640.ms, duration: 350.ms).slideY(begin: 0.05, end: 0),
+                    const SizedBox(height: AppSizes.lg),
+
+                    Text('Photos as proof', style: AppTextStyles.titleLarge)
+                        .animate().fadeIn(delay: 680.ms, duration: 300.ms),
+                    const SizedBox(height: 4),
+                    PhotoAttachmentsField(
+                      paths: _photos,
+                      enabled: !controller.isSubmitting,
+                      helper: 'Optional · what happened, damage, receipts or screenshots · up to 5',
+                      onChanged: (photos) => setState(() => _photos = photos),
+                    ),
                     const SizedBox(height: AppSizes.xxl),
                   ],
                 ),

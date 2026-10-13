@@ -5,7 +5,9 @@ import '../services/report_service.dart';
 
 /// Drives the file-a-report flow, the My Reports list and booking disputes.
 class ReportController extends ChangeNotifier {
-  final ReportService _reportService = ReportService();
+  ReportController({ReportService? service}) : _reportService = service ?? ReportService();
+
+  final ReportService _reportService;
 
   List<ReportModel> reports = [];
   List<DisputeModel> disputes = [];
@@ -70,12 +72,14 @@ class ReportController extends ChangeNotifier {
     String? providerId,
     required ReportReason reason,
     required String details,
+    List<String> photoPaths = const [],
   }) async {
     isSubmitting = true;
     errorMessage = null;
     notifyListeners();
     try {
       final report = await _reportService.fileReport(
+        photoPaths: photoPaths,
         bookingId: bookingId,
         reviewId: reviewId,
         messageId: messageId,
@@ -95,21 +99,36 @@ class ReportController extends ChangeNotifier {
     }
   }
 
-  /// Raises a dispute on a booking. Returns null and sets [errorMessage] when
-  /// the API refuses it — most often because the job cannot be disputed in its
-  /// current status, or already is.
+  /// Photos that could not be attached to the last dispute raised, so the
+  /// screen can say so (the dispute itself stands; they can be added later
+  /// from My Reports).
+  int unsentDisputePhotos = 0;
+
+  /// Raises a dispute on a booking, then attaches [photoPaths] as evidence.
+  /// Returns null and sets [errorMessage] when the API refuses the dispute —
+  /// most often because the job cannot be disputed in its current status, or
+  /// already is.
   Future<DisputeModel?> raiseDispute({
     required String bookingId,
     required String reason,
+    List<String> photoPaths = const [],
   }) async {
     isSubmitting = true;
     errorMessage = null;
+    unsentDisputePhotos = 0;
     notifyListeners();
     try {
-      final dispute = await _reportService.raiseDispute(
+      var dispute = await _reportService.raiseDispute(
         bookingId: bookingId,
         reason: reason,
       );
+      for (final path in photoPaths) {
+        try {
+          dispute = await _reportService.uploadDisputeEvidence(bookingId: bookingId, filePath: path);
+        } catch (_) {
+          unsentDisputePhotos++;
+        }
+      }
       disputes = [dispute, ...disputes.where((d) => d.bookingId != dispute.bookingId)];
       return dispute;
     } catch (e) {

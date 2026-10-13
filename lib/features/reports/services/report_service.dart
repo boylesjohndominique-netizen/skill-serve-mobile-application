@@ -47,11 +47,12 @@ class ReportService {
     String? providerId,
     required ReportReason reason,
     required String details,
+    List<String> photoPaths = const [],
   }) async {
     final subjects = [bookingId, reviewId, messageId, serviceId, providerId].whereType<String>().length;
     assert(subjects == 1, 'A report names exactly one subject.');
 
-    final response = await ApiClient.instance.dio.post(_reports, data: {
+    final fields = <String, dynamic>{
       if (bookingId != null) 'booking_id': int.parse(bookingId),
       if (reviewId != null) 'review_id': int.parse(reviewId),
       if (messageId != null) 'message_id': int.parse(messageId),
@@ -59,7 +60,17 @@ class ReportService {
       if (providerId != null) 'provider_id': int.parse(providerId),
       'reason': reason.value,
       'description': details,
-    });
+    };
+    // Photos as proof go as multipart images[]; a report without any stays JSON.
+    final response = await ApiClient.instance.dio.post(
+      _reports,
+      data: photoPaths.isEmpty
+          ? fields
+          : FormData.fromMap({
+              ...fields,
+              'images[]': [for (final path in photoPaths) await imageMultipart(path)],
+            }),
+    );
     return ReportModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 

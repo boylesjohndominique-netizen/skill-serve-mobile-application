@@ -124,6 +124,41 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 Response schema: `see openapi.json`
 
+## `GET /api/support/tickets/{ticket}/attachments/{attachment}`
+
+Streamed from private storage after checking that the caller may view the ticket. The ids come from the ticket's `attachments` and each message's `attachments` (`download_path`).
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `ticket` | path | yes | integer |
+| `attachment` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The photo
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Unauthorized
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: No such photo on this ticket
+
+Response schema: `see openapi.json`
+
 ## `PATCH /api/support/tickets/{ticket}/resolve`
 
 Resolve a support ticket

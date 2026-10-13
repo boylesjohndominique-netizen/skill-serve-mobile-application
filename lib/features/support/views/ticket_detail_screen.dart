@@ -13,9 +13,13 @@ import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/status_badge.dart';
+import '../../../core/widgets/inputs/photo_attachments_field.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/widgets/misc/private_photo_strip.dart';
+import '../../../core/utils/photo_picker.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/widgets/feedback/app_notice.dart';
+import '../../../core/theme/app_palette.dart';
 
 /// One support ticket and its conversation with staff.
 class TicketDetailScreen extends StatefulWidget {
@@ -28,6 +32,10 @@ class TicketDetailScreen extends StatefulWidget {
 
 class _TicketDetailScreenState extends State<TicketDetailScreen> {
   final _replyController = TextEditingController();
+
+  /// Photos picked for the next reply.
+  List<String> _photos = const [];
+  static const _maxPhotos = 5;
 
   @override
   void initState() {
@@ -45,17 +53,27 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   Future<void> _sendReply() async {
     final text = _replyController.text.trim();
-    if (text.isEmpty) return;
+    final photos = _photos;
+    if (text.isEmpty && photos.isEmpty) return;
 
     final support = context.read<SupportController>();
     _replyController.clear();
-    final ok = await support.reply(widget.ticketId, text);
+    setState(() => _photos = const []);
+    final ok = await support.reply(widget.ticketId, text, photoPaths: photos);
     if (!mounted) return;
 
     if (!ok) {
-      // Give the text back so nothing the user typed is lost.
+      // Give the text and photos back so nothing the user added is lost.
       _replyController.text = text;
+      setState(() => _photos = photos);
       AppSnackbar.error(context, support.errorMessage ?? 'Unable to send this reply.');
+    }
+  }
+
+  Future<void> _addPhotos() async {
+    final picked = await pickPhotos(context, max: _maxPhotos - _photos.length);
+    if (picked.isNotEmpty && mounted) {
+      setState(() => _photos = [..._photos, ...picked].take(_maxPhotos).toList());
     }
   }
 
@@ -111,6 +129,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         // The original request reads as the first message in the thread.
         _Bubble(
           body: ticket.description,
+          photoUrls: ticket.photoUrls,
           author: 'You',
           at: ticket.createdAt,
           fromMe: true,
@@ -119,6 +138,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         for (final reply in ticket.replies)
           _Bubble(
             body: reply.body,
+            photoUrls: reply.photoUrls,
             author: reply.authorId == myId
                 ? 'You'
                 : (reply.authorName.isEmpty ? 'Support' : reply.authorName),
@@ -154,8 +174,28 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             top: BorderSide(color: isDark ? AppColors.lineDark : AppColors.line, width: 0.5),
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_photos.isNotEmpty) ...[
+              PhotoAttachmentsField(
+                paths: _photos,
+                max: _maxPhotos,
+                enabled: !support.isSubmitting,
+                helper: '${_photos.length} of $_maxPhotos photos · sent with your reply',
+                onChanged: (photos) => setState(() => _photos = photos),
+              ),
+              const SizedBox(height: AppSizes.sm),
+            ],
+            Row(
+          children: [
+            if (_photos.isEmpty)
+              IconButton(
+                tooltip: 'Add photos',
+                onPressed: support.isSubmitting ? null : _addPhotos,
+                icon: AppIcon(AppIcons.add_photo_alternate_outlined, color: context.accentInk),
+              ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
@@ -205,6 +245,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
               ),
             ),
           ],
+            ),
+          ],
         ),
       ),
     );
@@ -245,6 +287,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
 class _Bubble extends StatelessWidget {
   final String body;
+  final List<String> photoUrls;
   final String author;
   final DateTime at;
   final bool fromMe;
@@ -252,6 +295,7 @@ class _Bubble extends StatelessWidget {
 
   const _Bubble({
     required this.body,
+    this.photoUrls = const [],
     required this.author,
     required this.at,
     required this.fromMe,
@@ -289,7 +333,11 @@ class _Bubble extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 )),
             const SizedBox(height: 2),
-            Text(body, style: AppTextStyles.bodyLarge.copyWith(color: textColor)),
+            if (body.isNotEmpty) Text(body, style: AppTextStyles.bodyLarge.copyWith(color: textColor)),
+            if (photoUrls.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              PrivatePhotoStrip(urls: photoUrls),
+            ],
             const SizedBox(height: 4),
             Text(Formatters.relative(at),
                 style: AppTextStyles.caption.copyWith(color: textColor.withValues(alpha: 0.65))),

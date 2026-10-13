@@ -98,6 +98,9 @@ class ReportModel {
   final DateTime? resolvedAt;
   final DateTime? rejectedAt;
 
+  /// Photos the reporter sent as proof — private, read with their token.
+  final List<String> photoUrls;
+
   const ReportModel({
     required this.id,
     this.subjectType = 'user',
@@ -110,6 +113,7 @@ class ReportModel {
     required this.createdAt,
     this.resolvedAt,
     this.rejectedAt,
+    this.photoUrls = const [],
   });
 
   String get reasonLabel => ReportReason.labelFor(reason);
@@ -146,6 +150,10 @@ class ReportModel {
       createdAt: _date(json['created_at']) ?? DateTime.now(),
       resolvedAt: _date(json['resolved_at']),
       rejectedAt: _date(json['rejected_at']),
+      photoUrls: [
+        for (final item in (json['attachments'] as List? ?? const []))
+          if (item is Map && item['url'] is String) item['url'] as String,
+      ],
     );
   }
 

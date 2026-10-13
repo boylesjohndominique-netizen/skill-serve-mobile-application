@@ -154,6 +154,41 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
+## `GET /api/reports/{report}/attachments/{attachment}`
+
+Streamed from private storage after checking the view-reports permission. The ids come from the report's `attachments` (`download_path`).
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `report` | path | yes | integer |
+| `attachment` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The photo
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Unauthorized
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: No such photo on this report
+
+Response schema: `see openapi.json`
+
 ## `PATCH /api/reports/{report}/investigate`
 
 PATCH /api/reports/{report}/investigate — assign and start the investigation.

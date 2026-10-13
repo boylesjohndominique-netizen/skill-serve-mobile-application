@@ -17,6 +17,7 @@ import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/status_badge.dart';
 import '../models/report_model.dart';
 import '../../../core/widgets/misc/app_icon.dart';
+import '../../../core/widgets/misc/private_photo_strip.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 
@@ -145,6 +146,7 @@ class _ReportList extends StatelessWidget {
                 openedAt: reports[i].createdAt,
                 decidedAt: reports[i].decidedAt,
                 reference: '#${reports[i].id}',
+                footer: reports[i].photoUrls.isEmpty ? null : PrivatePhotoStrip(urls: reports[i].photoUrls, size: 56),
               )
                   .animate()
                   .fadeIn(delay: Duration(milliseconds: i.clamp(0, 8) * 60), duration: 350.ms)
@@ -220,7 +222,8 @@ class _CaseCard extends StatelessWidget {
   final String reference;
   final VoidCallback? onTap;
 
-  /// Extra content under the body — the dispute evidence strip.
+  /// Extra content under the body — the report's photos, or the dispute
+  /// evidence strip.
   final Widget? footer;
 
   const _CaseCard({

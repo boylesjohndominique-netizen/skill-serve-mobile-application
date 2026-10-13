@@ -39,7 +39,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/reports`
 
-Send exactly one subject. `booking_id` reports the other party on a booking the caller took part in; `review_id` reports a published review (not the caller's own); `message_id` reports a message the caller received; `service_id` reports a service listed in the marketplace (not the caller's own); `provider_id` reports a provider listed in the marketplace, from their public profile (not the caller themself) — the report is about the provider's account. Moderators review every report from the admin console. One open report per subject per reporter.
+Send JSON, or multipart/form-data to attach up to 5 photos as proof in `images[]` (JPG, PNG or WebP, 5 MB each); moderators see them with the report. Send exactly one subject. `booking_id` reports the other party on a booking the caller took part in; `review_id` reports a published review (not the caller's own); `message_id` reports a message the caller received; `service_id` reports a service listed in the marketplace (not the caller's own); `provider_id` reports a provider listed in the marketplace, from their public profile (not the caller themself) — the report is about the provider's account. Moderators review every report from the admin console. One open report per subject per reporter.
 
 **Authentication:** Bearer token
 
@@ -116,6 +116,37 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 404: Report not found
+
+Response schema: `see openapi.json`
+
+## `GET /api/client/v1/reports/{report}/attachments/{attachment}`
+
+Streamed from private storage to the reporter only. The attachment ids and URLs come from the report's `attachments`.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `report` | path | yes | integer |
+| `attachment` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The photo
+
+Response schema: `see openapi.json`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Not the caller's report, or no such photo
 
 Response schema: `see openapi.json`
 

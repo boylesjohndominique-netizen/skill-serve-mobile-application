@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart';
+
 import '../models/support_ticket_model.dart';
 import '../../../core/services/api_client.dart';
+import '../../../core/utils/image_upload.dart';
 
 /// Service for support tickets — live API only.
 ///
@@ -31,25 +34,41 @@ class SupportService {
     return SupportTicketModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
-  /// POST /api/client/v1/support/tickets
+  /// POST /api/client/v1/support/tickets — with [photoPaths] as multipart
+  /// images[] when there are any.
   Future<SupportTicketModel> createTicket({
     required String subject,
     required String description,
     required TicketCategory category,
+    List<String> photoPaths = const [],
   }) async {
-    final response = await ApiClient.instance.dio.post(_base, data: {
+    final fields = {
       'subject': subject,
       'description': description,
       'category': category.value,
-    });
+    };
+    final response = await ApiClient.instance.dio.post(
+      _base,
+      data: photoPaths.isEmpty ? fields : await _withPhotos(fields, photoPaths),
+    );
     return SupportTicketModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
   /// POST /api/client/v1/support/tickets/{ticket}/replies — returns the whole
   /// ticket, so the caller can replace its copy of the thread.
-  Future<SupportTicketModel> reply(String id, String body) async {
-    final response =
-        await ApiClient.instance.dio.post('$_base/$id/replies', data: {'body': body});
+  /// Text, [photoPaths], or both.
+  Future<SupportTicketModel> reply(String id, String body, {List<String> photoPaths = const []}) async {
+    final fields = {if (body.isNotEmpty || photoPaths.isEmpty) 'body': body};
+    final response = await ApiClient.instance.dio.post(
+      '$_base/$id/replies',
+      data: photoPaths.isEmpty ? fields : await _withPhotos(fields, photoPaths),
+    );
     return SupportTicketModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
+
+  static Future<FormData> _withPhotos(Map<String, String> fields, List<String> photoPaths) async =>
+      FormData.fromMap({
+        ...fields,
+        'images[]': [for (final path in photoPaths) await imageMultipart(path)],
+      });
 }

@@ -8,6 +8,7 @@ import '../controllers/booking_controller.dart';
 import '../controllers/provider_booking_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../reports/controllers/report_controller.dart';
+import '../../reports/views/raise_dispute_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -609,22 +610,16 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   Future<void> _raiseDispute(BookingModel booking) async {
-    final reason = await AppDialog.prompt(
-      context,
-      title: 'Raise a dispute?',
-      message:
-          'Our support team will review this booking and contact both of you. Tell us what went wrong.',
-      fieldLabel: 'What went wrong?',
-      hint: 'Describe the problem in at least 10 characters',
-      confirmLabel: 'Raise dispute',
-      danger: true,
-      maxLength: 2000,
-    );
-    if (reason == null || !mounted) return;
+    final draft = await showRaiseDisputeSheet(context);
+    if (draft == null || !mounted) return;
 
     final reports = context.read<ReportController>();
     setState(() => _acting = true);
-    final dispute = await reports.raiseDispute(bookingId: booking.id, reason: reason);
+    final dispute = await reports.raiseDispute(
+      bookingId: booking.id,
+      reason: draft.reason,
+      photoPaths: draft.photoPaths,
+    );
     if (!mounted) return;
     setState(() => _acting = false);
 
@@ -632,7 +627,15 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       AppSnackbar.error(context, reports.errorMessage ?? 'Unable to raise this dispute.');
       return;
     }
-    AppSnackbar.success(context, 'Dispute raised. Our support team will review it.');
+    final unsent = reports.unsentDisputePhotos;
+    if (unsent > 0) {
+      AppSnackbar.error(
+        context,
+        'Dispute raised, but $unsent ${unsent == 1 ? 'photo' : 'photos'} could not be attached. Add them from My Reports.',
+      );
+    } else {
+      AppSnackbar.success(context, 'Dispute raised. Our support team will review it.');
+    }
     await _loadBooking();
   }
 
