@@ -82,7 +82,7 @@ class _ClientSearchScreenState extends State<ClientSearchScreen> {
             children: [
               Text('Explore', style: AppTextStyles.displayMedium)
                   .animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, end: 0),
-              Text('Search every service and provider on SkillServe.', style: AppTextStyles.bodySmall),
+              Text('Search services, categories and providers by name.', style: AppTextStyles.bodySmall),
               const SizedBox(height: AppSizes.md),
               AppSearchBar(
                 controller: _queryController,
@@ -264,6 +264,9 @@ class _Results extends StatelessWidget {
                 child: ServiceCard(
                   service: service,
                   onTap: () => context.push('/service-details/${service.id}'),
+                  onProviderTap: service.providerId.isEmpty
+                      ? null
+                      : () => context.push('/provider-profile/${service.providerId}'),
                 ),
               ),
             const SizedBox(height: AppSizes.lg),

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -14,11 +15,16 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../marketplace/models/service_model.dart';
+import '../../marketplace/services/catalog_updates.dart';
 import '../../marketplace/services/service_service.dart';
+import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 
+/// One published service: what it is, what it costs, who offers it (tap
+/// through to their profile), booking it and reporting it. Follows
+/// [CatalogUpdates], so an edit the provider makes shows while it is open.
 class ServiceDetailsScreen extends StatefulWidget {
   final String serviceId;
   const ServiceDetailsScreen({super.key, required this.serviceId});
@@ -34,18 +40,37 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    CatalogUpdates.instance.addListener(_onCatalogChanged);
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() => _failed = false);
+  @override
+  void dispose() {
+    CatalogUpdates.instance.removeListener(_onCatalogChanged);
+    super.dispose();
+  }
+
+  /// A live update re-reads the listing; if it was hidden or removed, the
+  /// screen says it is no longer available.
+  void _onCatalogChanged() {
+    if (_service != null) _load(silent: true);
+  }
+
+  /// [silent] is a live refresh: only "this listing is gone" (404) replaces
+  /// the page; a dropped connection keeps the listing already shown.
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) setState(() => _failed = false);
     try {
       final service = await ServiceService().getServiceById(widget.serviceId);
       if (mounted) setState(() => _service = service);
-    } catch (_) {
+    } catch (e) {
+      if (silent && !_isGone(e)) return;
       if (mounted) setState(() => _failed = true);
     }
   }
+
+  void _report(ServiceModel service) =>
+      showReportContentSheet(context, serviceId: service.id, title: 'Report this service');
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +96,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             IconButton(
               tooltip: 'Report this service',
               icon: const AppIcon(AppIcons.flag_outlined),
-              onPressed: () => showReportContentSheet(context, serviceId: s.id, title: 'Report this service'),
+              onPressed: () => _report(s),
             ),
         ],
       ),
@@ -102,10 +127,21 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               const SizedBox(height: AppSizes.lg),
               Text(s.title, style: AppTextStyles.headlineLarge)
                   .animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
+              if (s.categoryName.isNotEmpty || s.location.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  [if (s.categoryName.isNotEmpty) s.categoryName, if (s.location.isNotEmpty) s.location].join(' • '),
+                  style: AppTextStyles.bodySmall,
+                ),
+              ],
               const SizedBox(height: AppSizes.sm),
               Row(
                 children: [
-                  _Pill(icon: AppIcons.payments_outlined, label: Formatters.peso(s.price), isDark: isDark),
+                  _Pill(
+                    icon: AppIcons.payments_outlined,
+                    label: s.isQuoteOnly ? 'On quote' : Formatters.peso(s.price),
+                    isDark: isDark,
+                  ),
                   const SizedBox(width: AppSizes.sm),
                   _Pill(icon: AppIcons.timer_outlined, label: s.duration, isDark: isDark),
                 ],
@@ -114,8 +150,32 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               Text('Description', style: AppTextStyles.titleLarge)
                   .animate().fadeIn(delay: 260.ms, duration: 300.ms),
               const SizedBox(height: 6),
-              Text(s.description, style: AppTextStyles.bodyLarge)
-                  .animate().fadeIn(delay: 320.ms, duration: 300.ms),
+              Text(
+                s.description.trim().isEmpty ? 'The provider has not added a description.' : s.description,
+                style: AppTextStyles.bodyLarge,
+              ).animate().fadeIn(delay: 320.ms, duration: 300.ms),
+              if (s.providerId.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.xl),
+                Text('Offered by', style: AppTextStyles.titleLarge),
+                const SizedBox(height: AppSizes.sm),
+                _ProviderTile(
+                  name: s.providerName,
+                  onTap: () => context.push('/provider-profile/${s.providerId}'),
+                ).animate().fadeIn(delay: 360.ms, duration: 300.ms),
+              ],
+              if (canReport) ...[
+                const SizedBox(height: AppSizes.lg),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => _report(s),
+                    icon: AppIcon(AppIcons.flag_outlined, size: 16, color: context.textMutedColor),
+                    label: Text(
+                      'Report this service',
+                      style: AppTextStyles.label.copyWith(color: context.textMutedColor),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSizes.xxxl),
             ],
           ),
@@ -128,6 +188,57 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             label: 'Book this service',
             icon: AppIcons.calendar_month_rounded,
             onPressed: () => context.push('/booking-form/${s.providerId}'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Who offers the service; opens their full profile.
+/// The API no longer lists it: hidden, unpublished, or its provider removed.
+bool _isGone(Object error) => error is DioException && error.response?.statusCode == 404;
+
+class _ProviderTile extends StatelessWidget {
+  final String name;
+  final VoidCallback onTap;
+  const _ProviderTile({required this.name, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: isDark ? AppColors.surfaceDark : AppColors.surface,
+      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSizes.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+          ),
+          child: Row(
+            children: [
+              AppAvatar(
+                name: name,
+                radius: 20,
+                backgroundColor: AppColors.secondary,
+                foregroundColor: AppColors.primary,
+              ),
+              const SizedBox(width: AppSizes.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
+                    Text('View profile, portfolio and reviews', style: AppTextStyles.bodySmall),
+                  ],
+                ),
+              ),
+              AppIcon(AppIcons.chevron_right_rounded, color: context.textMutedColor),
+            ],
           ),
         ),
       ),

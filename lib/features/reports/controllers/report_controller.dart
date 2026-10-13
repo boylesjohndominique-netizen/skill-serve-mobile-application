@@ -67,6 +67,7 @@ class ReportController extends ChangeNotifier {
     String? reviewId,
     String? messageId,
     String? serviceId,
+    String? providerId,
     required ReportReason reason,
     required String details,
   }) async {
@@ -79,6 +80,7 @@ class ReportController extends ChangeNotifier {
         reviewId: reviewId,
         messageId: messageId,
         serviceId: serviceId,
+        providerId: providerId,
         reason: reason,
         details: details,
       );

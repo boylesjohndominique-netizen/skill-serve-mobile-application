@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 import 'features/auth/controllers/auth_controller.dart';
+import 'features/marketplace/views/marketplace_live_sync.dart';
 import 'features/notifications/views/notification_poller.dart';
 import 'features/booking/controllers/booking_controller.dart';
 import 'features/booking/controllers/provider_booking_controller.dart';
@@ -156,7 +157,8 @@ class SkillLinkApp extends StatelessWidget {
                     data: MediaQuery.of(context)
                         .copyWith(disableAnimations: preferences.reduceMotion),
                     child: NotificationPoller(
-                        child: MaintenanceGate(child: widget ?? const SizedBox.shrink())),
+                        child: MarketplaceLiveSync(
+                            child: MaintenanceGate(child: widget ?? const SizedBox.shrink()))),
                   ),
                   breakpoints: const [
                     Breakpoint(start: 0, end: 450, name: MOBILE),

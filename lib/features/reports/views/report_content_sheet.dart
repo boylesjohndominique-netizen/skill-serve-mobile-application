@@ -10,20 +10,21 @@ import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/inputs/app_text_field.dart';
 
-/// Report a review, a message or a service listing: pick a reason, say why,
-/// send.
+/// Report a review, a message, a service listing or a provider: pick a
+/// reason, say why, send.
 ///
-/// Pass exactly one of [reviewId], [messageId] or [serviceId]. The API decides
-/// who it is about, and refuses your own review or service, or a message you
-/// did not receive.
+/// Pass exactly one of [reviewId], [messageId], [serviceId] or [providerId].
+/// The API decides who it is about, and refuses your own review, service or
+/// profile, or a message you did not receive.
 Future<void> showReportContentSheet(
   BuildContext context, {
   String? reviewId,
   String? messageId,
   String? serviceId,
+  String? providerId,
   required String title,
 }) {
-  assert([reviewId, messageId, serviceId].whereType<String>().length == 1, 'Report one subject.');
+  assert([reviewId, messageId, serviceId, providerId].whereType<String>().length == 1, 'Report one subject.');
 
   return showModalBottomSheet<void>(
     context: context,
@@ -37,6 +38,7 @@ Future<void> showReportContentSheet(
       reviewId: reviewId,
       messageId: messageId,
       serviceId: serviceId,
+      providerId: providerId,
       title: title,
     ),
   );
@@ -46,14 +48,22 @@ class _ReportContentSheet extends StatefulWidget {
   final String? reviewId;
   final String? messageId;
   final String? serviceId;
+  final String? providerId;
   final String title;
 
   const _ReportContentSheet({
     required this.reviewId,
     required this.messageId,
     required this.serviceId,
+    required this.providerId,
     required this.title,
   });
+
+  List<ReportReason> get reasons => serviceId != null
+      ? ReportReason.forServices
+      : providerId != null
+          ? ReportReason.forProviders
+          : ReportReason.forContent;
 
   @override
   State<_ReportContentSheet> createState() => _ReportContentSheetState();
@@ -77,6 +87,7 @@ class _ReportContentSheetState extends State<_ReportContentSheet> {
       reviewId: widget.reviewId,
       messageId: widget.messageId,
       serviceId: widget.serviceId,
+      providerId: widget.providerId,
       reason: _reason!,
       details: _details.text.trim(),
     );
@@ -115,7 +126,7 @@ class _ReportContentSheetState extends State<_ReportContentSheet> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final reason in widget.serviceId != null ? ReportReason.forServices : ReportReason.forContent)
+                for (final reason in widget.reasons)
                   ChoiceChip(
                     label: Text(reason.label),
                     selected: _reason == reason,

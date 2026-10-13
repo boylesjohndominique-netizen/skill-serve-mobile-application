@@ -7,8 +7,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config/app_config.dart';
 import 'api_client.dart';
 
-/// Minimal Laravel Reverb (Pusher protocol v7) client for private and
-/// presence channels.
+/// Minimal Laravel Reverb (Pusher protocol v7) client for public, private
+/// and presence channels.
 ///
 /// Connects, authorizes channels through `/api/broadcasting/auth` with the
 /// signed-in user's bearer token, answers server pings, and reconnects with
@@ -18,6 +18,10 @@ import 'api_client.dart';
 /// Presence channels ([joinPresence]) report who else is subscribed and carry
 /// client events ([whisper]) between members — used for "in this chat" and
 /// "typing…" in a conversation.
+///
+/// Public channels ([listenPublic]) need no account — the marketplace channel
+/// tells guests and customers alike that the catalog changed — so they outlive
+/// [disconnect], which only ends the signed-in user's channels.
 class RealtimeClient {
   RealtimeClient._();
 
@@ -27,6 +31,7 @@ class RealtimeClient {
 
   final Map<String, Map<String, void Function(Map<String, dynamic> data)>> _handlers = {};
   final Map<String, _Presence> _presence = {};
+  final Map<String, Map<String, void Function(Map<String, dynamic> data)>> _publicHandlers = {};
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
   Timer? _reconnectTimer;
@@ -46,6 +51,31 @@ class RealtimeClient {
       _connect();
     } else if (isNew && _socketId != null) {
       _subscribe(name);
+    }
+  }
+
+  /// Subscribe to [event] on public channel [channel]. No authorization: the
+  /// server sends public channels to anyone connected.
+  void listenPublic(String channel, String event, void Function(Map<String, dynamic> data) handler) {
+    final isNew = !_publicHandlers.containsKey(channel);
+    _publicHandlers.putIfAbsent(channel, () => {})[event] = handler;
+    _wanted = true;
+
+    if (_channel == null) {
+      _connect();
+    } else if (isNew && _socketId != null) {
+      _subscribe(channel);
+    }
+  }
+
+  /// Stop listening on public channel [channel]; the connection closes once
+  /// nothing else needs it.
+  void unlistenPublic(String channel) {
+    if (_publicHandlers.remove(channel) == null) return;
+    _send({'event': 'pusher:unsubscribe', 'data': {'channel': channel}});
+    if (_handlers.isEmpty && _presence.isEmpty && _publicHandlers.isEmpty) {
+      _wanted = false;
+      _close();
     }
   }
 
@@ -85,12 +115,15 @@ class RealtimeClient {
     _send({'event': 'client-$event', 'channel': name, 'data': data});
   }
 
-  /// Leave every channel and close the connection (e.g. on logout).
+  /// Leave every private and presence channel (e.g. on logout). The socket
+  /// is closed so the server forgets them too; public channels, which need no
+  /// account, are rejoined on a fresh connection.
   void disconnect() {
-    _wanted = false;
     _handlers.clear();
     _presence.clear();
     _close();
+    _wanted = _publicHandlers.isNotEmpty;
+    if (_wanted) _connect();
   }
 
   void _connect() {
@@ -127,7 +160,7 @@ class RealtimeClient {
         final timeout = (established['activity_timeout'] as num?)?.toInt() ?? 30;
         _pingTimer?.cancel();
         _pingTimer = Timer.periodic(Duration(seconds: timeout), (_) => _send({'event': 'pusher:ping', 'data': {}}));
-        for (final name in [..._handlers.keys, ..._presence.keys]) {
+        for (final name in [..._handlers.keys, ..._presence.keys, ..._publicHandlers.keys]) {
           _subscribe(name);
         }
       case 'pusher:ping':
@@ -163,7 +196,8 @@ class RealtimeClient {
           }
           return;
         }
-        final handler = _handlers[message['channel']]?[event];
+        final channelName = message['channel'];
+        final handler = _handlers[channelName]?[event] ?? _publicHandlers[channelName]?[event];
         if (handler != null && data is Map<String, dynamic>) handler(data);
     }
   }
@@ -171,6 +205,10 @@ class RealtimeClient {
   Future<void> _subscribe(String name) async {
     final socketId = _socketId;
     if (socketId == null) return;
+    if (_publicHandlers.containsKey(name)) {
+      _send({'event': 'pusher:subscribe', 'data': {'channel': name}});
+      return;
+    }
     try {
       final response = await ApiClient.instance.dio.post(
         AppConfig.broadcastingAuthUrl,

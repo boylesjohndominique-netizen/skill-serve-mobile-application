@@ -25,6 +25,17 @@ enum ReportReason {
     other,
   ];
 
+  /// The reasons that make sense for a provider reported from their public
+  /// profile, without a booking — so nothing about a job they did.
+  static const forProviders = [
+    misleadingInformation,
+    spam,
+    inappropriateContent,
+    harassment,
+    safetyConcern,
+    other,
+  ];
+
   /// The reasons that make sense for a service listing.
   static const forServices = [
     misleadingInformation,

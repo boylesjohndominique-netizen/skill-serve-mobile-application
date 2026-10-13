@@ -75,7 +75,7 @@ final _routes = <String>[
   '/google-register',
 ];
 
-Widget _app(String route) {
+Widget _app(String route, {GoRouter? router}) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => AuthController()),
@@ -102,13 +102,32 @@ Widget _app(String route) {
       builder: (context, child) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        routerConfig: GoRouter(initialLocation: route, routes: appRoutes),
+        routerConfig: router ?? GoRouter(initialLocation: route, routes: appRoutes),
       ),
     ),
   );
 }
 
 void main() {
+  testWidgets('booking details opened with nothing beneath it leads back home', (tester) async {
+    // Confirming a booking replaces the stack with the details screen, so the
+    // app bar's back button and the system back gesture must lead home.
+    final router = GoRouter(initialLocation: '/booking-details/BK-5000', routes: appRoutes);
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app('/booking-details/BK-5000', router: router));
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byTooltip('Back to home'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Back to home'));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(router.routeInformationProvider.value.uri.path, '/client');
+
+    // Unmount so the home screen's entrance animations leave no timers.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   for (final route in _routes) {
     testWidgets('no overflow on $route', (tester) async {
       for (final size in [const Size(390, 844), const Size(320, 568)]) {

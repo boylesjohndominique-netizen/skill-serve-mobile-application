@@ -96,6 +96,45 @@ void main() {
     });
   });
 
+  group('RealtimeClient public channels', () {
+    final client = RealtimeClient.instance;
+    tearDown(() {
+      client.unlistenPublic('marketplace');
+      client.disconnect();
+    });
+
+    Map<String, dynamic> catalogChange() => {
+          'event': 'marketplace.changed',
+          'channel': 'marketplace',
+          'data': jsonEncode({'resources': ['services']}),
+        };
+
+    test('route their events and outlive the signed-in user\'s channels', () {
+      final received = <Object?>[];
+      client.listenPublic('marketplace', 'marketplace.changed', (data) => received.add(data['resources']));
+
+      client.handleMessageForTesting(jsonEncode(catalogChange()));
+      // Signing out ends the private channels, not the public catalog feed.
+      client.disconnect();
+      client.handleMessageForTesting(jsonEncode(catalogChange()));
+
+      expect(received, [
+        ['services'],
+        ['services'],
+      ]);
+    });
+
+    test('stop reporting once unsubscribed', () {
+      final received = <Object?>[];
+      client.listenPublic('marketplace', 'marketplace.changed', received.add);
+      client.unlistenPublic('marketplace');
+
+      client.handleMessageForTesting(jsonEncode(catalogChange()));
+
+      expect(received, isEmpty);
+    });
+  });
+
   group('BackgroundNotifications.check', () {
     test('does nothing without a background token', () async {
       SharedPreferences.setMockInitialValues({});

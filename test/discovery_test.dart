@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skillserve_mobile/features/marketplace/controllers/discovery_controller.dart';
+import 'package:skillserve_mobile/features/marketplace/controllers/marketplace_controller.dart';
 import 'package:skillserve_mobile/features/marketplace/models/category_model.dart';
 import 'package:skillserve_mobile/features/marketplace/models/discovery_filters.dart';
 import 'package:skillserve_mobile/features/marketplace/models/provider_model.dart';
 import 'package:skillserve_mobile/features/marketplace/models/service_model.dart';
+import 'package:skillserve_mobile/features/marketplace/services/catalog_updates.dart';
 import 'package:skillserve_mobile/features/marketplace/services/recent_searches_service.dart';
 import 'package:skillserve_mobile/features/marketplace/services/service_service.dart';
 
@@ -131,6 +133,29 @@ void main() {
       expect(service.averageRating, 4.25);
       expect(service.reviewCount, 8);
       expect(service.isQuoteOnly, isFalse);
+    });
+
+    test('a provider is named by display_name, never a blank', () {
+      // A provider who registered without a business name.
+      final unnamedBusiness = ProviderModel.fromJson({
+        'id': 1,
+        'business_name': '',
+        'display_name': 'Maria Santos',
+        'profile_photo_url': 'https://cdn.example/p.jpg',
+      });
+      expect(unnamedBusiness.user.fullName, 'Maria Santos');
+      expect(unnamedBusiness.user.profilePicture, 'https://cdn.example/p.jpg');
+
+      // Older payloads without display_name still use the business name.
+      expect(ProviderModel.fromJson({'id': 2, 'business_name': 'Fix-It'}).user.fullName, 'Fix-It');
+      expect(ProviderModel.fromJson({'id': 3, 'business_name': ''}).user.fullName, ProviderModel.fallbackName);
+
+      final service = ServiceModel.fromJson({
+        'id': 4,
+        'title': 'Laptop repair',
+        'provider': {'id': 1, 'business_name': '', 'display_name': 'Maria Santos'},
+      });
+      expect(service.providerName, 'Maria Santos');
     });
 
     test('a custom-priced service is quote only', () {
@@ -273,6 +298,26 @@ void main() {
       controller.dispose();
     });
 
+    test('a catalog change re-runs the search on screen without a loader', () async {
+      final fake = _FakeServiceService();
+      final updates = CatalogUpdates();
+      final controller = DiscoveryController(service: fake, updates: updates);
+      await controller.initialize();
+      await controller.submit('laptop');
+      final loading = <bool>[];
+      controller.addListener(() => loading.add(controller.isLoading));
+
+      fake.serviceTitle = 'Laptop repair (new)';
+      updates.changed(['services']);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(fake.serviceSearches, ['laptop', 'laptop']);
+      expect(fake.highlightLoads, 2, reason: 'the rails refresh too');
+      expect(controller.services.single.title, 'Laptop repair (new)');
+      expect(loading, everyElement(isFalse), reason: 'results stay on screen while refreshing');
+      controller.dispose();
+    });
+
     test('a failed search surfaces an error instead of stale results', () async {
       final fake = _FakeServiceService()..failing = true;
       final controller = DiscoveryController(service: fake);
@@ -290,10 +335,74 @@ void main() {
       controller.dispose();
     });
   });
+
+  group('marketplace controller', () {
+    test('Home loads providers, the newest services, categories and the featured rail', () async {
+      final fake = _FakeServiceService();
+      final controller = MarketplaceController(service: fake, updates: CatalogUpdates());
+
+      await controller.loadInitial();
+
+      expect(controller.providers.single.user.fullName, 'Juan Aircon');
+      expect(controller.services.single.title, 'Aircon Cleaning');
+      expect(fake.servicePageSizes, [MarketplaceController.latestServicesLimit]);
+      expect(controller.categories, hasLength(2));
+      expect(controller.featuredProviders.single.user.fullName, 'Featured Co.');
+      expect(controller.error, isNull);
+      expect(controller.hasLoaded, isTrue);
+      controller.dispose();
+    });
+
+    test('one failed list does not blank the rest of Home', () async {
+      final fake = _FakeServiceService()..failProviders = true;
+      final controller = MarketplaceController(service: fake, updates: CatalogUpdates());
+
+      await controller.loadInitial();
+
+      expect(controller.providers, isEmpty);
+      expect(controller.services, isNotEmpty);
+      expect(controller.error, isNull);
+
+      fake.failing = true;
+      await controller.loadInitial();
+      expect(controller.error, isNotNull, reason: 'nothing at all loaded');
+      controller.dispose();
+    });
+
+    test('a newly published service appears without a manual refresh', () async {
+      final fake = _FakeServiceService();
+      final updates = CatalogUpdates();
+      final controller = MarketplaceController(service: fake, updates: updates);
+
+      // Nothing is fetched for a Home tab nobody opened.
+      updates.changed(['services']);
+      await Future<void>.delayed(Duration.zero);
+      expect(fake.serviceSearches, isEmpty);
+
+      await controller.loadInitial();
+      fake.serviceTitle = 'Laptop repair';
+      updates.changed(['services']);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.services.single.title, 'Laptop repair');
+      expect(controller.isLoading, isFalse);
+
+      // A refresh that fails keeps what is already on screen.
+      fake.failing = true;
+      updates.changed(['services']);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.services.single.title, 'Laptop repair');
+      expect(controller.error, isNull);
+      controller.dispose();
+    });
+  });
 }
 
 class _FakeServiceService extends ServiceService {
   bool failing = false;
+  bool failProviders = false;
+  String serviceTitle = 'Aircon Cleaning';
+  final List<int> servicePageSizes = [];
 
   final List<String?> serviceSearches = [];
   final List<String?> providerSearches = [];
@@ -323,11 +432,12 @@ class _FakeServiceService extends ServiceService {
     int perPage = ServiceService.discoveryPageSize,
   }) async {
     serviceSearches.add(search);
+    servicePageSizes.add(perPage);
     if (failing) throw Exception('offline');
     return [
       ServiceModel.fromJson({
         'id': 21,
-        'title': 'Aircon Cleaning',
+        'title': serviceTitle,
         'price': '1500.00',
         'provider': {'id': 9, 'business_name': 'Juan Aircon'},
       }),
@@ -341,7 +451,7 @@ class _FakeServiceService extends ServiceService {
     int perPage = ServiceService.discoveryPageSize,
   }) async {
     providerSearches.add(search);
-    if (failing) throw Exception('offline');
+    if (failing || failProviders) throw Exception('offline');
     return [_provider(9, 'Juan Aircon')];
   }
 

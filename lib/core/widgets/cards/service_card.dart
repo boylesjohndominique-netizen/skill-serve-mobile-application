@@ -17,7 +17,11 @@ class ServiceCard extends StatelessWidget {
   final ServiceModel service;
   final VoidCallback? onTap;
 
-  const ServiceCard({super.key, required this.service, this.onTap});
+  /// Opens the provider's profile from their name; the name is plain text
+  /// when null.
+  final VoidCallback? onProviderTap;
+
+  const ServiceCard({super.key, required this.service, this.onTap, this.onProviderTap});
 
   @override
   Widget build(BuildContext context) {
@@ -65,15 +69,55 @@ class ServiceCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        [
-                          if (service.providerName.isNotEmpty) service.providerName,
-                          if (service.categoryName.isNotEmpty) service.categoryName,
-                        ].join(' • '),
-                        style: AppTextStyles.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      if (onProviderTap != null && service.providerName.isNotEmpty)
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Semantics(
+                                button: true,
+                                label: 'View ${service.providerName}\'s profile',
+                                excludeSemantics: true,
+                                child: InkWell(
+                                  onTap: onProviderTap,
+                                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    child: Text(
+                                      service.providerName,
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        color: context.accentInk,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: context.accentInk,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (service.categoryName.isNotEmpty)
+                              Flexible(
+                                child: Text(
+                                  ' • ${service.categoryName}',
+                                  style: AppTextStyles.bodySmall,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                        )
+                      else
+                        Text(
+                          [
+                            if (service.providerName.isNotEmpty) service.providerName,
+                            if (service.categoryName.isNotEmpty) service.categoryName,
+                          ].join(' • '),
+                          style: AppTextStyles.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 10,

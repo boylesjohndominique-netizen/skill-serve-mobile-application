@@ -1,5 +1,7 @@
 import '../../reports/views/report_content_sheet.dart';
 import '../../auth/controllers/auth_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -25,13 +27,21 @@ import '../../marketplace/models/provider_model.dart';
 import '../../reviews/models/review_model.dart';
 import '../../marketplace/models/service_model.dart';
 import '../../../core/widgets/feedback/error_state.dart';
+import '../../marketplace/services/catalog_updates.dart';
 import '../../marketplace/services/service_service.dart';
+import '../../../core/widgets/misc/app_avatar.dart';
+import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// Full public provider profile for signed-in clients — the mobile mirror of
-/// the admin Marketplace Preview → Profile tab.
+/// the admin Marketplace Preview → Profile tab: who they are, their services,
+/// portfolio, availability, recognition and reviews, plus booking, messaging,
+/// favoriting and reporting the provider.
+///
+/// Follows [CatalogUpdates], so a service the provider publishes or a new
+/// rating appears while the profile is open.
 class ProviderProfileScreen extends StatefulWidget {
   final String providerId;
   const ProviderProfileScreen({super.key, required this.providerId});
@@ -79,18 +89,33 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   @override
   void initState() {
     super.initState();
+    CatalogUpdates.instance.addListener(_onCatalogChanged);
     _load();
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    CatalogUpdates.instance.removeListener(_onCatalogChanged);
+    super.dispose();
+  }
+
+  void _onCatalogChanged() {
+    if (_loaded) _load(silent: true);
+  }
+
+  /// [silent] refreshes in place for a live update: only "this provider is
+  /// no longer listed" (404 — suspended, private, unverified) replaces the
+  /// profile; a dropped connection keeps the profile already shown.
+  Future<void> _load({bool silent = false}) async {
     final service = ServiceService();
-    if (_failed) setState(() => _failed = false);
+    if (_failed && !silent) setState(() => _failed = false);
     // The provider detail already includes its public services and reviews.
     final ProviderModel provider;
     try {
       provider = await service.getProviderById(widget.providerId);
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
+    } catch (e) {
+      final gone = e is DioException && e.response?.statusCode == 404;
+      if (mounted && (!silent || gone)) setState(() => _failed = true);
       return;
     }
     if (!mounted) return;
@@ -104,6 +129,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     });
   }
 
+  void _report(ProviderModel provider) => showReportContentSheet(
+        context,
+        providerId: provider.id,
+        title: 'Report ${provider.user.fullName}',
+      );
+
   @override
   Widget build(BuildContext context) {
     if (_failed) {
@@ -115,6 +146,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     if (!_loaded || _provider == null) return const Scaffold(body: LoadingState());
     final p = _provider!;
     final favorites = context.watch<FavoritesController>();
+    // Only a signed-in customer reports a provider; guests have no account.
+    final canReport = context.select<AuthController, bool>((auth) => auth.isClient);
 
     return Scaffold(
       appBar: AppBar(
@@ -132,6 +165,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
             ),
           ),
+          if (canReport)
+            IconButton(
+              tooltip: 'Report this provider',
+              icon: const AppIcon(AppIcons.flag_outlined),
+              onPressed: () => _report(p),
+            ),
         ],
       ),
       body: SafeArea(
@@ -140,11 +179,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ImageCarousel(images: p.portfolioImages)
-                  .animate().fadeIn(duration: 350.ms).slideY(begin: 0.04, end: 0),
-              const SizedBox(height: AppSizes.lg),
+              if (p.portfolioImages.isNotEmpty) ...[
+                ImageCarousel(images: p.portfolioImages)
+                    .animate().fadeIn(duration: 350.ms).slideY(begin: 0.04, end: 0),
+                const SizedBox(height: AppSizes.lg),
+              ],
               Row(
                 children: [
+                  AppAvatar(
+                    initials: p.user.initials,
+                    photoUrl: p.user.profilePicture,
+                    radius: 30,
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: AppColors.primary,
+                  ),
+                  const SizedBox(width: AppSizes.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,6 +210,16 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                           ],
                         ),
                         Text(p.categoryName, style: AppTextStyles.bodyLarge),
+                        if (p.location.isNotEmpty)
+                          Row(
+                            children: [
+                              AppIcon(AppIcons.location_on_outlined, size: 14, color: context.textMutedColor),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(p.location, style: AppTextStyles.bodySmall, overflow: TextOverflow.ellipsis),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -281,7 +340,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.lg),
                   child: Text(
-                    '${p.user.firstName} hasn\'t listed services yet — send a message to ask about availability.',
+                    '${p.user.fullName} hasn\'t listed services yet — send a message to ask about availability.',
                     style: AppTextStyles.bodyMedium,
                   ),
                 )
@@ -291,20 +350,49 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     padding: const EdgeInsets.only(bottom: AppSizes.sm),
                     child: _ServiceRow(
                       service: _services[i],
-                      onBook: () => context.push('/booking-form/${p.id}'),
+                      onTap: () => context.push('/service-details/${_services[i].id}'),
+                      onBook: p.isAcceptingBookings ? () => context.push('/booking-form/${p.id}') : null,
                     )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 480 + i * 60), duration: 350.ms)
                         .slideY(begin: 0.05, end: 0),
                   ),
 
+              // ── Portfolio ──
+              const SizedBox(height: AppSizes.xl),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SectionHeaderLocal(title: 'Portfolio'),
+                  if (p.portfolioImages.isNotEmpty)
+                    TextButton(
+                      onPressed: () => context.push('/portfolio-gallery/${p.id}'),
+                      child: Text('View all (${p.portfolioImages.length})'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              if (p.portfolioImages.isEmpty)
+                Text('No work samples uploaded yet.', style: AppTextStyles.bodyMedium)
+              else
+                _PortfolioPreview(
+                  images: p.portfolioImages,
+                  onTap: () => context.push('/portfolio-gallery/${p.id}'),
+                ),
+
               // ── Reviews ──
               const SizedBox(height: AppSizes.xl),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SectionHeaderLocal(title: 'Reviews')
-                      .animate().fadeIn(delay: 520.ms, duration: 300.ms),
+                  Row(
+                    children: [
+                      const SectionHeaderLocal(title: 'Reviews'),
+                      const SizedBox(width: AppSizes.sm),
+                      if (p.reviewCount > 0)
+                        RatingWidget(rating: p.averageRating, reviewCount: p.reviewCount, size: 14),
+                    ],
+                  ).animate().fadeIn(delay: 520.ms, duration: 300.ms),
                   TextButton(
                     onPressed: () => context.push('/reviews/${p.id}'),
                     child: const Text('See all'),
@@ -327,6 +415,21 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         .fadeIn(delay: Duration(milliseconds: 560 + i * 60), duration: 350.ms)
                         .slideY(begin: 0.05, end: 0),
                   ),
+
+              // ── Report ──
+              if (canReport) ...[
+                const SizedBox(height: AppSizes.lg),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => _report(p),
+                    icon: AppIcon(AppIcons.flag_outlined, size: 16, color: context.textMutedColor),
+                    label: Text(
+                      'Report this provider',
+                      style: AppTextStyles.label.copyWith(color: context.textMutedColor),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSizes.xxxl),
             ],
           ),
@@ -351,7 +454,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               SizedBox(
                 width: 190,
                 child: PrimaryButton(
-                  label: p.isAcceptingBookings ? 'Book ${p.user.firstName}' : 'Not taking bookings',
+                  label: p.isAcceptingBookings ? 'Book now' : 'Not taking bookings',
                   icon: AppIcons.calendar_month_rounded,
                   // The API refuses bookings for a paused provider, so the
                   // button reflects that instead of failing on submit.
@@ -584,62 +687,138 @@ class _BadgeChip extends StatelessWidget {
   }
 }
 
+/// One of the provider's services: tap for its details, or book it. [onBook]
+/// is null while the provider is not taking bookings.
 class _ServiceRow extends StatelessWidget {
   final ServiceModel service;
-  final VoidCallback onBook;
-  const _ServiceRow({required this.service, required this.onBook});
+  final VoidCallback onTap;
+  final VoidCallback? onBook;
+  const _ServiceRow({required this.service, required this.onTap, required this.onBook});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surface,
+    return Material(
+      color: isDark ? AppColors.surfaceDark : AppColors.surface,
+      borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
-        boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(service.title, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Row(
+        child: Container(
+          padding: const EdgeInsets.all(AppSizes.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            border: Border.all(color: (isDark ? AppColors.lineDark : AppColors.line).withValues(alpha: 0.5), width: 0.8),
+            boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppIcon(AppIcons.schedule_rounded, size: 13, color: context.textMutedColor),
-                    const SizedBox(width: 4),
-                    Text(service.duration, style: AppTextStyles.bodySmall),
-                    const SizedBox(width: 12),
-                    Text(
-                      // Custom-priced work is quoted by the provider, so no
-                      // amount is shown for it.
-                      service.isQuoteOnly ? 'On quote' : Formatters.peso(service.price),
-                      style: AppTextStyles.monoMd.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
+                    Text(service.title, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
+                    if (service.categoryName.isNotEmpty)
+                      Text(service.categoryName, style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        AppIcon(AppIcons.schedule_rounded, size: 13, color: context.textMutedColor),
+                        const SizedBox(width: 4),
+                        Text(service.duration, style: AppTextStyles.bodySmall),
+                        const SizedBox(width: 12),
+                        Text(
+                          // Custom-priced work is quoted by the provider, so no
+                          // amount is shown for it.
+                          service.isQuoteOnly ? 'On quote' : Formatters.peso(service.price),
+                          style: AppTextStyles.monoMd.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSizes.md),
-          SizedBox(
-            height: 34,
-            child: FilledButton(
-              onPressed: onBook,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.secondary,
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
               ),
-              child: Text('Book', style: AppTextStyles.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
-            ),
+              const SizedBox(width: AppSizes.md),
+              SizedBox(
+                height: 34,
+                child: FilledButton(
+                  onPressed: onBook,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.lg),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+                  ),
+                  child: Text('Book', style: AppTextStyles.label.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The first few work samples as a strip of thumbnails; any tap opens the
+/// full gallery.
+class _PortfolioPreview extends StatelessWidget {
+  final List<String> images;
+  final VoidCallback onTap;
+  const _PortfolioPreview({required this.images, required this.onTap});
+
+  static const _shown = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = images.take(_shown).toList();
+    final more = images.length - shown.length;
+
+    return Row(
+      children: [
+        for (var i = 0; i < _shown; i++) ...[
+          if (i > 0) const SizedBox(width: AppSizes.sm),
+          Expanded(
+            child: i >= shown.length
+                ? const SizedBox.shrink()
+                : Semantics(
+                    button: true,
+                    label: 'Open portfolio',
+                    child: GestureDetector(
+                      onTap: onTap,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CachedNetworkImage(
+                                imageUrl: shown[i],
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => const ShimmerPlaceholder(),
+                                errorWidget: (_, __, ___) => Container(
+                                  color: AppColors.secondarySoft,
+                                  child: const AppIcon(AppIcons.photo_library_outlined, color: AppColors.secondaryDeep),
+                                ),
+                              ),
+                              if (more > 0 && i == shown.length - 1)
+                                Container(
+                                  color: Colors.black.withValues(alpha: 0.45),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '+$more',
+                                    style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ],
-      ),
+      ],
     );
   }
 }

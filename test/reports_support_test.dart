@@ -53,6 +53,15 @@ Map<String, dynamic> ticketPayload([Map<String, dynamic> overrides = const {}]) 
 
 void main() {
   group('ReportModel', () {
+    test('a provider reported from their profile is offered no booking-only reasons', () {
+      // There is no job behind a profile report, so nothing about one.
+      expect(ReportReason.forProviders, isNot(contains(ReportReason.noShow)));
+      expect(ReportReason.forProviders, isNot(contains(ReportReason.serviceQuality)));
+      expect(ReportReason.forProviders, isNot(contains(ReportReason.paymentDispute)));
+      expect(ReportReason.forProviders, contains(ReportReason.misleadingInformation));
+      expect(ReportReason.forProviders.last, ReportReason.other);
+    });
+
     test('parses a report payload', () {
       final report = ReportModel.fromJson(reportPayload());
 

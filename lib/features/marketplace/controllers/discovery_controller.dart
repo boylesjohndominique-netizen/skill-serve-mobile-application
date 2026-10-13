@@ -6,23 +6,33 @@ import '../models/category_model.dart';
 import '../models/discovery_filters.dart';
 import '../models/provider_model.dart';
 import '../models/service_model.dart';
+import '../services/catalog_updates.dart';
 import '../services/recent_searches_service.dart';
 import '../services/service_service.dart';
 
 /// Drives the Explore tab: one search box over services and providers, the
 /// suggestions and recent terms that lead into it, and the featured and
 /// top-rated rails shown before a search is made.
+///
+/// Follows [CatalogUpdates]: when the catalog changes, the rails and the
+/// search on screen are re-run in place, so a newly published service or
+/// provider appears in the results without searching again.
 class DiscoveryController extends ChangeNotifier {
   DiscoveryController({
     ServiceService? service,
     RecentSearchesService? recentSearches,
+    CatalogUpdates? updates,
     Duration debounce = const Duration(milliseconds: 350),
   })  : _service = service ?? ServiceService(),
         _recentSearches = recentSearches ?? RecentSearchesService(),
-        _debounce = debounce;
+        _updates = updates ?? CatalogUpdates.instance,
+        _debounce = debounce {
+    _updates.addListener(_onCatalogChanged);
+  }
 
   final ServiceService _service;
   final RecentSearchesService _recentSearches;
+  final CatalogUpdates _updates;
   final Duration _debounce;
 
   Timer? _debounceTimer;
@@ -101,9 +111,11 @@ class DiscoveryController extends ChangeNotifier {
     await loadHighlights();
   }
 
-  Future<void> loadHighlights() async {
-    isLoadingHighlights = true;
-    notifyListeners();
+  Future<void> loadHighlights({bool silent = false}) async {
+    if (!silent) {
+      isLoadingHighlights = true;
+      notifyListeners();
+    }
     try {
       final results = await Future.wait([
         _service.getCategories(),
@@ -116,9 +128,12 @@ class DiscoveryController extends ChangeNotifier {
       _loadedHighlights = true;
     } catch (_) {
       // The rails are supporting content: leave them empty rather than
-      // blocking the search box behind an error screen.
-      featuredProviders = [];
-      topRatedProviders = [];
+      // blocking the search box behind an error screen. A silent refresh
+      // that failed keeps what is already shown.
+      if (!silent) {
+        featuredProviders = [];
+        topRatedProviders = [];
+      }
     }
     isLoadingHighlights = false;
     notifyListeners();
@@ -230,13 +245,21 @@ class DiscoveryController extends ChangeNotifier {
   /// Retries the current search after a failure.
   Future<void> retry() => hasQuery ? _search() : loadHighlights();
 
-  Future<void> _search() async {
+  /// The catalog changed on the server: re-run what is on screen.
+  void _onCatalogChanged() {
+    if (_loadedHighlights) loadHighlights(silent: true);
+    if (hasQuery && hasSearched && error == null) _search(silent: true);
+  }
+
+  Future<void> _search({bool silent = false}) async {
     final term = query.trim();
     final requestId = ++_requestId;
 
-    isLoading = true;
-    error = null;
-    notifyListeners();
+    if (!silent) {
+      isLoading = true;
+      error = null;
+      notifyListeners();
+    }
 
     try {
       final results = await Future.wait([
@@ -248,6 +271,8 @@ class DiscoveryController extends ChangeNotifier {
       providers = results[1] as List<ProviderModel>;
     } catch (_) {
       if (requestId != _requestId) return;
+      // A background refresh that failed keeps the results already shown.
+      if (silent) return;
       services = [];
       providers = [];
       error = 'We could not run that search. Check your connection and try again.';
@@ -269,6 +294,7 @@ class DiscoveryController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _updates.removeListener(_onCatalogChanged);
     _debounceTimer?.cancel();
     super.dispose();
   }

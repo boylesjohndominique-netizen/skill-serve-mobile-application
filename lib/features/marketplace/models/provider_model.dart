@@ -9,7 +9,8 @@ import '../../provider/models/provider_availability_model.dart';
 ///
 /// The public catalog only lists verified providers and never exposes the
 /// provider's user account, so [user] is a display identity built from the
-/// business name.
+/// API's `display_name` — the business name, or the account holder's name when
+/// the provider gave no business name — and their account photo.
 class ProviderModel {
   final String id;
   final UserModel user;
@@ -95,12 +96,26 @@ class ProviderModel {
   List<BadgeModel> get earnedBadges =>
       badges.where((badge) => badge.earned).toList();
 
+  /// Shown when a payload names the provider nowhere at all.
+  static const fallbackName = 'SkillServe provider';
+
+  /// What to call a provider in a catalog payload: `display_name` from the
+  /// API, else the business name, else [fallbackName] — never a blank.
+  static String nameFrom(Map<String, dynamic> json) {
+    for (final key in const ['display_name', 'business_name']) {
+      final value = (json[key] as String? ?? '').trim();
+      if (value.isNotEmpty) return value;
+    }
+    return fallbackName;
+  }
+
   factory ProviderModel.fromJson(Map<String, dynamic> json) {
     final id = json['id'].toString();
-    final businessName = json['business_name'] as String? ?? '';
+    final displayName = nameFrom(json);
+    final photoUrl = json['profile_photo_url'] as String?;
     final services = [
       for (final item in (json['services'] as List? ?? const []))
-        ServiceModel.fromJson(item as Map<String, dynamic>, providerId: id, providerName: businessName),
+        ServiceModel.fromJson(item as Map<String, dynamic>, providerId: id, providerName: displayName),
     ];
     final prices = services.map((s) => s.price);
 
@@ -109,9 +124,10 @@ class ProviderModel {
       user: UserModel(
         id: 'provider-$id',
         role: UserRole.provider,
-        firstName: businessName,
+        firstName: displayName,
         lastName: '',
         email: '',
+        profilePicture: photoUrl == null || photoUrl.isEmpty ? null : photoUrl,
         createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
       ),
       bio: (json['bio'] ?? json['specialization']) as String? ?? '',

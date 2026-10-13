@@ -18,12 +18,12 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/section_header.dart';
 import '../../../core/widgets/misc/verification_seal.dart';
+import '../../booking/controllers/booking_controller.dart';
 import '../../booking/models/booking_model.dart';
 import '../../identity/controllers/identity_controller.dart';
 import '../../identity/views/eligibility_banner.dart';
 import '../../marketplace/models/provider_model.dart';
-import '../../booking/services/booking_service.dart';
-import '../../marketplace/services/service_service.dart';
+import '../../../core/widgets/cards/service_card.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/constants/app_icons.dart';
@@ -40,41 +40,18 @@ class ClientHomeScreen extends StatefulWidget {
 }
 
 class _ClientHomeScreenState extends State<ClientHomeScreen> {
-  List<ProviderModel> _featured = [];
-  bool _featuredLoading = true;
-  List<BookingModel> _upcoming = [];
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Both controllers outlive this tab and stay current on their own: the
+      // marketplace follows catalog changes, the bookings follow booking
+      // notifications. Load them only if nothing has yet.
       final marketplace = context.read<MarketplaceController>();
-      if (marketplace.providers.isEmpty) marketplace.loadInitial();
-      _loadFeatured();
-      _loadUpcoming();
+      if (!marketplace.hasLoaded && !marketplace.isLoading) marketplace.loadInitial();
+      final bookings = context.read<BookingController>();
+      if (bookings.bookings.isEmpty && !bookings.isLoading) bookings.loadClientBookings();
     });
-  }
-
-  Future<void> _loadFeatured() async {
-    try {
-      final f = await ServiceService().getFeaturedProviders();
-      if (mounted) setState(() { _featured = f; _featuredLoading = false; });
-    } catch (_) {
-      if (mounted) setState(() { _featuredLoading = false; });
-    }
-  }
-
-  Future<void> _loadUpcoming() async {
-    try {
-      final bookings = await BookingService().getClientBookings();
-      if (mounted) {
-        setState(() {
-          _upcoming = bookings
-              .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
-              .toList();
-        });
-      }
-    } catch (_) {}
   }
 
   Future<void> _openFilters() async {
@@ -93,10 +70,12 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     // approved the National ID while the app was open, and the banner would
     // otherwise keep saying it is blocked.
     final identity = context.read<IdentityController>();
-    await marketplace.loadInitial();
-    await _loadFeatured();
-    await _loadUpcoming();
-    await identity.refreshEligibility();
+    final bookings = context.read<BookingController>();
+    await Future.wait([
+      marketplace.loadInitial(),
+      bookings.loadClientBookings(),
+      identity.refreshEligibility(),
+    ]);
   }
 
   @override
@@ -105,7 +84,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     final favorites = context.watch<FavoritesController>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final upcoming = _upcoming;
+    final upcoming = context
+        .watch<BookingController>()
+        .bookings
+        .where((b) => b.status == BookingStatus.confirmed || b.status == BookingStatus.pending)
+        .toList();
+    final featured = marketplace.featuredProviders;
+    // Live catalog refreshes are silent; the featured rail, which no filter
+    // changes, shimmers only on the very first load.
+    final firstLoad = marketplace.isLoading && !marketplace.hasLoaded;
 
     return Scaffold(
       body: SafeArea(
@@ -230,7 +217,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               const SectionHeader(title: 'Featured Pros', eyebrow: 'Verified & trusted')
                   .animate().fadeIn(delay: 420.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.md),
-              if (_featuredLoading)
+              if (firstLoad)
                 SizedBox(
                   height: 168,
                   child: ListView.separated(
@@ -240,24 +227,56 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     itemBuilder: (_, __) => const ShimmerPlaceholder(width: 150, height: 168),
                   ),
                 )
-              else if (_featured.isEmpty)
+              else if (featured.isEmpty)
                 const EmptyState(icon: AppIcons.workspace_premium_outlined, title: 'No featured pros yet', message: 'Verified providers will appear here.')
               else
                 SizedBox(
                   height: 168,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: _featured.length,
+                    itemCount: featured.length,
                     separatorBuilder: (_, __) => const SizedBox(width: AppSizes.md),
                     itemBuilder: (context, i) => _FeaturedCard(
-                      provider: _featured[i],
-                      onTap: () => context.push('/provider-profile/${_featured[i].id}'),
+                      provider: featured[i],
+                      onTap: () => context.push('/provider-profile/${featured[i].id}'),
                     )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 460 + (i.clamp(0, 6) * 50)), duration: 350.ms)
                         .slideX(begin: 0.12, end: 0),
                   ),
                 ),
+
+              // ── Latest services ──
+              // What providers have published most recently, so a new
+              // listing shows up here the moment it goes live.
+              const SizedBox(height: AppSizes.xl),
+              SectionHeader(
+                title: 'Latest services',
+                eyebrow: marketplace.selectedCategory == 'All' ? 'Newly published' : marketplace.selectedCategory,
+              ).animate().fadeIn(delay: 480.ms, duration: 300.ms),
+              const SizedBox(height: AppSizes.md),
+              if (marketplace.isLoading)
+                const ShimmerCardList(count: 2, itemHeight: 100)
+              else if (marketplace.services.isEmpty)
+                EmptyState(
+                  icon: AppIcons.design_services_rounded,
+                  title: 'No services yet',
+                  message: marketplace.selectedCategory == 'All'
+                      ? 'Services appear here as soon as providers publish them.'
+                      : 'Nothing is published in ${marketplace.selectedCategory} yet.',
+                )
+              else
+                for (final service in marketplace.services)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.md),
+                    child: ServiceCard(
+                      service: service,
+                      onTap: () => context.push('/service-details/${service.id}'),
+                      onProviderTap: service.providerId.isEmpty
+                          ? null
+                          : () => context.push('/provider-profile/${service.providerId}'),
+                    ),
+                  ),
 
               // ── Provider grid ──
               const SizedBox(height: AppSizes.xl),
@@ -576,6 +595,7 @@ class _FeaturedCard extends StatelessWidget {
               children: [
                 AppAvatar(
                   initials: provider.user.initials,
+                  photoUrl: provider.user.profilePicture,
                   radius: 24,
                   backgroundColor: AppColors.secondary,
                   foregroundColor: AppColors.primary,

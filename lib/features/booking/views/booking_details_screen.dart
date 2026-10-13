@@ -124,28 +124,63 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     if (mounted) AppSnackbar.error(context, message ?? 'That did not work. Please try again.');
   }
 
+  /// Where back leads when this screen opened with nothing beneath it — after
+  /// confirming a booking, or from a notification: the user's own home.
+  String get _home => _isProviderView ? '/provider' : '/client';
+
+  /// Back always has somewhere to go: the previous screen when there is one,
+  /// otherwise home. Without this the app bar showed no back button and the
+  /// system back gesture closed the app.
+  PreferredSizeWidget _appBar(BuildContext context) {
+    final canPop = context.canPop();
+    return AppBar(
+      title: const Text('Booking Details'),
+      automaticallyImplyLeading: canPop,
+      leading: canPop
+          ? null
+          : IconButton(
+              tooltip: 'Back to home',
+              icon: const AppIcon(AppIcons.arrow_back_rounded),
+              onPressed: () => context.go(_home),
+            ),
+    );
+  }
+
+  /// [child] with the system back gesture sent home when nothing is beneath.
+  Widget _withBackToHome(BuildContext context, Widget child) {
+    return PopScope(
+      canPop: context.canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go(_home);
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: LoadingState());
+    if (_loading) {
+      return _withBackToHome(context, Scaffold(appBar: _appBar(context), body: const LoadingState()));
+    }
 
     final booking = _booking;
     if (booking == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Booking Details')),
+      return _withBackToHome(context, Scaffold(
+        appBar: _appBar(context),
         body: SafeArea(
           child: ErrorState(
             message: _error ?? 'This booking could not be loaded.',
             onRetry: _loadBooking,
           ),
         ),
-      );
+      ));
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isProviderView = _isProviderView;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Booking Details')),
+    return _withBackToHome(context, Scaffold(
+      appBar: _appBar(context),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadBooking,
@@ -356,7 +391,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildActions(BuildContext context, BookingModel booking, bool isProviderView) {
@@ -519,6 +554,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         label: 'Leave a review',
         icon: AppIcons.star_border_rounded,
         onPressed: () => context.push('/write-review/${booking.id}'),
+      ));
+    }
+    if (booking.status == BookingStatus.cancelled) {
+      actions.add(PrimaryButton(
+        label: 'Back to home',
+        icon: AppIcons.home_rounded,
+        onPressed: () => context.go('/client'),
       ));
     }
     if (booking.status == BookingStatus.disputed) {

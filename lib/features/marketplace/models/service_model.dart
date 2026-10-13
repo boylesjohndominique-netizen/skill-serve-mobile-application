@@ -1,3 +1,5 @@
+import 'provider_model.dart';
+
 /// A public service from `GET /api/client/v1/services` or embedded in a
 /// provider (`GET /api/client/v1/providers/{provider}`).
 class ServiceModel {
@@ -72,7 +74,7 @@ class ServiceModel {
     return ServiceModel(
       id: json['id'].toString(),
       providerId: (provider?['id'] ?? json['provider_id'] ?? providerId ?? '').toString(),
-      providerName: provider?['business_name'] as String? ?? providerName ?? '',
+      providerName: provider != null ? ProviderModel.nameFrom(provider) : providerName ?? '',
       categoryId: (category?['id'] ?? json['category_id'] ?? '').toString(),
       categoryName: category?['name'] as String? ?? '',
       title: json['title'] as String? ?? '',
