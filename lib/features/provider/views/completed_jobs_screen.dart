@@ -35,14 +35,14 @@ class _CompletedJobsScreenState extends State<CompletedJobsScreen> {
     final controller = context.watch<ProviderBookingController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Completed Jobs')),
+      appBar: AppBar(title: const Text('Completed Bookings')),
       body: SafeArea(
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
             : controller.errorMessage != null && controller.bookings.isEmpty
                 ? ErrorState(message: controller.errorMessage!, onRetry: _reload)
                 : controller.completed.isEmpty
-                ? const EmptyState(icon: AppIcons.task_alt_rounded, title: 'No completed jobs yet', message: 'Your finished bookings will be listed here.')
+                ? const EmptyState(icon: AppIcons.task_alt_rounded, title: 'No completed bookings yet', message: 'Your finished bookings will be listed here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     itemCount: controller.completed.length,

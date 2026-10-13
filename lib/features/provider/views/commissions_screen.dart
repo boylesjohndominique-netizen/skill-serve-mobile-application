@@ -149,8 +149,8 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
                 const SizedBox(width: AppSizes.sm),
                 Expanded(
                   child: Text(
-                    'New work is paused: you cannot accept or start jobs, or publish services, '
-                    'until this is settled. Jobs you have already agreed to are unaffected — '
+                    'New work is paused: you cannot accept new bookings, start a service or publish services '
+                    'until this is settled. Bookings you have already accepted are unaffected — '
                     'you can still decline and cancel.',
                     style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
                   ),
@@ -381,7 +381,7 @@ class _BlockWarning extends StatelessWidget {
           const SizedBox(width: AppSizes.sm),
           Expanded(
             child: Text(
-              'Pay it in time to keep taking work: new jobs and services pause '
+              'Pay it in time to keep taking work: new bookings and services pause '
               '${rules.join(', or ')}, whichever comes first.',
               style: AppTextStyles.bodySmall.copyWith(color: color),
             ),

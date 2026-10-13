@@ -39,7 +39,7 @@ const _paymentIcons = <String, AppIconData>{
 };
 
 const _paymentBlurbs = <String, String>{
-  'on_hand': 'Hand the payment to the provider when the job is done',
+  'on_hand': 'Hand the payment to the provider when the service is done',
   'gcash': 'Send it to the provider\'s own GCash number',
 };
 

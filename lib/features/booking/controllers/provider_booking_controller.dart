@@ -75,14 +75,14 @@ class ProviderBookingController extends ChangeNotifier {
   Future<bool> cancel(String id, {required String reason}) => _transition(
         id,
         () => _bookingService.cancelAcceptedBooking(id, reason: reason),
-        'Unable to cancel this job.',
+        'Unable to cancel this booking.',
       );
 
   Future<bool> start(String id) =>
-      _transition(id, () => _bookingService.startBooking(id), 'Unable to start this job.');
+      _transition(id, () => _bookingService.startBooking(id), 'Unable to start this service.');
 
   Future<bool> complete(String id) =>
-      _transition(id, () => _bookingService.completeBooking(id), 'Unable to complete this job.');
+      _transition(id, () => _bookingService.completeBooking(id), 'Unable to complete this service.');
 
   /// Records that the customer paid for a completed job; [reference] is an
   /// optional GCash or transfer number.

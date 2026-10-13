@@ -425,12 +425,12 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         ));
       case BookingStatus.confirmed:
         actions.add(PrimaryButton(
-          label: 'Start job',
+          label: 'Start service',
           icon: AppIcons.play_arrow_rounded,
           isLoading: _acting,
           onPressed: _acting
               ? null
-              : () => _act(() => controller.start(booking.id), 'Job started — good luck!'),
+              : () => _act(() => controller.start(booking.id), 'Service started — good luck!'),
         ));
         actions.add(const SizedBox(height: AppSizes.sm));
         actions.add(OutlinedAppButton(
@@ -440,7 +440,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         ));
         actions.add(const SizedBox(height: AppSizes.sm));
         actions.add(OutlinedAppButton(
-          label: 'Cancel job',
+          label: 'Cancel booking',
           icon: AppIcons.close_rounded,
           color: AppColors.error,
           onPressed: _acting ? null : () => _cancelAcceptedJob(booking, controller),
@@ -452,7 +452,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           isLoading: _acting,
           onPressed: _acting
               ? null
-              : () => _act(() => controller.complete(booking.id), 'Job marked as completed.'),
+              : () => _act(() => controller.complete(booking.id), 'Service marked as completed.'),
         ));
       case BookingStatus.completed when booking.canRecordPayment:
         actions.add(PrimaryButton(
@@ -516,17 +516,17 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   ) async {
     final reason = await AppDialog.prompt(
       context,
-      title: 'Cancel this job?',
+      title: 'Cancel this booking?',
       message: 'You already accepted this booking. The client will be notified with your reason.'
           '${_lateFeeNotice(booking)}',
       fieldLabel: 'Reason',
       hint: 'e.g. I am unwell and cannot make it that day',
-      confirmLabel: 'Cancel job',
+      confirmLabel: 'Cancel booking',
       danger: true,
       minLength: 5,
     );
     if (reason == null || !mounted) return;
-    await _act(() => controller.cancel(booking.id, reason: reason), 'Job cancelled. The client has been told.');
+    await _act(() => controller.cancel(booking.id, reason: reason), 'Booking cancelled. The customer has been told.');
   }
 
   Widget _clientActions(BuildContext context, BookingModel booking) {

@@ -175,7 +175,7 @@ class _DisputeList extends StatelessWidget {
                   icon: AppIcons.gavel_rounded,
                   title: 'No disputes raised',
                   message:
-                      'If a job goes wrong, you can raise a dispute from the booking and track it here.',
+                      'If a booking goes wrong, you can raise a dispute from the booking and track it here.',
                 ),
               ],
             )

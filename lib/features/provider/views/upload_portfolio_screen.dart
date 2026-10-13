@@ -117,7 +117,7 @@ class _UploadPortfolioScreenState extends State<UploadPortfolioScreen> {
                 ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.06, end: 0),
 
                 const SizedBox(height: AppSizes.xl),
-                AppTextField(label: 'Title', hint: 'e.g. Bathroom Repipe Job', controller: _title, validator: Validators.required)
+                AppTextField(label: 'Title', hint: 'e.g. Bathroom repipe', controller: _title, validator: Validators.required)
                     .animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.06, end: 0),
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(

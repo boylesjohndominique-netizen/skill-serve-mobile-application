@@ -62,7 +62,7 @@ class _MyReviewsScreenState extends State<MyReviewsScreen> {
                                 icon: AppIcons.star_outline_rounded,
                                 title: 'No reviews yet',
                                 message:
-                                    'After a job is completed you can rate it, and your reviews will be listed here.',
+                                    'After a booking is completed you can rate it, and your reviews will be listed here.',
                               ),
                             ],
                           )

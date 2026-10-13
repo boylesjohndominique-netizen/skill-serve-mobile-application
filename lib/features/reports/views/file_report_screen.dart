@@ -184,7 +184,7 @@ class _FileReportScreenState extends State<FileReportScreen> {
           icon: AppIcons.calendar_month_outlined,
           title: 'Nothing to report yet',
           message:
-              'Reports are about a specific booking. Once a job has started or finished, you can report an issue with it here.',
+              'Reports are about a specific booking. Once a booking has started or finished, you can report an issue with it here.',
         ),
       ];
     }

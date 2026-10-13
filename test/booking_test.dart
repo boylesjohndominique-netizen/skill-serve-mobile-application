@@ -132,7 +132,7 @@ void main() {
       }));
       expect(
         finished.timeline.map((e) => e.label),
-        ['Requested', 'Accepted', 'Job started', 'Completed'],
+        ['Requested', 'Accepted', 'Service started', 'Completed'],
       );
 
       final declined = BookingModel.fromJson(clientPayload({

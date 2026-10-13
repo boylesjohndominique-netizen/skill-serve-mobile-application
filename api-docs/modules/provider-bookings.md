@@ -119,7 +119,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/client/v1/provider/bookings/{booking}/complete`
 
-Mark a job in progress as completed
+Mark a service in progress as completed
 
 **Authentication:** Bearer token
 
@@ -279,7 +279,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/client/v1/provider/bookings/{booking}/start`
 
-Start a confirmed job
+Start the service on a confirmed booking
 
 **Authentication:** Bearer token
 

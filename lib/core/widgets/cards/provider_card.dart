@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../constants/app_animations.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
 import '../../../features/marketplace/models/provider_model.dart';
-import '../misc/rating_widget.dart';
-import '../feedback/shimmer_placeholder.dart';
+import '../misc/app_avatar.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 
-/// Provider summary card — used in Browse Services, Search results, and
-/// Favorites. Shows the platform's verification seal when applicable.
+/// Provider summary card — Home, Explore, Browse Services and Favorites.
 ///
-/// Features soft shadow, press-scale micro-animation, animated favorite
-/// heart toggle, and dark-mode-aware colors.
+/// One clean row: the provider's own photo (or initials) with a verified
+/// tick, their name, category and area, rating and finished bookings, and the
+/// lowest price with the favorite toggle. Never a stock photo: a picture next
+/// to a name reads as that person or their work.
 class ProviderCard extends StatefulWidget {
   final ProviderModel provider;
   final VoidCallback? onTap;
@@ -93,87 +92,128 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                 : AppSizes.shadowFor(context, level: ShadowLevel.md),
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.provider.portfolioImages.isNotEmpty
-                          ? widget.provider.portfolioImages.first
-                          : 'https://picsum.photos/seed/${widget.provider.id}/200/200',
-                      width: 68,
-                      height: 68,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => const ShimmerPlaceholder(width: 68, height: 68),
-                    ),
-                  ),
-                  if (widget.provider.isVerified)
-                    Positioned(
-                      bottom: -2,
-                      right: -2,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(color: surfaceColor, shape: BoxShape.circle),
-                        child: AppIcon(AppIcons.verified_rounded, size: 16, color: context.accentInk),
-                      ),
-                    ),
-                ],
-              ),
+              _Avatar(provider: widget.provider, ringColor: surfaceColor),
               const SizedBox(width: AppSizes.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      widget.provider.user.fullName,
+                      style: AppTextStyles.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      [
+                        if (widget.provider.categoryName.isNotEmpty) widget.provider.categoryName,
+                        if (widget.provider.location.isNotEmpty) widget.provider.location,
+                      ].join(' • '),
+                      style: AppTextStyles.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
-                        Expanded(
-                          child: Text(widget.provider.user.fullName, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
+                        AppIcon(AppIcons.star_rounded, size: 14, color: context.starColor),
+                        const SizedBox(width: 3),
+                        Text(
+                          widget.provider.reviewCount == 0
+                              ? 'New'
+                              : '${widget.provider.averageRating.toStringAsFixed(1)} (${widget.provider.reviewCount})',
+                          style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
                         ),
-                        GestureDetector(
-                          onTap: widget.onFavoriteToggle,
-                          child: AnimatedBuilder(
-                            animation: _heartScale,
-                            builder: (context, child) => Transform.scale(
-                              scale: _heartScale.value,
-                              child: child,
-                            ),
-                            child: AppIcon(
-                              widget.isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
-                              size: 16,
-                              strokeWidth: 1.5,
-                              color: widget.isFavorite ? AppColors.error : context.textMutedColor,
-                            ),
+                        Text(' • ', style: AppTextStyles.bodySmall),
+                        Flexible(
+                          child: Text(
+                            '${widget.provider.completedBookings} '
+                            '${widget.provider.completedBookings == 1 ? 'booking' : 'bookings'} done',
+                            style: AppTextStyles.bodySmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(widget.provider.categoryName, style: AppTextStyles.bodySmall),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        RatingWidget(rating: widget.provider.averageRating, reviewCount: widget.provider.reviewCount),
-                        const SizedBox(width: 10),
-                        AppIcon(AppIcons.work_outline_rounded, size: 13, color: context.textMutedColor),
-                        const SizedBox(width: 3),
-                        Text('${widget.provider.completedJobs} jobs', style: AppTextStyles.bodySmall),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    if (widget.provider.startingPrice != null)
-                      Text(
-                        'From ${Formatters.peso(widget.provider.startingPrice!)}',
-                        style: AppTextStyles.label.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
-                      ),
                   ],
                 ),
+              ),
+              const SizedBox(width: AppSizes.sm),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Semantics(
+                    button: true,
+                    label: widget.isFavorite ? 'Remove from favorites' : 'Add to favorites',
+                    child: GestureDetector(
+                      onTap: widget.onFavoriteToggle,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: AnimatedBuilder(
+                          animation: _heartScale,
+                          builder: (context, child) => Transform.scale(scale: _heartScale.value, child: child),
+                          child: AppIcon(
+                            widget.isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
+                            size: 18,
+                            strokeWidth: 1.5,
+                            color: widget.isFavorite ? AppColors.error : context.textMutedColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (widget.provider.startingPrice != null) ...[
+                    const SizedBox(height: AppSizes.sm),
+                    Text('From', style: AppTextStyles.caption),
+                    Text(
+                      Formatters.peso(widget.provider.startingPrice!),
+                      style: AppTextStyles.label.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The provider's photo, or their initials, with a verified tick.
+class _Avatar extends StatelessWidget {
+  final ProviderModel provider;
+  final Color ringColor;
+
+  const _Avatar({required this.provider, required this.ringColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        AppAvatar(
+          initials: provider.user.initials,
+          photoUrl: provider.user.profilePicture,
+          radius: 26,
+          backgroundColor: AppColors.secondarySoft,
+          foregroundColor: AppColors.secondaryDeep,
+        ),
+        if (provider.isVerified)
+          Positioned(
+            bottom: -2,
+            right: -2,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(color: ringColor, shape: BoxShape.circle),
+              child: AppIcon(AppIcons.verified_rounded, size: 15, color: context.accentInk),
+            ),
+          ),
+      ],
     );
   }
 }

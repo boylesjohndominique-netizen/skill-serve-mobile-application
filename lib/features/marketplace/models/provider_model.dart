@@ -21,7 +21,7 @@ class ProviderModel {
   final DateTime? verifiedAt;
   final double averageRating;
   final int reviewCount;
-  final int completedJobs;
+  final int completedBookings;
   final String categoryName;
   final List<String> portfolioImages;
 
@@ -67,7 +67,7 @@ class ProviderModel {
     this.verifiedAt,
     this.averageRating = 0,
     this.reviewCount = 0,
-    this.completedJobs = 0,
+    this.completedBookings = 0,
     required this.categoryName,
     this.portfolioImages = const [],
     this.skills = const [],
@@ -139,7 +139,7 @@ class ProviderModel {
       verifiedAt: DateTime.tryParse(json['verified_at'] as String? ?? ''),
       averageRating: double.tryParse('${json['average_rating'] ?? 0}') ?? 0,
       reviewCount: (json['total_reviews'] as num?)?.toInt() ?? 0,
-      completedJobs: (json['completed_bookings'] as num?)?.toInt() ?? 0,
+      completedBookings: (json['completed_bookings'] as num?)?.toInt() ?? 0,
       categoryName: (json['primary_category'] as String?) ??
           (services.isNotEmpty ? services.first.categoryName : null) ??
           (json['specialization'] as String? ?? ''),

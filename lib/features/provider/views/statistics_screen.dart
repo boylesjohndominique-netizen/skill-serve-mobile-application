@@ -59,7 +59,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               children: [
                 Expanded(child: _StatCard(label: 'Avg. Rating', value: (provider?.averageRating ?? 0.0).toStringAsFixed(1), icon: AppIcons.star_rounded, index: 0)),
                 const SizedBox(width: AppSizes.md),
-                Expanded(child: _StatCard(label: 'Total Jobs', value: '${provider?.completedJobs ?? 0}', icon: AppIcons.task_alt_rounded, index: 1)),
+                Expanded(child: _StatCard(label: 'Total Bookings', value: '${provider?.completedBookings ?? 0}', icon: AppIcons.task_alt_rounded, index: 1)),
               ],
             ),
             const SizedBox(height: AppSizes.md),
@@ -71,7 +71,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ],
             ),
             const SizedBox(height: AppSizes.xl),
-            Text('Completed Jobs (Last 6 Months)', style: AppTextStyles.titleLarge)
+            Text('Completed Bookings (Last 6 Months)', style: AppTextStyles.titleLarge)
                 .animate().fadeIn(delay: 350.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.lg),
             Container(

@@ -20,10 +20,10 @@ const _faqs = [
   _Faq('How do I book a service?', 'Browse a category or search for a provider, view their profile, then tap "Book now" to choose a date and time.'),
   _Faq('How are providers verified?', 'Every provider submits a valid ID and relevant certificates, which our admin team reviews before their profile goes live.'),
   _Faq('Can I cancel a booking?', 'Yes — open the booking from your Booking History and tap "Cancel booking." Both you and the provider will be notified.'),
-  _Faq('Can I change the date or time of a booking?', 'Yes, until the job starts. Open the booking and tap "Reschedule" to pick a new slot within the provider\'s hours. If the provider had already accepted, they will be asked to accept the new time.'),
+  _Faq('Can I change the date or time of a booking?', 'Yes, until the service starts. Open the booking and tap "Reschedule" to pick a new slot within the provider\'s hours. If the provider had already accepted, they will be asked to accept the new time.'),
   _Faq('How do I message a provider?', 'From a provider\'s profile, tap "Message" to start a conversation before or after booking.'),
-  _Faq('What if I have an issue with a completed job?', 'You can leave a review reflecting your experience, or contact support directly for unresolved disputes.'),
-  _Faq('How do providers get paid?', 'You pay the provider directly, using the method you chose when booking (cash, GCash, …). Once they receive it, the provider marks the job as paid in the app, and you can see the payment under Payments.'),
+  _Faq('What if I have an issue with a completed booking?', 'You can leave a review reflecting your experience, or contact support directly for unresolved disputes.'),
+  _Faq('How do providers get paid?', 'You pay the provider directly, using the method you chose when booking (cash, GCash, …). Once they receive it, the provider marks the booking as paid in the app, and you can see the payment under Payments.'),
   _Faq('How do I save a provider for later?', 'Tap the heart on a provider\'s card or profile. Saved providers appear under Favorites and stay there across devices while you are signed in.'),
 ];
 

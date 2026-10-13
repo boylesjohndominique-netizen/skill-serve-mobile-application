@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +11,6 @@ import '../../../core/constants/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
@@ -23,6 +21,7 @@ import '../../booking/models/booking_model.dart';
 import '../../identity/controllers/identity_controller.dart';
 import '../../identity/views/eligibility_banner.dart';
 import '../../marketplace/models/provider_model.dart';
+import '../../../core/widgets/cards/provider_card.dart';
 import '../../../core/widgets/cards/service_card.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
@@ -31,7 +30,8 @@ import 'widgets/discovery_filter_sheet.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// Client's primary landing tab — the SkillServe "Discover" experience:
-/// hero, category chips, featured strip, and a 2-column provider grid.
+/// hero, category chips, featured strip, the newest services and the
+/// available providers.
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
 
@@ -307,30 +307,19 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                       : null,
                 )
               else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: AppSizes.md,
-                    crossAxisSpacing: AppSizes.md,
-                    childAspectRatio: 0.52,
-                  ),
-                  itemCount: marketplace.providers.length,
-                  itemBuilder: (context, i) {
-                    final p = marketplace.providers[i];
-                    return _GridProviderCard(
-                      provider: p,
-                      isFavorite: favorites.isFavorite(p.id),
-                      onFavoriteToggle: () => toggleFavorite(context, p),
-                      onTap: () => context.push('/provider-profile/${p.id}'),
-                      onBook: () => context.push('/booking-form/${p.id}'),
+                for (var i = 0; i < marketplace.providers.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.md),
+                    child: ProviderCard(
+                      provider: marketplace.providers[i],
+                      isFavorite: favorites.isFavorite(marketplace.providers[i].id),
+                      onFavoriteToggle: () => toggleFavorite(context, marketplace.providers[i]),
+                      onTap: () => context.push('/provider-profile/${marketplace.providers[i].id}'),
                     )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 560 + (i.clamp(0, 8) * 50)), duration: 350.ms)
-                        .slideY(begin: 0.06, end: 0);
-                  },
-                ),
+                        .slideY(begin: 0.06, end: 0),
+                  ),
               const SizedBox(height: AppSizes.xxl),
             ],
           ),
@@ -630,170 +619,8 @@ class _FeaturedCard extends StatelessWidget {
                   style: AppTextStyles.label.copyWith(color: AppColors.textOnDark, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(width: 6),
-                Text('${provider.completedJobs} jobs', style: AppTextStyles.caption.copyWith(color: AppColors.textMutedDark)),
+                Text('${provider.completedBookings} bookings', style: AppTextStyles.caption.copyWith(color: AppColors.textMutedDark)),
               ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// ─── 2-column provider grid card ───
-class _GridProviderCard extends StatelessWidget {
-  final ProviderModel provider;
-  final bool isFavorite;
-  final VoidCallback onFavoriteToggle;
-  final VoidCallback onTap;
-  final VoidCallback onBook;
-
-  const _GridProviderCard({
-    required this.provider,
-    required this.isFavorite,
-    required this.onFavoriteToggle,
-    required this.onTap,
-    required this.onBook,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
-    final lineColor = isDark ? AppColors.lineDark : AppColors.line;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          border: Border.all(color: lineColor.withValues(alpha: 0.5), width: 0.8),
-          boxShadow: AppSizes.shadowFor(context, level: ShadowLevel.sm),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Cover with seal + favorite
-            Stack(
-              children: [
-                SizedBox(
-                  height: 72,
-                  width: double.infinity,
-                  child: provider.portfolioImages.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: provider.portfolioImages.first,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => const ShimmerPlaceholder(height: 72),
-                        )
-                      : Container(color: AppColors.primary),
-                ),
-                Container(
-                  height: 72,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.35)],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: GestureDetector(
-                    onTap: onFavoriteToggle,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), shape: BoxShape.circle),
-                      child: AppIcon(
-                        isFavorite ? AppIcons.favorite_rounded : AppIcons.favorite_border_rounded,
-                        size: 14,
-                        strokeWidth: 1.5,
-                        color: isFavorite ? AppColors.error : Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -2,
-                  right: 8,
-                  child: VerificationSeal(
-                    status: provider.verificationStatus,
-                    size: 34,
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          provider.user.fullName,
-                          style: AppTextStyles.titleMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (provider.isVerified)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: AppIcon(AppIcons.verified_rounded, size: 14, color: context.accentInk),
-                        ),
-                    ],
-                  ),
-                  Text(provider.categoryName, style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      AppIcon(AppIcons.star_rounded, size: 12, color: context.starColor),
-                      const SizedBox(width: 2),
-                      Text(provider.averageRating.toStringAsFixed(1), style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 6),
-                      Text('${provider.completedJobs} jobs', style: AppTextStyles.caption.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    provider.bio,
-                    style: AppTextStyles.bodySmall.copyWith(color: isDark ? AppColors.textMutedDark : AppColors.textSecondary, fontSize: 11),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'From ${Formatters.peso(provider.startingPrice ?? 0)}',
-                    style: AppTextStyles.monoSm.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 32,
-                    child: FilledButton(
-                      onPressed: onBook,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.secondary,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusSm)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const AppIcon(AppIcons.calendar_month_rounded, size: 14, color: AppColors.primary),
-                          const SizedBox(width: 4),
-                          Text('Book now', style: AppTextStyles.caption.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
         ),

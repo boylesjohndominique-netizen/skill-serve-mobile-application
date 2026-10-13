@@ -142,7 +142,7 @@ class _BadgesScreenState extends State<BadgesScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text('Keep completing jobs and reviews to earn more.', style: AppTextStyles.bodySmall),
+                      Text('Keep completing bookings and earning good reviews to earn more.', style: AppTextStyles.bodySmall),
                     ],
                   ),
                 ),

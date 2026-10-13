@@ -95,13 +95,13 @@ class _EarningsScreenState extends State<EarningsScreen> {
                           style: AppTextStyles.bodySmall,
                         ),
                         const SizedBox(height: AppSizes.xl),
-                        Text('Completed jobs', style: AppTextStyles.titleLarge),
+                        Text('Completed bookings', style: AppTextStyles.titleLarge),
                         const SizedBox(height: AppSizes.md),
                         if (completed.isEmpty)
                           const EmptyState(
                             icon: AppIcons.payments_outlined,
                             title: 'No earnings yet',
-                            message: 'Jobs you complete will appear here with what you earned.',
+                            message: 'Bookings you complete will appear here with what you earned.',
                           )
                         else
                           for (var i = 0; i < completed.length; i++)
@@ -159,7 +159,7 @@ class _Summary extends StatelessWidget {
               ),
               const SizedBox(width: AppSizes.sm),
               Text(
-                '$jobs completed ${jobs == 1 ? 'job' : 'jobs'}',
+                '$jobs completed ${jobs == 1 ? 'booking' : 'bookings'}',
                 style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
               ),
             ],
@@ -205,7 +205,7 @@ class _Breakdown extends StatelessWidget {
       ),
       child: Column(
         children: [
-          row('Job prices', Formatters.peso(gross)),
+          row('Booking totals', Formatters.peso(gross)),
           row('Platform fee', '− ${Formatters.peso(fees)}'),
           Divider(height: AppSizes.lg, color: isDark ? AppColors.lineDark : AppColors.line),
           row('You earn', Formatters.peso(net), strong: true),
@@ -217,7 +217,7 @@ class _Breakdown extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '${Formatters.peso(unpaid)} of completed jobs is not yet marked paid.',
+                    '${Formatters.peso(unpaid)} of completed bookings is not yet marked paid.',
                     style: AppTextStyles.bodySmall,
                   ),
                 ),

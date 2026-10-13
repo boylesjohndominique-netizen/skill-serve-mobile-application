@@ -40,10 +40,10 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
     final ok = starting ? await controller.start(booking.id) : await controller.complete(booking.id);
     if (!mounted) return;
     if (ok) {
-      AppSnackbar.success(context, starting ? 'Job started — good luck!' : 'Job marked as completed.');
+      AppSnackbar.success(context, starting ? 'Service started — good luck!' : 'Service marked as completed.');
     } else {
       AppSnackbar.error(context,
-          controller.errorMessage ?? (starting ? 'Unable to start this job.' : 'Unable to complete this job.'));
+          controller.errorMessage ?? (starting ? 'Unable to start this service.' : 'Unable to complete this service.'));
     }
   }
 
@@ -52,14 +52,14 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
     final controller = context.watch<ProviderBookingController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Active Jobs')),
+      appBar: AppBar(title: const Text('Active Bookings')),
       body: SafeArea(
         child: controller.isLoading
             ? const Padding(padding: EdgeInsets.all(AppSizes.pageHPad), child: ShimmerCardList(itemHeight: 130))
             : controller.errorMessage != null && controller.bookings.isEmpty
                 ? ErrorState(message: controller.errorMessage!, onRetry: _reload)
                 : controller.active.isEmpty
-                ? const EmptyState(icon: AppIcons.work_outline_rounded, title: 'No active jobs', message: 'Accepted bookings you\'re currently working on will show up here.')
+                ? const EmptyState(icon: AppIcons.work_outline_rounded, title: 'No active bookings', message: 'Accepted bookings you\'re currently working on will show up here.')
                 : ListView.separated(
                     padding: const EdgeInsets.all(AppSizes.pageHPad),
                     itemCount: controller.active.length,
@@ -72,7 +72,7 @@ class _ActiveJobsScreenState extends State<ActiveJobsScreen> {
                           BookingCard(booking: booking, isProviderView: true, onTap: () => context.push('/booking-details/${booking.id}')),
                           const SizedBox(height: AppSizes.sm),
                           PrimaryButton(
-                            label: booking.status == BookingStatus.confirmed ? 'Start job' : 'Mark as completed',
+                            label: booking.status == BookingStatus.confirmed ? 'Start service' : 'Mark as completed',
                             icon: booking.status == BookingStatus.confirmed
                                 ? AppIcons.play_arrow_rounded
                                 : AppIcons.task_alt_rounded,

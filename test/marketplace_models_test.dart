@@ -70,7 +70,7 @@ void main() {
     expect(provider.yearsExperience, 6);
     expect(provider.averageRating, 4.5);
     expect(provider.reviewCount, 12);
-    expect(provider.completedJobs, 40);
+    expect(provider.completedBookings, 40);
     expect(provider.startingPrice, 900);
     expect(provider.categoryName, 'Appliance Repair');
     expect(provider.portfolioImages, ['https://example.com/a.jpg', 'https://example.com/b.jpg']);

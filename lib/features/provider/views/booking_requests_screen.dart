@@ -211,13 +211,13 @@ class _ActionableCard extends StatelessWidget {
                 const SizedBox(width: AppSizes.md),
                 Expanded(
                   child: PrimaryButton(
-                    label: 'Start job',
+                    label: 'Start service',
                     icon: AppIcons.play_arrow_rounded,
                     isLoading: busy,
                     onPressed: busy
                         ? null
                         : () => _runAction(context, () => controller.start(booking.id),
-                            'Job started — good luck!'),
+                            'Service started — good luck!'),
                   ),
                 ),
               ],
@@ -237,7 +237,7 @@ class _ActionableCard extends StatelessWidget {
               onPressed: busy
                   ? null
                   : () => _runAction(context, () => controller.complete(booking.id),
-                      'Job marked as completed.'),
+                      'Service marked as completed.'),
             ),
           ],
         );

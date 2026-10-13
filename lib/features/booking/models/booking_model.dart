@@ -231,7 +231,7 @@ class BookingModel {
         if (confirmedAt != null)
           BookingTimelineEntry(label: 'Accepted', at: confirmedAt!, status: 'confirmed'),
         if (startedAt != null)
-          BookingTimelineEntry(label: 'Job started', at: startedAt!, status: 'inProgress'),
+          BookingTimelineEntry(label: 'Service started', at: startedAt!, status: 'inProgress'),
         if (completedAt != null)
           BookingTimelineEntry(label: 'Completed', at: completedAt!, status: 'completed'),
         if (cancelledAt != null)

@@ -173,7 +173,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                       .animate()
                       .fadeIn(delay: 250.ms, duration: 350.ms)
                       .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
-                  StatCard(label: 'Active Jobs', value: '${bookings.active.length}', icon: AppIcons.work_rounded, onTap: () => context.push('/active-jobs'))
+                  StatCard(label: 'Active Bookings', value: '${bookings.active.length}', icon: AppIcons.work_rounded, onTap: () => context.push('/active-jobs'))
                       .animate()
                       .fadeIn(delay: 330.ms, duration: 350.ms)
                       .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
@@ -202,14 +202,16 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: AppSizes.sm),
-                  TextButton(onPressed: () => context.push('/booking-requests'), child: const Text('See all')),
+                  // The upcoming list continues on Active Bookings, not on
+                  // the new requests.
+                  TextButton(onPressed: () => context.push('/active-jobs'), child: const Text('See all')),
                 ],
               ).animate().fadeIn(delay: 420.ms, duration: 300.ms),
               const SizedBox(height: AppSizes.md),
               if (bookings.isLoading)
                 const ShimmerCardList(count: 2, itemHeight: 110)
               else if (bookings.active.isEmpty)
-                const EmptyState(icon: AppIcons.event_available_outlined, title: 'Nothing scheduled', message: 'Confirmed jobs will show up here.')
+                const EmptyState(icon: AppIcons.event_available_outlined, title: 'No upcoming bookings', message: 'Bookings you accept will show up here.')
               else
                 Column(
                   children: [

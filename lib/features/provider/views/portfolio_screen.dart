@@ -52,7 +52,7 @@ class _ProviderPortfolioScreenState extends State<ProviderPortfolioScreen> {
               ? EmptyState(
                   icon: AppIcons.photo_library_outlined,
                   title: 'Showcase your work',
-                  message: 'Upload photos of completed jobs to build trust with future clients.',
+                  message: 'Upload photos of services you completed to build trust with future customers.',
                   actionLabel: 'Upload portfolio item',
                   onAction: () => context.push('/upload-portfolio'),
                 )

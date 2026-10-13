@@ -172,7 +172,7 @@ class _RescheduleBookingScreenState extends State<RescheduleBookingScreen> {
         appBar: AppBar(title: const Text('Reschedule')),
         body: const SafeArea(
           child: ErrorState(
-            message: 'This booking can no longer be rescheduled because the job has started or ended.',
+            message: 'This booking can no longer be rescheduled because the service has started or ended.',
           ),
         ),
       );

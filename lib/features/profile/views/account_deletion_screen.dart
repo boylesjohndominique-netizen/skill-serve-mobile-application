@@ -129,7 +129,7 @@ class _AccountDeletionScreenState extends State<AccountDeletionScreen> {
                   const SizedBox(height: AppSizes.sm),
                   Text(
                     'Settle or cancel any open bookings first — we will not close '
-                    'an account that still owes someone a job. Want a copy of '
+                    'an account that still owes someone a service. Want a copy of '
                     'your data? Take it from "View account data" before you go.',
                     style: AppTextStyles.bodySmall.copyWith(
                         color: isDark

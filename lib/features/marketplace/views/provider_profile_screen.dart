@@ -234,7 +234,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   const SizedBox(width: AppSizes.lg),
                   AppIcon(AppIcons.work_outline_rounded, size: 16, color: context.textMutedColor),
                   const SizedBox(width: 4),
-                  Text('${p.completedJobs} jobs', style: AppTextStyles.bodyMedium),
+                  Text('${p.completedBookings} bookings', style: AppTextStyles.bodyMedium),
                   const SizedBox(width: AppSizes.lg),
                   AppIcon(AppIcons.timeline_rounded, size: 16, color: context.textMutedColor),
                   const SizedBox(width: 4),
