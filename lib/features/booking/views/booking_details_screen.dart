@@ -322,6 +322,14 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     .animate()
                     .fadeIn(delay: 250.ms, duration: 350.ms)
                     .slideY(begin: 0.06, end: 0),
+                // The provider's take, with every step of the sum shown.
+                if (isProviderView && booking.earnings != null) ...[
+                  const SizedBox(height: AppSizes.lg),
+                  _EarningsCard(earnings: booking.earnings!, isDark: isDark)
+                      .animate()
+                      .fadeIn(delay: 280.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                ],
                 // How to pay — the customer's own unpaid GCash booking only.
                 // The API decides when to send these details; the app never
                 // guesses at a provider's payment number.
@@ -888,6 +896,70 @@ class _Timeline extends StatelessWidget {
               ],
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// What the provider receives from this booking: the price, SkillServe's
+/// commission and the rest, then where that commission stands.
+class _EarningsCard extends StatelessWidget {
+  final BookingEarnings earnings;
+  final bool isDark;
+  const _EarningsCard({required this.earnings, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final rate = earnings.commissionRate;
+    final rateLabel = rate == null ? '' : ' (${rate.toStringAsFixed(rate % 1 == 0 ? 0 : 2)}%)';
+
+    Widget line(String label, String value, {bool strong = false, Color? color}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(label, style: strong ? AppTextStyles.titleMedium : AppTextStyles.bodyMedium),
+              ),
+              Text(
+                value,
+                style: (strong ? AppTextStyles.monoLg : AppTextStyles.monoMd).copyWith(
+                  color: color,
+                  fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+
+    final (tone, message) = switch (earnings.commissionStatus) {
+      'outstanding' => (NoticeTone.warning, 'You owe SkillServe ${Formatters.peso(earnings.commission)} for this booking. Pay it under Commission to keep taking new bookings.'),
+      'settled' => (
+          NoticeTone.success,
+          earnings.commissionSettledAt == null
+              ? 'SkillServe\'s share is paid.'
+              : 'SkillServe\'s share was paid on ${Formatters.dateShort(earnings.commissionSettledAt!)}.',
+        ),
+      'waived' => (NoticeTone.success, 'SkillServe waived its share — you keep the full ${Formatters.peso(earnings.price)}.'),
+      'voided' => (NoticeTone.info, 'This booking was cancelled, so nothing is earned and no commission is due.'),
+      _ => (NoticeTone.info, 'SkillServe\'s share becomes due once you record the customer\'s payment.'),
+    };
+
+    return _SectionCard(
+      title: 'Your earnings',
+      isDark: isDark,
+      children: [
+        line('Price the customer pays', Formatters.peso(earnings.price)),
+        line('SkillServe commission$rateLabel', '− ${Formatters.peso(earnings.commission)}', color: context.errorColor),
+        Divider(height: AppSizes.lg, color: isDark ? AppColors.lineDark : AppColors.line),
+        line('You receive', Formatters.peso(earnings.providerReceives), strong: true, color: context.accentInk),
+        const SizedBox(height: AppSizes.sm),
+        AppNotice(
+          tone: tone,
+          message: message,
+          action: earnings.commissionStatus == 'outstanding'
+              ? TextButton(onPressed: () => context.push('/commissions'), child: const Text('Open Commission'))
+              : null,
+        ),
       ],
     );
   }

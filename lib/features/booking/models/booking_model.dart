@@ -22,6 +22,40 @@ class BookingTimelineEntry {
 ///
 /// [gcashNumber] is null when the provider has not saved their details yet;
 /// [note] then explains what to do instead, so it is always worth showing.
+/// The provider's take from one booking, from the API's `earnings`. Every
+/// figure is the server's — the app shows the sum, it never does it.
+class BookingEarnings {
+  final double price;
+
+  /// The rate recorded when the booking was made, e.g. 10 for 10%.
+  final double? commissionRate;
+  final double commission;
+  final double providerReceives;
+
+  /// `pending` (due once the customer's payment is recorded), `outstanding`
+  /// (owed to SkillServe), `settled`, `waived` or `voided` (cancelled).
+  final String commissionStatus;
+  final DateTime? commissionSettledAt;
+
+  const BookingEarnings({
+    required this.price,
+    this.commissionRate,
+    required this.commission,
+    required this.providerReceives,
+    this.commissionStatus = 'pending',
+    this.commissionSettledAt,
+  });
+
+  factory BookingEarnings.fromJson(Map<String, dynamic> json) => BookingEarnings(
+        price: double.tryParse('${json['price']}') ?? 0,
+        commissionRate: json['commission_rate'] == null ? null : double.tryParse('${json['commission_rate']}'),
+        commission: double.tryParse('${json['commission']}') ?? 0,
+        providerReceives: double.tryParse('${json['provider_receives']}') ?? 0,
+        commissionStatus: json['commission_status'] as String? ?? 'pending',
+        commissionSettledAt: DateTime.tryParse('${json['commission_settled_at'] ?? ''}')?.toLocal(),
+      );
+}
+
 class PaymentInstructions {
   final String method;
   final String? gcashNumber;
@@ -128,6 +162,10 @@ class BookingModel {
   /// How to pay the provider, on the customer's own unpaid GCash booking.
   /// Absent on every other booking, and on the provider's payload.
   final PaymentInstructions? paymentInstructions;
+
+  /// What the provider gets from this booking — price, SkillServe's share and
+  /// the rest — as the API works it out. Provider's view only.
+  final BookingEarnings? earnings;
   final bool isReviewed;
   final DateTime? confirmedAt;
   final DateTime? startedAt;
@@ -168,6 +206,7 @@ class BookingModel {
     this.cancellationPolicy,
     this.paymentMethodCode,
     this.paymentInstructions,
+    this.earnings,
     this.isReviewed = false,
     this.confirmedAt,
     this.startedAt,
@@ -284,6 +323,9 @@ class BookingModel {
       paymentInstructions: json['payment_instructions'] is Map
           ? PaymentInstructions.fromJson(
               Map<String, dynamic>.from(json['payment_instructions'] as Map))
+          : null,
+      earnings: json['earnings'] is Map
+          ? BookingEarnings.fromJson(Map<String, dynamic>.from(json['earnings'] as Map))
           : null,
       isReviewed: json['is_reviewed'] == true,
       confirmedAt: _date(json['confirmed_at']),

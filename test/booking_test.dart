@@ -161,6 +161,46 @@ void main() {
     });
   });
 
+  group('provider earnings', () {
+    test('reads the server\'s sum: price, commission and what the provider receives', () {
+      final booking = BookingModel.fromJson({
+        'id': 7,
+        'booking_number': 'BK-1',
+        'status': 'completed',
+        'total_price': '1500.00',
+        'platform_fee': '150.00',
+        'scheduled_date': '2026-10-20T01:00:00+00:00',
+        'earnings': {
+          'price': '1500.00',
+          'commission_rate': '10.00',
+          'commission': '150.00',
+          'provider_receives': '1350.00',
+          'commission_status': 'settled',
+          'commission_settled_at': '2026-10-21T01:00:00+00:00',
+        },
+      });
+
+      final earnings = booking.earnings!;
+      expect(earnings.price, 1500);
+      expect(earnings.commissionRate, 10);
+      expect(earnings.commission, 150);
+      expect(earnings.providerReceives, 1350);
+      expect(earnings.commissionStatus, 'settled');
+      expect(earnings.commissionSettledAt, isNotNull);
+    });
+
+    test('the customer\'s copy of a booking carries no earnings', () {
+      final booking = BookingModel.fromJson({
+        'id': 8,
+        'booking_number': 'BK-2',
+        'status': 'pending',
+        'total_price': '500.00',
+        'scheduled_date': '2026-10-20T01:00:00+00:00',
+      });
+      expect(booking.earnings, isNull);
+    });
+  });
+
   group('payment methods', () {
     test('only the two methods the API accepts are offered', () {
       expect(BookingModel.paymentMethods.map((m) => m.$1), ['on_hand', 'gcash']);
