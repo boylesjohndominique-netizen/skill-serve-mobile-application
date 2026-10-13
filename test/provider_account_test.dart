@@ -223,6 +223,23 @@ void main() {
       expect(album.createdAt, isNotNull);
     });
 
+    test('deleting several removes each, and reports any the server refused', () async {
+      final service = _FakePortfolioService(stored: [
+        for (final id in ['1', '2', '3'])
+          PortfolioModel(id: id, providerId: 'PV-1', image: 'https://example.test/$id.jpg', title: 'Work $id'),
+      ]);
+      final controller = PortfolioController(service: service);
+      await controller.loadMine();
+
+      expect(await controller.removeMany(['1', '2']), 2);
+      expect(controller.items.map((i) => i.id), ['3']);
+
+      service.failWrites = true;
+      expect(await controller.removeMany(['3']), 0);
+      expect(controller.items.map((i) => i.id), ['3'], reason: 'a refused delete keeps the item');
+      expect(controller.errorMessage, isNotNull);
+    });
+
     test('a refused delete puts the item back', () async {
       final service = _FakePortfolioService(stored: [_item]);
       final controller = PortfolioController(service: service);

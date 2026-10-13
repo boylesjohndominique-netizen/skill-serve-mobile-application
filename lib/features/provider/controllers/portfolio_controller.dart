@@ -117,4 +117,23 @@ class PortfolioController extends ChangeNotifier {
       return false;
     }
   }
+
+  /// Removes several items, one request each; returns how many went. Any the
+  /// server refuses stay in the list, with [errorMessage] saying why.
+  Future<int> removeMany(Iterable<String> ids) async {
+    var removed = 0;
+    String? failure;
+    for (final id in ids.toList()) {
+      if (await remove(id)) {
+        removed++;
+      } else {
+        failure = errorMessage;
+      }
+    }
+    if (failure != null) {
+      errorMessage = failure;
+      notifyListeners();
+    }
+    return removed;
+  }
 }
