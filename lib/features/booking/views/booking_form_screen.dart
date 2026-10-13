@@ -43,11 +43,23 @@ const _paymentBlurbs = <String, String>{
   'gcash': 'Send it to the provider\'s own GCash number',
 };
 
-/// SkillServe 4-step booking wizard —
+/// SkillServe booking wizard —
 /// 1 Service → 2 Schedule → 3 Details & Payment → 4 Confirm.
+///
+/// Started from one particular service ([serviceId] — Service Details, or a
+/// service's Book button on the provider profile), that service is already
+/// chosen, so the wizard skips the first step and runs Schedule → Details →
+/// Confirm.
 class BookingFormScreen extends StatefulWidget {
   final String providerId;
-  const BookingFormScreen({super.key, required this.providerId});
+
+  /// The service the customer already picked, or null to choose one here.
+  final String? serviceId;
+
+  /// Where the provider and their services are read from; tests pass a fake.
+  final ServiceService? catalog;
+
+  const BookingFormScreen({super.key, required this.providerId, this.serviceId, this.catalog});
 
   @override
   State<BookingFormScreen> createState() => _BookingFormScreenState();
@@ -70,6 +82,13 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
 
   int _step = 0;
   ServiceModel? _selectedService;
+
+  /// The service came with the route and is still bookable, so there is
+  /// nothing to choose: the wizard starts at the schedule.
+  bool _serviceChosenUpfront = false;
+
+  /// The first step shown — the schedule when the service was chosen upfront.
+  int get _firstStep => _serviceChosenUpfront ? 1 : 0;
   DateTime _date = DateTime.now().add(const Duration(days: 1));
 
   /// Chosen start time as minutes from midnight; null until one is picked,
@@ -105,17 +124,22 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     final ProviderModel provider;
     try {
       // The provider detail includes its bookable (approved, public) services.
-      provider = await ServiceService().getProviderById(widget.providerId);
+      provider = await (widget.catalog ?? ServiceService()).getProviderById(widget.providerId);
     } catch (_) {
       if (mounted) setState(() => _loading = false);
       return;
     }
     final services = provider.services;
+    // A service that is no longer bookable (hidden, edited back into review)
+    // is not in the list: fall back to choosing one rather than failing.
+    final chosen = services.where((service) => service.id == widget.serviceId).firstOrNull;
     if (mounted) {
       setState(() {
         _provider = provider;
         _services = services;
-        _selectedService = services.isEmpty ? null : services.first;
+        _selectedService = chosen ?? (services.isEmpty ? null : services.first);
+        _serviceChosenUpfront = chosen != null;
+        _step = _firstStep;
         _loading = false;
       });
       _selectFirstSlot();
@@ -241,8 +265,10 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
         child: Column(
           children: [
             const SizedBox(height: AppSizes.md),
-            _WizardStepper(current: _step, names: const ['Service', 'Schedule', 'Details', 'Confirm'])
-                .animate().fadeIn(duration: 300.ms),
+            _WizardStepper(
+              current: _step - _firstStep,
+              names: const ['Service', 'Schedule', 'Details', 'Confirm'].sublist(_firstStep),
+            ).animate().fadeIn(duration: 300.ms),
             const SizedBox(height: AppSizes.md),
             Expanded(
               child: AnimatedSwitcher(
@@ -271,7 +297,7 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
           padding: const EdgeInsets.fromLTRB(AppSizes.pageHPad, AppSizes.sm, AppSizes.pageHPad, AppSizes.lg),
           child: Row(
             children: [
-              if (_step > 0) ...[
+              if (_step > _firstStep) ...[
                 Expanded(
                   child: OutlinedAppButton(
                     label: 'Back',
@@ -343,6 +369,10 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_serviceChosenUpfront && _selectedService != null) ...[
+          _ChosenService(service: _selectedService!, categoryName: _provider!.categoryName),
+          const SizedBox(height: AppSizes.lg),
+        ],
         Text('When do you need it?', style: AppTextStyles.titleLarge),
         const SizedBox(height: 4),
         Text('Pick a date and a time slot that works for you.', style: AppTextStyles.bodyMedium),
@@ -705,6 +735,55 @@ class _MethodTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The service being booked, shown above the schedule when it was chosen
+/// before the wizard opened.
+class _ChosenService extends StatelessWidget {
+  final ServiceModel service;
+  final String categoryName;
+
+  const _ChosenService({required this.service, required this.categoryName});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final category = service.categoryName.isNotEmpty ? service.categoryName : categoryName;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+      ),
+      child: Row(
+        children: [
+          const AppIcon(AppIcons.design_services_rounded, color: AppColors.secondaryDeep, size: 22),
+          const SizedBox(width: AppSizes.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Booking', style: AppTextStyles.caption),
+                Text(service.title, style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
+                Text(
+                  [if (category.isNotEmpty) category, if (service.duration.isNotEmpty) service.duration].join(' • '),
+                  style: AppTextStyles.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSizes.sm),
+          Text(
+            service.isQuoteOnly ? 'On quote' : Formatters.peso(service.price),
+            style: AppTextStyles.monoMd.copyWith(color: context.accentInk, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }

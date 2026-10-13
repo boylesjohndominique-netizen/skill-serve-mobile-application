@@ -351,7 +351,9 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     child: _ServiceRow(
                       service: _services[i],
                       onTap: () => context.push('/service-details/${_services[i].id}'),
-                      onBook: p.isAcceptingBookings ? () => context.push('/booking-form/${p.id}') : null,
+                      onBook: p.isAcceptingBookings
+                          ? () => context.push('/booking-form/${p.id}?serviceId=${_services[i].id}')
+                          : null,
                     )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 480 + i * 60), duration: 350.ms)

@@ -187,7 +187,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           child: PrimaryButton(
             label: 'Book this service',
             icon: AppIcons.calendar_month_rounded,
-            onPressed: () => context.push('/booking-form/${s.providerId}'),
+            onPressed: () => context.push('/booking-form/${s.providerId}?serviceId=${s.id}'),
           ),
         ),
       ),

@@ -162,8 +162,12 @@ final List<RouteBase> appRoutes = [
   ),
   GoRoute(
     path: '/booking-form/:providerId',
-    builder: (context, state) =>
-        BookingFormScreen(providerId: state.pathParameters['providerId']!),
+    // `?serviceId=` when the customer already picked the service: the
+    // wizard then skips choosing one.
+    builder: (context, state) => BookingFormScreen(
+      providerId: state.pathParameters['providerId']!,
+      serviceId: state.uri.queryParameters['serviceId'],
+    ),
   ),
   GoRoute(
     path: '/booking-confirmation',
