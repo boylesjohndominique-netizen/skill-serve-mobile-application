@@ -16,6 +16,7 @@ import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../marketplace/models/service_model.dart';
 import '../../marketplace/services/catalog_updates.dart';
+import '../../reviews/views/service_reviews_screen.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/widgets/misc/app_icon.dart';
@@ -163,6 +164,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   onTap: () => context.push('/provider-profile/${s.providerId}'),
                 ).animate().fadeIn(delay: 360.ms, duration: 300.ms),
               ],
+              const SizedBox(height: AppSizes.xl),
+              ServiceReviewsPreview(serviceId: s.id, serviceTitle: s.title)
+                  .animate().fadeIn(delay: 400.ms, duration: 300.ms),
               if (canReport) ...[
                 const SizedBox(height: AppSizes.lg),
                 Center(

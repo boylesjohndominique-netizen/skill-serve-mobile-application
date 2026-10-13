@@ -56,6 +56,7 @@ import '../features/support/views/ticket_detail_screen.dart';
 import '../features/reviews/views/my_reviews_screen.dart';
 import '../features/reviews/views/write_review_screen.dart';
 import '../features/reviews/views/reviews_screen.dart';
+import '../features/reviews/views/service_reviews_screen.dart';
 
 // Provider
 import '../features/provider/views/provider_shell.dart';
@@ -149,6 +150,13 @@ final List<RouteBase> appRoutes = [
     path: '/provider-profile/:id',
     builder: (context, state) =>
         ProviderProfileScreen(providerId: state.pathParameters['id']!),
+  ),
+  GoRoute(
+    path: '/service-reviews/:serviceId',
+    builder: (context, state) => ServiceReviewsScreen(
+      serviceId: state.pathParameters['serviceId']!,
+      serviceTitle: state.uri.queryParameters['title'],
+    ),
   ),
   GoRoute(
     path: '/service-details/:id',
@@ -422,6 +430,7 @@ const _marketplace = <String>{
   'categories',
   'search',
   'service-details',
+  'service-reviews',
   'provider-profile',
   'portfolio-gallery',
 };

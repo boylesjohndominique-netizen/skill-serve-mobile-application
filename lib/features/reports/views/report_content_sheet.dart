@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../auth/controllers/auth_controller.dart';
+import '../../reviews/models/review_model.dart';
 import '../controllers/report_controller.dart';
 import '../models/report_model.dart';
 import '../../../core/constants/app_colors.dart';
@@ -16,6 +18,14 @@ import '../../../core/widgets/inputs/app_text_field.dart';
 /// Pass exactly one of [reviewId], [messageId], [serviceId] or [providerId].
 /// The API decides who it is about, and refuses your own review, service or
 /// profile, or a message you did not receive.
+/// A report action for [review], or null when there should be none: a guest
+/// cannot report, and nobody reports their own review — they edit it.
+VoidCallback? reviewReportAction(BuildContext context, ReviewModel review) {
+  final me = context.read<AuthController>().currentUser?.id;
+  if (me == null || review.reviewerId == me) return null;
+  return () => showReportContentSheet(context, reviewId: review.id, title: 'Report this review');
+}
+
 Future<void> showReportContentSheet(
   BuildContext context, {
   String? reviewId,

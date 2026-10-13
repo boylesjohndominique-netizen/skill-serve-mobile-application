@@ -162,3 +162,35 @@ Response schema: `#/components/schemas/ClientServiceEnvelope`
 
 Response schema: `see openapi.json`
 
+## `GET /api/client/v1/services/{service}/reviews`
+
+Newest first. `meta.rating` carries the service's rating (`average`), how many published reviews it has (`total`) and how many gave each star (`breakdown`, "5" down to "1") — always for all reviews, even when `rating` narrows the list. Hidden or removed reviews never appear.
+
+**Authentication:** Public
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `service` | path | yes | integer |
+| `rating` | query | no | integer |
+| `per_page` | query | no | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Reviews
+
+Response schema: `#/components/schemas/ClientServiceReviewListEnvelope`
+
+#### HTTP 404: Service not found or unavailable
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `see openapi.json`
+

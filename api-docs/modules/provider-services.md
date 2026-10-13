@@ -191,7 +191,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/client/v1/provider/portfolio`
 
-Add a work sample to the provider's own portfolio
+Add a piece of work, with its photos, to the provider's own portfolio
 
 **Authentication:** Bearer token
 
@@ -256,6 +256,124 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 404: Item not found, or it belongs to another provider
+
+Response schema: `see openapi.json`
+
+## `PATCH /api/client/v1/provider/portfolio/{item}`
+
+Change a portfolio item's title or description
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `item` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `title` | no | string, maxLength=255 |
+| `description` | no | string, maxLength=2000 |
+
+### Responses
+
+#### HTTP 200: Item updated
+
+Response schema: `#/components/schemas/ClientPortfolioEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Item not found, or it belongs to another provider
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
+
+Response schema: `see openapi.json`
+
+## `POST /api/client/v1/provider/portfolio/{item}/images`
+
+Appended after the item's current photos. An item holds at most 10.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `item` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Photos added
+
+Response schema: `#/components/schemas/ClientPortfolioEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Item not found, or it belongs to another provider
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error, or the item would hold more than 10 photos
+
+Response schema: `see openapi.json`
+
+## `DELETE /api/client/v1/provider/portfolio/{item}/images/{image}`
+
+An item keeps at least one photo (422 for the last one — delete the item instead). Removing the cover makes the next photo the cover.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `item` | path | yes | integer |
+| `image` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Photo removed
+
+Response schema: `#/components/schemas/ClientPortfolioEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Item or photo not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: It is the item's only photo
 
 Response schema: `see openapi.json`
 
@@ -564,6 +682,44 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 422: Validation failed
+
+Response schema: `see openapi.json`
+
+## `GET /api/client/v1/provider/statistics`
+
+Computed from the provider's own bookings and reviews at request time. `monthly` holds one entry per calendar month in the business timezone (Asia/Manila), oldest first and ending with the current month: bookings completed (by completion date), bookings received (by creation date) and earnings (completed total price less SkillServe's fee, as on the Earnings screen). `summary.average_rating` is the provider's rating — the average of their services' ratings; `rating_breakdown` counts published reviews per star. `completion_rate` is completed / (completed + cancelled) in percent, null before either happens.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `months` | query | no | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Statistics
+
+Response schema: `#/components/schemas/ProviderStatisticsEnvelope`
+
+#### HTTP 401: Unauthenticated
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Active, verified-email provider account required
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: Provider profile not found
+
+Response schema: `see openapi.json`
+
+#### HTTP 422: Validation error
 
 Response schema: `see openapi.json`
 

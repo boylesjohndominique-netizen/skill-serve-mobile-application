@@ -411,7 +411,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     padding: const EdgeInsets.only(bottom: AppSizes.md),
                     child: ReviewCard(
                       review: _reviews[i],
-                      onReport: _reportAction(context, _reviews[i]),
+                      onReport: reviewReportAction(context, _reviews[i]),
                     )
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 560 + i * 60), duration: 350.ms)
@@ -823,17 +823,4 @@ class _PortfolioPreview extends StatelessWidget {
       ],
     );
   }
-}
-
-/// A report action for [review], or null when there should be none: a guest
-/// cannot report, and nobody reports their own review — they edit it.
-VoidCallback? _reportAction(BuildContext context, ReviewModel review) {
-  final auth = context.read<AuthController>();
-  final me = auth.currentUser?.id;
-  if (me == null || review.reviewerId == me) return null;
-  return () => showReportContentSheet(
-        context,
-        reviewId: review.id,
-        title: 'Report this review',
-      );
 }
