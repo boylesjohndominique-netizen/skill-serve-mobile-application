@@ -160,6 +160,12 @@ class _CommissionsScreenState extends State<CommissionsScreen> {
           ),
         ],
 
+        // Owed, not blocking yet, but it will: say when, so it can be paid in time.
+        if (summary.warnsBeforeBlock) ...[
+          const SizedBox(height: AppSizes.lg),
+          _BlockWarning(summary: summary),
+        ],
+
         // ── How to settle it ──
         const SizedBox(height: AppSizes.lg),
         Text('How to settle', style: AppTextStyles.titleLarge),
@@ -339,6 +345,46 @@ class _CommissionRow extends StatelessWidget {
                 style: AppTextStyles.bodySmall,
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// When unpaid commission will pause new work, while it has not yet.
+class _BlockWarning extends StatelessWidget {
+  final CommissionSummary summary;
+  const _BlockWarning({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDark ? AppColors.warningOnDark : AppColors.warning;
+    final deadline = summary.blockDeadline;
+    final rules = [
+      if (deadline != null) 'on ${Formatters.dateTime(deadline)}',
+      if (summary.hasBlockThreshold) 'once it reaches ₱${summary.blockThreshold}',
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceAltDark : AppColors.warningBg,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppIcon(AppIcons.schedule_rounded, color: color, size: AppSizes.iconMd),
+          const SizedBox(width: AppSizes.sm),
+          Expanded(
+            child: Text(
+              'Pay it in time to keep taking work: new jobs and services pause '
+              '${rules.join(', or ')}, whichever comes first.',
+              style: AppTextStyles.bodySmall.copyWith(color: color),
+            ),
           ),
         ],
       ),

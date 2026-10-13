@@ -29,6 +29,14 @@ class CommissionSummary {
   /// The provider's most recent GCash payment, whatever became of it.
   final CommissionRemittance? latestRemittance;
 
+  /// The unpaid total at which new work pauses. `0.00` means any debt
+  /// pauses it at once (System Settings → Marketplace).
+  final String blockThreshold;
+
+  /// When the oldest unpaid commission starts pausing new work by age, or
+  /// null when that rule is off or nothing is owed.
+  final DateTime? blockDeadline;
+
   const CommissionSummary({
     this.eligible = true,
     this.reason,
@@ -38,7 +46,17 @@ class CommissionSummary {
     this.outstanding = const [],
     this.paymentAccount = const CommissionPaymentAccount(),
     this.latestRemittance,
+    this.blockThreshold = '0.00',
+    this.blockDeadline,
   });
+
+  /// Whether unpaid commission only pauses work once it reaches an amount.
+  bool get hasBlockThreshold => (double.tryParse(blockThreshold) ?? 0) > 0;
+
+  /// The provider owes something that has not paused their work yet, but
+  /// will — by age or by amount — so the screen warns them in time.
+  bool get warnsBeforeBlock =>
+      hasOutstanding && !isBlockedByCommission && (blockDeadline != null || hasBlockThreshold);
 
   /// Whether the commission debt in particular is what is blocking work.
   bool get isBlockedByCommission => reason == 'outstanding_commission';
@@ -65,6 +83,8 @@ class CommissionSummary {
         latestRemittance: json['latest_remittance'] is Map
             ? CommissionRemittance.fromJson(Map<String, dynamic>.from(json['latest_remittance'] as Map))
             : null,
+        blockThreshold: json['block_threshold']?.toString() ?? '0.00',
+        blockDeadline: DateTime.tryParse(json['block_deadline'] as String? ?? '')?.toLocal(),
       );
 }
 

@@ -55,6 +55,34 @@ void main() {
       expect(summary.hasPendingRemittance, isFalse);
     });
 
+    test('warns before unpaid commission pauses work, never once it already has', () {
+      // Any debt blocks (the default): already blocked, nothing to warn about.
+      expect(CommissionSummary.fromJson(summaryPayload()).warnsBeforeBlock, isFalse);
+
+      final upcoming = CommissionSummary.fromJson(summaryPayload({
+        'eligible': true,
+        'reason': null,
+        'block_threshold': '200.00',
+        'block_deadline': '2026-10-20T08:00:00+00:00',
+      }));
+      expect(upcoming.warnsBeforeBlock, isTrue);
+      expect(upcoming.hasBlockThreshold, isTrue);
+      expect(upcoming.blockDeadline!.isAtSameMomentAs(DateTime.parse('2026-10-20T08:00:00+00:00')), isTrue);
+
+      // Nothing owed, nothing to warn about.
+      final clear = CommissionSummary.fromJson(summaryPayload({
+        'eligible': true,
+        'reason': null,
+        'outstanding_count': 0,
+        'outstanding': [],
+        'block_threshold': '200.00',
+      }));
+      expect(clear.warnsBeforeBlock, isFalse);
+
+      // An older API without the block fields: no warning, no crash.
+      expect(CommissionSummary.fromJson(summaryPayload({'eligible': true, 'reason': null})).warnsBeforeBlock, isFalse);
+    });
+
     test('an older API without the payment fields still parses', () {
       final payload = summaryPayload()
         ..remove('payment_account')

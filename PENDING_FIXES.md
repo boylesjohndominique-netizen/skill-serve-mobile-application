@@ -1,6 +1,7 @@
 # Pending Fixes — SkillServe Mobile (Flutter)
 
-Last updated: 2026-10-11 (F6 — QR codes with the exact amount).
+Last updated: 2026-10-13 (F8 — live marketplace, search, provider profile and reports; every code
+item is done and the backend is deployed — only phone checks remain).
 Last full audit: 2026-09-21, against `SkillServe_User_Mobile_Functionalities_Flutter.pdf` and the
 Laravel API. The master list — including backend, admin web and deployment — is
 `web-project-bsit3blk3group6/PENDING_FIXES.md`; the IDs below are the same there. Items marked
@@ -17,6 +18,16 @@ Nothing open.
 ## High
 
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
+
+### F8 · Live marketplace, search, provider profile, reports, booking back navigation (2026-10-13)
+Release APK built 2026-10-13 against production (`build/app/outputs/flutter-apk/app-release.apk`).
+- [ ] With a provider and a customer: a newly published (and, if required, approved) service shows
+  on the customer's Home under *Latest services* without refreshing; "electronics" and a provider's
+  own name find them on Home and Explore; open a provider (photo, services, portfolio, reviews) and
+  report them and a service; book → *View booking details* → back arrow goes home; cancel →
+  *Back to home*.
+- [ ] As a provider who owes commission while System Settings → Marketplace has a block amount or
+  age set: the Commission screen says when new work will pause.
 
 ### F6 · QR codes with the exact amount (2026-10-11)
 - [ ] Booking QR on a real phone: provider uploads their GCash QR (GCash details); a customer's
