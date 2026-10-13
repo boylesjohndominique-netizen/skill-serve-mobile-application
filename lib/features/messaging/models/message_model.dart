@@ -76,6 +76,10 @@ class ConversationModel {
   final String participantName;
   final String? participantAvatar;
 
+  /// The provider's public profile id when the other party is the provider
+  /// (the customer's view); null on the provider's side.
+  final String? providerProfileId;
+
   final String lastMessage;
 
   /// Whether the signed-in account sent [lastMessage], so the list can
@@ -92,6 +96,7 @@ class ConversationModel {
     this.participantId = '',
     this.participantName = '',
     this.participantAvatar,
+    this.providerProfileId,
     this.lastMessage = '',
     this.lastMessageIsMine = false,
     this.lastMessageAt,
@@ -125,6 +130,7 @@ class ConversationModel {
       participantId: counterpart?['id']?.toString() ?? '',
       participantName: counterpart?['name'] as String? ?? '',
       participantAvatar: counterpart?['profile_picture'] as String?,
+      providerProfileId: counterpart?['provider_id']?.toString(),
       lastMessage: last?['content'] as String? ?? '',
       lastMessageIsMine: last?['is_mine'] == true,
       lastMessageAt: MessageModel._date(json['last_message_at']),
@@ -146,6 +152,7 @@ class ConversationModel {
         participantId: participantId,
         participantName: participantName,
         participantAvatar: participantAvatar,
+        providerProfileId: providerProfileId,
         lastMessage: lastMessage ?? this.lastMessage,
         lastMessageIsMine: lastMessageIsMine ?? this.lastMessageIsMine,
         lastMessageAt: lastMessageAt ?? this.lastMessageAt,

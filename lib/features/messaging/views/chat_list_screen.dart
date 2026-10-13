@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../messaging/controllers/chat_controller.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -127,11 +128,7 @@ class _ConversationRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            AppAvatar(
-              name: conversation.participantName,
-              photoUrl: conversation.participantAvatar,
-              radius: 24,
-            ),
+            _Avatar(conversation: conversation),
             const SizedBox(width: AppSizes.md),
             Expanded(
               child: Column(
@@ -198,6 +195,35 @@ class _ConversationRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The other party's photo. For a customer it opens the provider's full
+/// profile; the rest of the row still opens the conversation.
+class _Avatar extends StatelessWidget {
+  final ConversationModel conversation;
+  const _Avatar({required this.conversation});
+
+  @override
+  Widget build(BuildContext context) {
+    final avatar = AppAvatar(
+      name: conversation.participantName,
+      photoUrl: conversation.participantAvatar,
+      radius: 24,
+    );
+    final id = conversation.providerProfileId;
+    final isClient = context.select<AuthController, bool>((auth) => auth.isClient);
+    if (!isClient || id == null || id.isEmpty) return avatar;
+
+    return Semantics(
+      button: true,
+      label: 'View ${conversation.participantName}\'s profile',
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => context.push('/provider-profile/$id'),
+        child: avatar,
       ),
     );
   }

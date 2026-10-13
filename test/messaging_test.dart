@@ -101,6 +101,18 @@ void main() {
       expect(conversation.lastMessageAt, isNotNull);
     });
 
+    test('a customer\'s thread carries the provider\'s public profile id', () {
+      final withProvider = ConversationModel.fromJson(conversationPayload({
+        'counterpart': {'id': 9, 'provider_id': 3, 'name': 'Juan Aircon Services', 'profile_picture': null},
+      }));
+      expect(withProvider.providerProfileId, '3');
+      // Updating the unread count keeps the link to the profile.
+      expect(withProvider.copyWith(unreadCount: 0).providerProfileId, '3');
+
+      // The provider's side of the thread names a customer: no profile id.
+      expect(ConversationModel.fromJson(conversationPayload()).providerProfileId, isNull);
+    });
+
     test('the preview marks your own last message', () {
       expect(ConversationModel.fromJson(conversationPayload()).preview, 'On my way.');
 

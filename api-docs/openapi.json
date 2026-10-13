@@ -22956,8 +22956,13 @@
                         "description": "Their user id",
                         "type": "integer"
                     },
+                    "provider_id": {
+                        "description": "Present only when the other party is the provider (the customer's view): their provider profile id, for GET /api/client/v1/providers/{provider}",
+                        "type": "integer",
+                        "nullable": true
+                    },
                     "name": {
-                        "description": "A provider's business name, or a customer's name",
+                        "description": "A provider's display name (business name, else account name), or a customer's name",
                         "type": "string"
                     },
                     "profile_picture": {

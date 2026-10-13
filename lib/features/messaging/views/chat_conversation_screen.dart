@@ -64,6 +64,12 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     _myId = context.read<AuthController>().currentUser?.id ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chat.openConversation(widget.bookingId);
+      // Opened from a notification, a booking or a profile before the
+      // Messages tab: the header needs this thread's participant (name,
+      // photo, profile link) from the inbox.
+      if (_chat.conversationFor(widget.bookingId) == null && !_chat.isLoading) {
+        _chat.loadConversations();
+      }
     });
     _realtime.joinPresence(
       _presenceChannel,
@@ -151,54 +157,70 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
     _scrollToBottomIfNeeded(chat.activeMessages.length);
 
+    // A customer opens the provider's full profile from the header; the
+    // provider's side has no public profile to open for a customer.
+    final providerProfileId = context.select<AuthController, bool>((auth) => auth.isClient)
+        ? conversation?.providerProfileId
+        : null;
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: Row(
-          children: [
-            AppAvatar(
-              name: conversation?.participantName,
-              photoUrl: conversation?.participantAvatar,
-              fallbackIcon: AppIcons.person,
-              radius: 17,
-            ),
-            const SizedBox(width: AppSizes.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    conversation?.participantName.isNotEmpty == true
-                        ? conversation!.participantName
-                        : 'Conversation',
-                    style: const TextStyle(fontSize: 15),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // Live status first; the service otherwise.
-                  if (_otherTyping || _otherInChat)
+        title: _ProfileLink(
+          providerProfileId: providerProfileId,
+          name: conversation?.participantName ?? '',
+          child: Row(
+            children: [
+              AppAvatar(
+                name: conversation?.participantName,
+                photoUrl: conversation?.participantAvatar,
+                fallbackIcon: AppIcons.person,
+                radius: 17,
+              ),
+              const SizedBox(width: AppSizes.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      _otherTyping ? 'typing…' : 'In this chat',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: _otherTyping ? context.accentInk : AppColors.success,
-                        fontStyle: _otherTyping ? FontStyle.italic : FontStyle.normal,
-                      ),
-                      maxLines: 1,
-                    )
-                  else if (conversation?.serviceTitle.isNotEmpty == true)
-                    Text(
-                      conversation!.serviceTitle,
-                      style: TextStyle(fontSize: 11, color: context.textMutedColor),
+                      conversation?.participantName.isNotEmpty == true
+                          ? conversation!.participantName
+                          : 'Conversation',
+                      style: const TextStyle(fontSize: 15),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                ],
+                    // Live status first; the service otherwise.
+                    if (_otherTyping || _otherInChat)
+                      Text(
+                        _otherTyping ? 'typing…' : 'In this chat',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: _otherTyping ? context.accentInk : AppColors.success,
+                          fontStyle: _otherTyping ? FontStyle.italic : FontStyle.normal,
+                        ),
+                        maxLines: 1,
+                      )
+                    else if (conversation?.serviceTitle.isNotEmpty == true)
+                      Text(
+                        conversation!.serviceTitle,
+                        style: TextStyle(fontSize: 11, color: context.textMutedColor),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
+          if (providerProfileId != null && providerProfileId.isNotEmpty)
+            IconButton(
+              tooltip: 'View provider profile',
+              onPressed: () => context.push('/provider-profile/$providerProfileId'),
+              icon: const AppIcon(AppIcons.person_outline_rounded, size: 20),
+            ),
           IconButton(
             tooltip: 'View booking',
             onPressed: () => context.push('/booking-details/${widget.bookingId}'),
@@ -453,6 +475,35 @@ class _Bubble extends StatelessWidget {
               onLongPressHint: 'Report this message',
               child: GestureDetector(onLongPress: onReport, child: bubble),
             ),
+    );
+  }
+}
+
+/// Opens the provider's public profile when [providerProfileId] is set;
+/// otherwise just shows [child].
+class _ProfileLink extends StatelessWidget {
+  final String? providerProfileId;
+  final String name;
+  final Widget child;
+
+  const _ProfileLink({required this.providerProfileId, required this.name, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final id = providerProfileId;
+    if (id == null || id.isEmpty) return child;
+
+    return Semantics(
+      button: true,
+      label: name.isEmpty ? 'View provider profile' : 'View $name\'s profile',
+      child: InkWell(
+        onTap: () => context.push('/provider-profile/$id'),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: child,
+        ),
+      ),
     );
   }
 }
