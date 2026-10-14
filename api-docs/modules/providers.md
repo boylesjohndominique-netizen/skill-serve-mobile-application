@@ -125,7 +125,7 @@ No JSON request body.
 
 ## `GET /api/providers/{provider}`
 
-GET /api/providers/{provider} — detailed provider profile.
+The `identity` block (the provider's National ID, null when none was submitted) is present only for administrators who may review identity verifications. A verified ID keeps its photos while the account exists.
 
 **Authentication:** Bearer token
 
@@ -156,6 +156,21 @@ No JSON request body.
             "email": "john@example.com",
             "phone": "+1234567890",
             "created_at": "2026-08-01T08:00:00+00:00"
+        },
+        "identity": {
+            "id": 7,
+            "status": "verified",
+            "full_name": "John Smith",
+            "id_number_last4": "4821",
+            "submitted_at": "2026-08-04T09:00:00+00:00",
+            "reviewed_at": "2026-08-05T10:00:00+00:00",
+            "documents": [
+                {
+                    "id": 12,
+                    "document_type": "id_front",
+                    "download_path": "/identity-verifications/7/documents/12/download"
+                }
+            ]
         },
         "business_name": "Smith Plumbing Co.",
         "bio": "Experienced plumber with 10 years in residential and commercial work.",
