@@ -44,6 +44,22 @@ class ReportController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Re-reads reports and disputes without a loading state — support acted
+  /// on one (a decision, a dispute update) while the user may be looking.
+  /// Keeps what is on screen if the refresh fails.
+  Future<void> refreshQuietly() async {
+    try {
+      final results = await Future.wait([_reportService.getMyReports(), _reportService.getMyDisputes()]);
+      reports = results[0] as List<ReportModel>;
+      disputes = results[1] as List<DisputeModel>;
+      reportsError = null;
+      disputesError = null;
+      notifyListeners();
+    } catch (_) {
+      // The next visit to My Reports loads them again.
+    }
+  }
+
   Future<void> _loadReports() async {
     try {
       reports = await _reportService.getMyReports();

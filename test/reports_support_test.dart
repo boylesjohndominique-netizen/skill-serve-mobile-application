@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:skillserve_mobile/features/reports/controllers/report_controller.dart';
 import 'package:skillserve_mobile/features/reports/models/report_model.dart';
 import 'package:skillserve_mobile/features/reports/services/report_service.dart';
+import 'package:skillserve_mobile/features/support/controllers/support_controller.dart';
 import 'package:skillserve_mobile/features/support/models/support_ticket_model.dart';
+import 'package:skillserve_mobile/features/support/services/support_service.dart';
 
 Map<String, dynamic> reportPayload([Map<String, dynamic> overrides = const {}]) => {
       'id': 8,
@@ -80,7 +82,61 @@ class _FakeReportService extends ReportService {
   }
 }
 
+/// Answers with [ticket] (and nothing else), or fails when [offline].
+class _FakeSupportService extends SupportService {
+  Map<String, dynamic> ticket = ticketPayload();
+  bool offline = false;
+
+  @override
+  Future<List<SupportTicketModel>> getTickets({TicketStatus? status}) async {
+    if (offline) throw Exception('offline');
+    return [SupportTicketModel.fromJson(ticket)];
+  }
+
+  @override
+  Future<SupportTicketModel> getTicket(String id) async {
+    if (offline) throw Exception('offline');
+    return SupportTicketModel.fromJson(ticket);
+  }
+}
+
 void main() {
+  group('live support updates', () {
+    test('a reply from support appears in the open ticket without a loading state', () async {
+      final service = _FakeSupportService();
+      final controller = SupportController(service: service);
+      await controller.openTicket('3');
+      expect(controller.activeTicket!.replies, hasLength(1));
+
+      service.ticket = ticketPayload({
+        'status': 'in_progress',
+        'messages': [
+          ...(ticketPayload()['messages'] as List),
+          {'id': 12, 'body': 'Refund sent.', 'author': {'id': 99, 'name': 'Support Team'}, 'created_at': '2026-10-01T13:00:00+08:00'},
+        ],
+      });
+      var loadingSeen = false;
+      controller.addListener(() => loadingSeen |= controller.isTicketLoading || controller.isLoading);
+      await controller.refreshQuietly();
+
+      expect(loadingSeen, isFalse);
+      expect(controller.activeTicket!.replies.last.body, 'Refund sent.');
+      expect(controller.tickets.single.status, TicketStatus.inProgress);
+    });
+
+    test('a failed live refresh keeps what is on screen', () async {
+      final service = _FakeSupportService();
+      final controller = SupportController(service: service);
+      await controller.openTicket('3');
+
+      service.offline = true;
+      await controller.refreshQuietly();
+
+      expect(controller.activeTicket, isNotNull);
+      expect(controller.ticketErrorMessage, isNull);
+    });
+  });
+
   group('raising a dispute with photos', () {
     test('the photos are attached as evidence after the dispute is raised', () async {
       final service = _FakeReportService();

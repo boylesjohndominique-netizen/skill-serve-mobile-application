@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `GET /api/permissions`
 
-GET /api/permissions — every permission grouped by module.
+One group per area of the admin web (config/permission-areas.php). `view_permissions` is the read-only level; `permissions` is everything full control grants, view first. Permissions in no area are listed under key `other`.
 
 **Authentication:** Bearer token
 
@@ -26,23 +26,23 @@ No JSON request body.
     "message": "Request successful.",
     "data": [
         {
-            "module": "Administrators",
+            "key": "settings",
+            "module": "System settings",
+            "description": "Platform rules, policies and appearance.",
+            "view_permissions": [
+                "view settings"
+            ],
             "permissions": [
                 {
-                    "id": 1,
-                    "name": "manage administrators",
-                    "module": "Administrators",
+                    "id": 90,
+                    "name": "view settings",
+                    "module": "Settings",
                     "guard_name": "web"
-                }
-            ]
-        },
-        {
-            "module": "Reports",
-            "permissions": [
+                },
                 {
-                    "id": 5,
-                    "name": "view reports",
-                    "module": "Reports",
+                    "id": 91,
+                    "name": "manage settings",
+                    "module": "Settings",
                     "guard_name": "web"
                 }
             ]

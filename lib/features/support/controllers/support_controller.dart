@@ -5,7 +5,9 @@ import '../services/support_service.dart';
 
 /// State for the support inbox, a new ticket, and an open ticket's thread.
 class SupportController extends ChangeNotifier {
-  final SupportService _service = SupportService();
+  SupportController({SupportService? service}) : _service = service ?? SupportService();
+
+  final SupportService _service;
 
   List<SupportTicketModel> tickets = [];
   bool isLoading = false;
@@ -34,6 +36,24 @@ class SupportController extends ChangeNotifier {
     }
     isLoading = false;
     notifyListeners();
+  }
+
+  /// Re-reads the inbox and the open ticket without a loading state —
+  /// support replied or resolved a ticket while the user may be reading it.
+  /// Keeps what is on screen if the refresh fails.
+  Future<void> refreshQuietly() async {
+    try {
+      tickets = await _service.getTickets();
+      final open = activeTicket;
+      if (open != null) {
+        final fresh = await _service.getTicket(open.id);
+        // Only if the user is still on that ticket.
+        if (activeTicket?.id == fresh.id) activeTicket = fresh;
+      }
+      notifyListeners();
+    } catch (_) {
+      // The next visit loads them again.
+    }
   }
 
   Future<void> openTicket(String id) async {

@@ -10,6 +10,8 @@ import '../../identity/controllers/identity_controller.dart';
 import '../../messaging/controllers/chat_controller.dart';
 import '../../provider/controllers/commission_controller.dart';
 import '../../provider/controllers/provider_services_controller.dart';
+import '../../reports/controllers/report_controller.dart';
+import '../../support/controllers/support_controller.dart';
 import '../../settings/controllers/preferences_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../models/notification_model.dart';
@@ -169,6 +171,25 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
     // before the preference gate: muting the banner silences the alert, it
     // does not mean the screen should keep showing a stale status.
     if (notification.type == NotificationType.booking) {
+      if (_auth.isProvider) {
+        context.read<ProviderBookingController>().loadProviderBookings();
+      } else {
+        context.read<BookingController>().loadClientBookings();
+      }
+    }
+
+    // Support replied to or resolved a ticket: an open thread shows the
+    // reply at once, and the inbox moves it.
+    if (rawType.startsWith('support_ticket')) {
+      context.read<SupportController>().refreshQuietly();
+    }
+
+    // A report decided or a dispute moved: My Reports follows, and a dispute
+    // decision can change the booking too.
+    if (rawType == 'report_update' || rawType == 'dispute_update') {
+      context.read<ReportController>().refreshQuietly();
+    }
+    if (rawType == 'dispute_update') {
       if (_auth.isProvider) {
         context.read<ProviderBookingController>().loadProviderBookings();
       } else {
