@@ -132,12 +132,22 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             SettingsGroup(
               icon: AppIcons.history_rounded,
               title: 'Activity',
-              summary: 'Activity history, reports',
+              summary: 'Your recent activity',
               children: [
                 // Notifications open from the bell on the dashboard.
                 SettingsTile(icon: AppIcons.history_rounded, label: 'Activity history', onTap: () => context.push('/activity-history')),
+              ],
+            ),
+            // Two kinds of case, each on its own screen: complaints about
+            // people, and disputes about a booking.
+            SettingsGroup(
+              icon: AppIcons.flag_outlined,
+              title: 'Reports & disputes',
+              summary: 'File a report, track reports and disputes',
+              children: [
                 SettingsTile(icon: AppIcons.flag_outlined, label: 'File a report', onTap: () => context.push('/file-report')),
                 SettingsTile(icon: AppIcons.receipt_long_outlined, label: 'My reports', onTap: () => context.push('/my-reports')),
+                SettingsTile(icon: AppIcons.gavel_rounded, label: 'My disputes', onTap: () => context.push('/my-disputes')),
               ],
             ),
             SettingsGroup(
@@ -161,9 +171,9 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             SettingsGroup(
               icon: AppIcons.help_outline_rounded,
               title: 'Help & support',
-              summary: 'Support tickets, help center, policies',
+              summary: 'Customer Support, help center, policies',
               children: [
-                SettingsTile(icon: AppIcons.support_agent_rounded, label: 'Support tickets', onTap: () => context.push('/support/tickets')),
+                SettingsTile(icon: AppIcons.support_agent_rounded, label: 'Customer Support', onTap: () => context.push('/support/tickets')),
                 SettingsTile(icon: AppIcons.help_outline_rounded, label: 'Help Center', onTap: () => context.push('/help-center')),
                 SettingsTile(icon: AppIcons.info_outline_rounded, label: 'About SkillServe', onTap: () => context.push('/about')),
                 SettingsTile(icon: AppIcons.description_outlined, label: 'Terms & Conditions', onTap: () => context.push('/terms')),

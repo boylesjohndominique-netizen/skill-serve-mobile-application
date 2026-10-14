@@ -91,7 +91,18 @@ class _ReportContentSheetState extends State<_ReportContentSheet> {
     super.dispose();
   }
 
-  bool get _canSubmit => _reason != null && _details.text.trim().length >= 10;
+  /// The API needs at least this many characters to act on a report.
+  static const _minDetails = 10;
+
+  bool get _canSubmit => _reason != null && _details.text.trim().length >= _minDetails;
+
+  /// Says why Send stays off once something too short has been typed.
+  String? get _detailsError {
+    final length = _details.text.trim().length;
+    return length > 0 && length < _minDetails
+        ? 'Please write at least $_minDetails characters ($length/$_minDetails).'
+        : null;
+  }
 
   Future<void> _submit() async {
     final reports = context.read<ReportController>();
@@ -156,10 +167,11 @@ class _ReportContentSheetState extends State<_ReportContentSheet> {
             const SizedBox(height: AppSizes.lg),
             AppTextField(
               label: 'What is wrong with it?',
-              hint: 'At least 10 characters',
+              hint: 'At least $_minDetails characters',
               controller: _details,
               maxLines: 3,
               maxLength: 2000,
+              errorText: _detailsError,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: AppSizes.sm),

@@ -184,8 +184,8 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       context.read<SupportController>().refreshQuietly();
     }
 
-    // A report decided or a dispute moved: My Reports follows, and a dispute
-    // decision can change the booking too.
+    // A report decided or a dispute moved: My Reports and My Disputes follow,
+    // and a dispute decision can change the booking too.
     if (rawType == 'report_update' || rawType == 'dispute_update') {
       context.read<ReportController>().refreshQuietly();
     }

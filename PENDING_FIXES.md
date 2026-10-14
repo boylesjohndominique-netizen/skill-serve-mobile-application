@@ -17,6 +17,11 @@ Nothing open.
 
 ## High
 
+### F12 · Owner feedback round (2026-10-14) — see the web repo's PENDING_FIXES F12
+- [ ] **Pictures missing** — production uploads are wiped on every Render restart (no persistent
+  disk; `/api/health` → `storage.persistent: false`). Attach the Render disk, then re-upload photos.
+- [ ] **Chat with a provider before booking** — design to agree (inquiry thread + migration), then build.
+
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
 
 ### F8 · Live marketplace, search, provider profile, reports, booking back navigation (2026-10-13)
@@ -257,7 +262,7 @@ Nothing open.
   such as "WD-1042 ₱8,500") are removed. The dashboard "This Month" card was summing all-time
   earnings; it now shows this month only.
 - Support tickets are available to providers too.
-- Reviews and messages can be reported; dispute photos can be attached from My Reports.
+- Reviews and messages can be reported; dispute photos can be attached from My Disputes.
 - My Reviews no longer flags every review, because the published status is `active`, not
   `published`.
 - Idle sessions last a year instead of 14 days (backend default), so a user who keeps opening the

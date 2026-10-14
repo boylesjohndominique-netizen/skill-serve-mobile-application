@@ -86,13 +86,13 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(ticket?.ticketNumber.isNotEmpty == true
           ? ticket!.ticketNumber
-          : 'Ticket')),
+          : 'Customer Support')),
       body: SafeArea(
         child: support.isTicketLoading
             ? const LoadingState()
             : ticket == null
                 ? ErrorState(
-                    message: support.ticketErrorMessage ?? 'This ticket could not be loaded.',
+                    message: support.ticketErrorMessage ?? 'This conversation could not be loaded.',
                     onRetry: () => support.openTicket(widget.ticketId),
                   )
                 : Column(
@@ -141,7 +141,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             photoUrls: reply.photoUrls,
             author: reply.authorId == myId
                 ? 'You'
-                : (reply.authorName.isEmpty ? 'Support' : reply.authorName),
+                : (reply.authorName.isEmpty ? 'Customer Support' : reply.authorName),
             at: reply.createdAt,
             fromMe: reply.authorId == myId,
             isDark: isDark,
@@ -274,7 +274,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             const SizedBox(width: AppSizes.sm),
             Expanded(
               child: Text(
-                'This ticket is resolved. Start a new ticket if you need more help.',
+                'This conversation is resolved. Contact Customer Support again if you need more help.',
                 style: AppTextStyles.bodyMedium,
               ),
             ),

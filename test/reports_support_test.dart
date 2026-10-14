@@ -62,6 +62,18 @@ class _FakeReportService extends ReportService {
   int failPhotos;
   final uploaded = <String>[];
 
+  /// Makes the reports list (not disputes) fail to load.
+  bool reportsOffline = false;
+
+  @override
+  Future<List<ReportModel>> getMyReports() async {
+    if (reportsOffline) throw Exception('offline');
+    return [ReportModel.fromJson(reportPayload())];
+  }
+
+  @override
+  Future<List<DisputeModel>> getMyDisputes() async => [DisputeModel.fromJson(disputePayload())];
+
   @override
   Future<DisputeModel> raiseDispute({required String bookingId, required String reason}) async =>
       DisputeModel.fromJson(disputePayload({'booking_id': int.parse(bookingId), 'reason': reason}));
@@ -134,6 +146,31 @@ void main() {
 
       expect(controller.activeTicket, isNotNull);
       expect(controller.ticketErrorMessage, isNull);
+    });
+  });
+
+  group('My Reports and My Disputes load separately', () {
+    test('each screen loads only its own list', () async {
+      final controller = ReportController(service: _FakeReportService());
+
+      await controller.loadDisputes();
+      expect(controller.disputes, hasLength(1));
+      expect(controller.reports, isEmpty);
+
+      await controller.loadReports();
+      expect(controller.reports, hasLength(1));
+      expect(controller.isLoadingReports || controller.isLoadingDisputes, isFalse);
+    });
+
+    test('reports failing to load does not touch the disputes', () async {
+      final controller = ReportController(service: _FakeReportService()..reportsOffline = true);
+
+      await controller.loadDisputes();
+      await controller.loadReports();
+
+      expect(controller.reportsError, isNotNull);
+      expect(controller.disputesError, isNull);
+      expect(controller.disputes, hasLength(1));
     });
   });
 

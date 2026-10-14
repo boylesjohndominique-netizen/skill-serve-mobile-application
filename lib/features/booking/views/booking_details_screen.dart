@@ -219,7 +219,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     icon: AppIcons.gavel_rounded,
                     title: 'This booking is under dispute',
                     message:
-                        'Our support team is reviewing the case. You can track progress in Reports or contact support anytime.',
+                        'Our support team is reviewing the case. You can track it in My Disputes or contact support anytime.',
                   )
                       .animate()
                       .fadeIn(delay: 130.ms, duration: 350.ms)
@@ -584,12 +584,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   /// Escalation paths open to either party: dispute the job itself, or report
-  /// the person. A job that is under way or finished can be disputed once.
+  /// the person. A job that is under way or finished can be disputed once;
+  /// once it is, either party follows the case on My Disputes.
   List<Widget> _escalationActions(BuildContext context, BookingModel booking) {
     final canDispute = booking.status == BookingStatus.inProgress ||
         booking.status == BookingStatus.completed;
 
     return [
+      if (booking.status == BookingStatus.disputed) ...[
+        const SizedBox(height: AppSizes.sm),
+        OutlinedAppButton(
+          label: 'Track dispute',
+          icon: AppIcons.gavel_rounded,
+          onPressed: () => context.push('/my-disputes'),
+        ),
+      ],
       if (canDispute) ...[
         const SizedBox(height: AppSizes.sm),
         OutlinedAppButton(
@@ -631,7 +640,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     if (unsent > 0) {
       AppSnackbar.error(
         context,
-        'Dispute raised, but $unsent ${unsent == 1 ? 'photo' : 'photos'} could not be attached. Add them from My Reports.',
+        'Dispute raised, but $unsent ${unsent == 1 ? 'photo' : 'photos'} could not be attached. Add them from My Disputes.',
       );
     } else {
       AppSnackbar.success(context, 'Dispute raised. Our support team will review it.');

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,8 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/realtime_client.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/photo_picker.dart';
+import '../../../core/widgets/feedback/app_bottom_sheet.dart';
+import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/empty_state.dart';
 import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
@@ -282,20 +285,37 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
           isDark: isDark,
           onRetry: message.hasFailed ? () => _retry(message) : null,
           onOpenPhoto: message.imageUrl != null || message.localImagePath != null ? () => _openPhoto(message) : null,
-          // Only a message you received can be reported.
-          onReport: fromMe || message.isPending
-              ? null
-              : () => showReportContentSheet(
-                    context,
-                    messageId: message.id,
-                    title: 'Report this message',
-                  ),
+          onLongPress: _messageActionsFor(message, fromMe: fromMe),
         )
             .animate()
             .fadeIn(delay: Duration(milliseconds: i.clamp(0, 12) * 30), duration: 250.ms)
             .slideX(begin: fromMe ? 0.08 : -0.08, end: 0);
       },
     );
+  }
+
+  /// The long-press menu on a message: copy its text, and report it when it
+  /// is one you received. Null when neither applies (a photo you sent).
+  VoidCallback? _messageActionsFor(MessageModel message, {required bool fromMe}) {
+    final canCopy = message.content.isNotEmpty;
+    // Only a message you received, and the API has stored, can be reported.
+    final canReport = !fromMe && !message.isPending;
+    if (!canCopy && !canReport) return null;
+
+    return () async {
+      final action = await AppBottomSheet.show<_MessageAction>(
+        context,
+        child: _MessageActionsSheet(canCopy: canCopy, canReport: canReport),
+      );
+      if (action == null || !mounted) return;
+      switch (action) {
+        case _MessageAction.copy:
+          await Clipboard.setData(ClipboardData(text: message.content));
+          if (mounted) AppSnackbar.success(context, 'Message copied.');
+        case _MessageAction.report:
+          showReportContentSheet(context, messageId: message.id, title: 'Report this message');
+      }
+    };
   }
 
   void _openPhoto(MessageModel message) {
@@ -492,8 +512,9 @@ class _Bubble extends StatelessWidget {
   /// Opens the message's photo full screen; null when it has none.
   final VoidCallback? onOpenPhoto;
 
-  /// Long-press action on a received message.
-  final VoidCallback? onReport;
+  /// Opens the message's long-press menu (copy, report); null when it has
+  /// nothing to offer.
+  final VoidCallback? onLongPress;
 
   const _Bubble({
     required this.message,
@@ -501,7 +522,7 @@ class _Bubble extends StatelessWidget {
     required this.isDark,
     this.onRetry,
     this.onOpenPhoto,
-    this.onReport,
+    this.onLongPress,
   });
 
   @override
@@ -614,12 +635,43 @@ class _Bubble extends StatelessWidget {
 
     return Align(
       alignment: fromMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: onReport == null
+      child: onLongPress == null
           ? bubble
           : Semantics(
-              onLongPressHint: 'Report this message',
-              child: GestureDetector(onLongPress: onReport, child: bubble),
+              onLongPressHint: 'Message options',
+              child: GestureDetector(onLongPress: onLongPress, child: bubble),
             ),
+    );
+  }
+}
+
+enum _MessageAction { copy, report }
+
+/// What a long-press on a message offers. Pasting needs no menu of its own:
+/// the message box takes a paste from its own long-press menu.
+class _MessageActionsSheet extends StatelessWidget {
+  final bool canCopy;
+  final bool canReport;
+  const _MessageActionsSheet({required this.canCopy, required this.canReport});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (canCopy)
+          ListTile(
+            leading: AppIcon(AppIcons.content_copy_rounded, color: context.accentInk),
+            title: Text('Copy text', style: AppTextStyles.bodyLarge),
+            onTap: () => Navigator.of(context).pop(_MessageAction.copy),
+          ),
+        if (canReport)
+          ListTile(
+            leading: const AppIcon(AppIcons.flag_outlined, color: AppColors.error),
+            title: Text('Report message', style: AppTextStyles.bodyLarge.copyWith(color: AppColors.error)),
+            onTap: () => Navigator.of(context).pop(_MessageAction.report),
+          ),
+      ],
     );
   }
 }

@@ -32,6 +32,10 @@ class AppTextField extends StatefulWidget {
   /// under the submission that is already using it.
   final bool enabled;
 
+  /// Shown in red under the field while set — for live checks outside a
+  /// [Form], such as a minimum length.
+  final String? errorText;
+
   const AppTextField({
     super.key,
     required this.label,
@@ -46,6 +50,7 @@ class AppTextField extends StatefulWidget {
     this.onChanged,
     this.inputFormatters,
     this.enabled = true,
+    this.errorText,
   });
 
   @override
@@ -109,6 +114,8 @@ class _AppTextFieldState extends State<AppTextField> {
               ),
               decoration: InputDecoration(
                 hintText: widget.hint,
+                errorText: widget.errorText,
+                errorMaxLines: 2,
                 // The cap is enforced, not advertised — the field keeps its
                 // shape whether or not a limit is set.
                 counterText: '',

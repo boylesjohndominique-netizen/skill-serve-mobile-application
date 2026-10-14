@@ -41,6 +41,14 @@ class _RaiseDisputeFormState extends State<_RaiseDisputeForm> {
 
   bool get _canSubmit => _reason.text.trim().length >= _minLength;
 
+  /// Says why the button stays off once something too short has been typed.
+  String? get _reasonError {
+    final length = _reason.text.trim().length;
+    return length > 0 && length < _minLength
+        ? 'Please write at least $_minLength characters ($length/$_minLength).'
+        : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Flexible(
@@ -61,6 +69,7 @@ class _RaiseDisputeFormState extends State<_RaiseDisputeForm> {
               controller: _reason,
               maxLines: 4,
               maxLength: 2000,
+              errorText: _reasonError,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: AppSizes.md),

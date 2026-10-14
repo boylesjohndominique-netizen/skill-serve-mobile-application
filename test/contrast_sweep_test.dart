@@ -42,7 +42,7 @@ const _routes = <String>[
   '/provider-preview/PV-100',
   // Client
   '/client', '/service-details/SV-1', '/provider-profile/PV-100', '/booking-history',
-  '/favorites', '/chat-conversation/CV-0', '/payments', '/my-reports', '/notifications',
+  '/favorites', '/chat-conversation/CV-0', '/payments', '/my-reports', '/my-disputes', '/notifications',
   '/reviews/PV-100', '/booking-details/BK-5000', '/help-center', '/activity-history',
   '/notification-preferences', '/privacy-settings', '/application-preferences',
   '/security-activity', '/file-report', '/identity-verification',

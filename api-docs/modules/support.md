@@ -197,7 +197,7 @@ Response schema: `see openapi.json`
 
 ## `POST /api/support/tickets/{ticket}/responses`
 
-Add a support ticket response
+Text, photos, or both. Send JSON for text only, or multipart/form-data with `images[]` (up to 5 JPG, PNG or WebP, at most 5 MB each) and an optional `body`. The requester is notified and sees the reply in the app at once.
 
 **Authentication:** Bearer token
 

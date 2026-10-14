@@ -124,7 +124,7 @@ backend test classes) · **UAT** steps → expected result.
 | M 7.2 | Send message | `/chat-conversation/:bookingId` | `POST /bookings/{id}/messages` | messaging_test · ClientCommunicationTest | Sent message appears once; retry on failure | |
 | M 7.3 | Receive messages | same | Reverb private channel | chat_realtime_test, presence_background_test | Message from phone 2 appears instantly; "typing…" and "In this chat" show | |
 | M 7.4 | Message history | same | `GET /bookings/{id}/messages` | messaging_test | Full history after reopening | |
-| M 7.5 | Report message | long-press → Report | `POST /reports` (message_id) | reports_support_test · ClientReportTest | Report → admin Reports | |
+| M 7.5 | Report message | long-press → Report message | `POST /reports` (message_id) | reports_support_test · ClientReportTest | Report → admin Reports | |
 
 ### 8. Notifications and Announcements
 
@@ -166,7 +166,7 @@ backend test classes) · **UAT** steps → expected result.
 | ID | Requirement | Screen | API | Tests | UAT → expected | Result |
 |----|-------------|--------|-----|-------|----------------|--------|
 | M 11.1 | Submit dispute | booking details → Raise a dispute | `PATCH /bookings/{id}/dispute` | reports_support_test · BookingDisputeTest | Customer or provider can dispute once | |
-| M 11.2 | My disputes | `/my-reports` | `GET /disputes` | reports_support_test · BookingDisputeTest | Own disputes with status | |
+| M 11.2 | My disputes | `/my-disputes` | `GET /disputes` | reports_support_test · BookingDisputeTest | Own disputes with status | |
 | M 11.3 | Dispute details | dispute card | same | reports_support_test | Statement, evidence, status | |
 | M 11.4 | Submit evidence | dispute card → Add photo | `POST /bookings/{id}/dispute/evidence` | reports_support_test · BookingDisputeTest | Up to 5 photos; admin can open them | |
 | M 11.5 | Dispute updates | dispute card, notifications | same | BookingDisputeTest · AdminDecisionNotificationTest | Status changes shown; both parties are notified | |

@@ -76,7 +76,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSizes.lg),
                 child: Text(
-                  'No articles match "${_query.trim()}". Try other words, or open a support ticket below.',
+                  'No articles match "${_query.trim()}". Try other words, or contact Customer Support below.',
                   style: AppTextStyles.bodyMedium,
                 ),
               ),
@@ -154,7 +154,7 @@ class _StillNeedHelpCard extends StatelessWidget {
                         style: AppTextStyles.onDark(AppTextStyles.titleMedium)),
                     Text(
                       canRaiseTickets
-                          ? 'Open a support ticket and we will reply in the app.'
+                          ? 'Message Customer Support and we will reply in the app.'
                           : 'Get in touch with our support team.',
                       style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMutedDark),
                     ),

@@ -32,7 +32,7 @@ class SupportController extends ChangeNotifier {
       tickets = await _service.getTickets();
     } catch (e) {
       tickets = [];
-      errorMessage = apiErrorMessage(e, 'Unable to load your support tickets.');
+      errorMessage = apiErrorMessage(e, 'Unable to load your support conversations.');
     }
     isLoading = false;
     notifyListeners();
@@ -64,7 +64,7 @@ class SupportController extends ChangeNotifier {
     try {
       activeTicket = await _service.getTicket(id);
     } catch (e) {
-      ticketErrorMessage = apiErrorMessage(e, 'Unable to load this ticket.');
+      ticketErrorMessage = apiErrorMessage(e, 'Unable to load this conversation.');
     }
     isTicketLoading = false;
     notifyListeners();
@@ -90,7 +90,7 @@ class SupportController extends ChangeNotifier {
       tickets = [ticket, ...tickets];
       return ticket;
     } catch (e) {
-      errorMessage = apiErrorMessage(e, 'Unable to create this ticket.');
+      errorMessage = apiErrorMessage(e, 'Unable to send your request.');
       return null;
     } finally {
       isSubmitting = false;

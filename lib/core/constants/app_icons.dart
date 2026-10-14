@@ -100,6 +100,7 @@ abstract final class AppIcons {
   static const AppIconData favorite_border_rounded = HugeIcons.strokeRoundedFavourite;
   static const AppIconData flag_outlined = HugeIcons.strokeRoundedFlag01;
   static const AppIconData flag_rounded = HugeIcons.strokeRoundedFlag01;
+  static const AppIconData content_copy_rounded = HugeIcons.strokeRoundedCopy01;
   static const AppIconData block_rounded = HugeIcons.strokeRoundedBlocked;
   static const AppIconData task_alt_rounded = HugeIcons.strokeRoundedTaskDone01;
   static const AppIconData refresh_rounded = HugeIcons.strokeRoundedRefresh01;

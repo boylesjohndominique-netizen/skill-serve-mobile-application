@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/models/user_model.dart';
+import '../../provider/services/provider_service_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -34,6 +36,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _firstName;
   late final TextEditingController _lastName;
   late final TextEditingController _phone;
+
+  /// Providers only: the name customers see in the marketplace.
+  late final TextEditingController _businessName;
   late PhAddress _address;
 
   /// A free-text address saved before the picker existed, shown so the user
@@ -51,6 +56,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastName = TextEditingController(text: user?.lastName);
     // Older accounts may hold +63 numbers; the field shows 09XXXXXXXXX.
     _phone = TextEditingController(text: PhMobileNumber.normalise(user?.phone ?? ''));
+    _businessName = TextEditingController(text: user?.providerBusinessName ?? '');
     _address = user?.addressDetails ?? PhAddress.empty;
     final text = user?.address.trim() ?? '';
     _legacyAddress = user?.addressDetails == null && text.isNotEmpty ? text : null;
@@ -61,6 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _firstName.dispose();
     _lastName.dispose();
     _phone.dispose();
+    _businessName.dispose();
     super.dispose();
   }
 
@@ -71,7 +78,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (auth.currentUser == null) return;
     setState(() => _saving = true);
     try {
-      final updated = await _profileService.updateProfile(
+      // The business name lives on the provider profile, saved first so the
+      // account returned below already carries it.
+      final businessName = _businessName.text.trim();
+      final isProvider = auth.currentUser!.role == UserRole.provider;
+      if (isProvider && businessName != (auth.currentUser!.providerBusinessName ?? '').trim()) {
+        await ProviderServiceService().updateMyProfile({'business_name': businessName});
+      }
+
+      var updated = await _profileService.updateProfile(
         auth.currentUser!,
         firstName: _firstName.text.trim(),
         lastName: _lastName.text.trim(),
@@ -80,6 +95,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         profilePicture: _selectedPhoto,
         clearProfilePicture: _removePhoto,
       );
+      if (isProvider) updated = updated.copyWith(providerBusinessName: businessName);
       auth.updateCurrentUser(updated);
       if (!mounted) return;
       setState(() {
@@ -174,6 +190,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     .animate()
                     .fadeIn(delay: 100.ms, duration: 350.ms)
                     .slideY(begin: 0.06, end: 0),
+                if (user?.role == UserRole.provider) ...[
+                  const SizedBox(height: AppSizes.lg),
+                  AppTextField(
+                    label: 'Business name (optional)',
+                    hint: 'Shown to customers instead of your name',
+                    controller: _businessName,
+                    prefixIcon: AppIcons.storefront_rounded,
+                    maxLength: 255,
+                    enabled: !_saving,
+                  )
+                      .animate()
+                      .fadeIn(delay: 140.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                ],
                 const SizedBox(height: AppSizes.lg),
                 AppTextField(
                   label: 'Phone number',

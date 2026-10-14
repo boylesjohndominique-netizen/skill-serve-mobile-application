@@ -62,4 +62,23 @@ void main() {
     expect(parsed.profilePicture, isNull);
     expect(parsed.initials, 'AS');
   });
+
+  test("a provider's business name is read, kept in the saved session and editable", () {
+    final user = UserModel.fromJson({
+      'id': 7,
+      'role_id': 3,
+      'first_name': 'Juan',
+      'last_name': 'Dela Cruz',
+      'email': 'juan@example.com',
+      'created_at': '2026-09-01T00:00:00Z',
+      'provider': {'business_name': 'Juan Aircon Services', 'verification_status': 'verified'},
+    });
+    expect(user.providerBusinessName, 'Juan Aircon Services');
+
+    // Survives the session cache, which stores toJson().
+    expect(UserModel.fromJson(user.toJson()).providerBusinessName, 'Juan Aircon Services');
+
+    expect(user.copyWith(providerBusinessName: 'JDC Cooling').providerBusinessName, 'JDC Cooling');
+    expect(user.copyWith(firstName: 'Johnny').providerBusinessName, 'Juan Aircon Services');
+  });
 }

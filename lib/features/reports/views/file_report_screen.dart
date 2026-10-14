@@ -83,8 +83,19 @@ class _FileReportScreenState extends State<FileReportScreen> {
       ..sort((a, b) => b.bookingDate.compareTo(a.bookingDate));
   }
 
+  /// The API needs at least this many characters to act on a report.
+  static const _minDetails = 10;
+
   bool get _canSubmit =>
-      _bookingId != null && _reason != null && _detailsController.text.trim().length >= 10;
+      _bookingId != null && _reason != null && _detailsController.text.trim().length >= _minDetails;
+
+  /// Says why Submit stays off once something too short has been typed.
+  String? get _detailsError {
+    final length = _detailsController.text.trim().length;
+    return length > 0 && length < _minDetails
+        ? 'Please write at least $_minDetails characters ($length/$_minDetails).'
+        : null;
+  }
 
   Future<void> _submit() async {
     final controller = context.read<ReportController>();
@@ -155,11 +166,11 @@ class _FileReportScreenState extends State<FileReportScreen> {
                     const SizedBox(height: AppSizes.sm),
                     AppTextField(
                       label: 'Tell us more',
-                      hint: 'Describe what happened, when, and any supporting facts…',
+                      hint: 'Describe what happened, when, and any supporting facts (at least $_minDetails characters)…',
                       controller: _detailsController,
                       maxLines: 5,
                       maxLength: 2000,
-                      // The API needs at least 10 characters to act on a report.
+                      errorText: _detailsError,
                       onChanged: (_) => setState(() {}),
                     ).animate().fadeIn(delay: 640.ms, duration: 350.ms).slideY(begin: 0.05, end: 0),
                     const SizedBox(height: AppSizes.lg),

@@ -51,7 +51,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Support'),
+        title: const Text('Customer Support'),
         bottom: failed
             ? null
             : TabBar(
@@ -76,15 +76,15 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen>
                       _TicketList(
                         tickets: support.openTickets,
                         onRefresh: _reload,
-                        emptyTitle: 'No open tickets',
+                        emptyTitle: 'No open conversations',
                         emptyMessage:
-                            'Need a hand? Start a ticket and our support team will get back to you.',
+                            'Need a hand? Message Customer Support and our team will get back to you.',
                       ),
                       _TicketList(
                         tickets: support.resolvedTickets,
                         onRefresh: _reload,
                         emptyTitle: 'Nothing resolved yet',
-                        emptyMessage: 'Tickets our team has closed will be kept here.',
+                        emptyMessage: 'Conversations our team has resolved are kept here.',
                       ),
                     ],
                   ),
@@ -96,7 +96,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen>
               backgroundColor: AppColors.secondary,
               foregroundColor: AppColors.primary,
               icon: const AppIcon(AppIcons.add_rounded, size: 18, color: AppColors.primary),
-              label: const Text('New ticket'),
+              label: const Text('Contact support'),
             ),
     );
   }

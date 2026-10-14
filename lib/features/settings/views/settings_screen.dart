@@ -67,14 +67,24 @@ class SettingsScreen extends StatelessWidget {
               SettingsGroup(
                 icon: AppIcons.history_rounded,
                 title: 'Activity',
-                summary: 'Favorites, payments, reviews, reports',
+                summary: 'Favorites, payments, reviews',
                 children: [
                   // Notifications open from the bell on Home.
                   SettingsTile(icon: AppIcons.favorite_border_rounded, label: 'Favorite providers', onTap: () => context.push('/favorites')),
                   SettingsTile(icon: AppIcons.receipt_long_outlined, label: 'Payments & receipts', onTap: () => context.push('/payments')),
                   SettingsTile(icon: AppIcons.star_outline_rounded, label: 'My reviews', onTap: () => context.push('/my-reviews')),
-                  SettingsTile(icon: AppIcons.flag_outlined, label: 'My reports', onTap: () => context.push('/my-reports')),
                   SettingsTile(icon: AppIcons.history_rounded, label: 'Activity history', onTap: () => context.push('/activity-history')),
+                ],
+              ),
+              // Two kinds of case, each on its own screen: complaints about
+              // people, and disputes about a booking.
+              SettingsGroup(
+                icon: AppIcons.flag_outlined,
+                title: 'Reports & disputes',
+                summary: 'Reports you filed, booking disputes',
+                children: [
+                  SettingsTile(icon: AppIcons.flag_outlined, label: 'My reports', onTap: () => context.push('/my-reports')),
+                  SettingsTile(icon: AppIcons.gavel_rounded, label: 'My disputes', onTap: () => context.push('/my-disputes')),
                 ],
               ),
             ],
@@ -99,10 +109,10 @@ class SettingsScreen extends StatelessWidget {
             SettingsGroup(
               icon: AppIcons.help_outline_rounded,
               title: 'Help & support',
-              summary: 'Support tickets, help center, policies',
+              summary: 'Customer Support, help center, policies',
               children: [
                 if (user != null)
-                  SettingsTile(icon: AppIcons.support_agent_rounded, label: 'Support tickets', onTap: () => context.push('/support/tickets')),
+                  SettingsTile(icon: AppIcons.support_agent_rounded, label: 'Customer Support', onTap: () => context.push('/support/tickets')),
                 SettingsTile(icon: AppIcons.help_outline_rounded, label: 'Help Center', onTap: () => context.push('/help-center')),
                 SettingsTile(icon: AppIcons.info_outline_rounded, label: 'About SkillServe', onTap: () => context.push('/about')),
                 SettingsTile(icon: AppIcons.description_outlined, label: 'Terms & Conditions', onTap: () => context.push('/terms')),

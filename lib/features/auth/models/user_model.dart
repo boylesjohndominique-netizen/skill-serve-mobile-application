@@ -29,6 +29,10 @@ class UserModel {
   final bool providerSuspended;
   final String? providerSuspensionReason;
 
+  /// Provider accounts only: the name customers see instead of the personal
+  /// name; null or empty when the provider has none.
+  final String? providerBusinessName;
+
   const UserModel({
     required this.id,
     required this.role,
@@ -45,6 +49,7 @@ class UserModel {
     this.providerVerificationStatus,
     this.providerSuspended = false,
     this.providerSuspensionReason,
+    this.providerBusinessName,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -62,6 +67,7 @@ class UserModel {
     String? profilePicture,
     bool clearProfilePicture = false,
     String? status,
+    String? providerBusinessName,
   }) =>
       UserModel(
         id: id,
@@ -80,6 +86,7 @@ class UserModel {
         providerVerificationStatus: providerVerificationStatus,
         providerSuspended: providerSuspended,
         providerSuspensionReason: providerSuspensionReason,
+        providerBusinessName: providerBusinessName ?? this.providerBusinessName,
       );
 
   /// Maps the `GET /api/client/v1/auth/me` payload, or a session cached by
@@ -104,6 +111,7 @@ class UserModel {
       providerVerificationStatus: provider?['verification_status'] as String?,
       providerSuspended: provider?['suspended'] == true,
       providerSuspensionReason: provider?['suspension_reason'] as String?,
+      providerBusinessName: provider?['business_name'] as String?,
     );
   }
 
@@ -154,6 +162,7 @@ class UserModel {
             'verification_status': providerVerificationStatus,
             'suspended': providerSuspended,
             'suspension_reason': providerSuspensionReason,
+            'business_name': providerBusinessName,
           },
       };
 }

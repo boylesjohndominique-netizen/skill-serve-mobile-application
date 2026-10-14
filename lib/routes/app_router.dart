@@ -49,6 +49,7 @@ import '../features/payments/views/payment_details_screen.dart';
 // Reports
 import '../features/reports/views/file_report_screen.dart';
 import '../features/reports/views/my_reports_screen.dart';
+import '../features/reports/views/my_disputes_screen.dart';
 
 // Reviews
 import '../features/support/views/new_ticket_screen.dart';
@@ -229,6 +230,9 @@ final List<RouteBase> appRoutes = [
       path: '/my-reports',
       builder: (context, state) => const MyReportsScreen()),
   GoRoute(
+      path: '/my-disputes',
+      builder: (context, state) => const MyDisputesScreen()),
+  GoRoute(
     path: '/write-review/:bookingId',
     builder: (context, state) =>
         WriteReviewScreen(bookingId: state.pathParameters['bookingId']!),
@@ -383,6 +387,7 @@ const _sharedSignedIn = <String>{
   'booking-details',
   'file-report',
   'my-reports',
+  'my-disputes',
   'support',
   'edit-profile',
   'change-password',

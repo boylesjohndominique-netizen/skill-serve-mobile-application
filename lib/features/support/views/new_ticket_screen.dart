@@ -50,10 +50,10 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
     if (!mounted) return;
 
     if (ticket == null) {
-      AppSnackbar.error(context, support.errorMessage ?? 'Unable to create this ticket.');
+      AppSnackbar.error(context, support.errorMessage ?? 'Unable to send your request.');
       return;
     }
-    AppSnackbar.success(context, 'Ticket ${ticket.ticketNumber} created.');
+    AppSnackbar.success(context, 'Sent to Customer Support. We will reply here in the app.');
     context.pushReplacement('/support/tickets/${ticket.id}');
   }
 
@@ -62,7 +62,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
     final support = context.watch<SupportController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Ticket')),
+      appBar: AppBar(title: const Text('Contact Customer Support')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.pageHPad),
@@ -135,7 +135,7 @@ class _NewTicketScreenState extends State<NewTicketScreen> {
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.lg),
           child: PrimaryButton(
-            label: 'Create ticket',
+            label: 'Send to Customer Support',
             icon: AppIcons.send_rounded,
             isLoading: support.isSubmitting,
             onPressed: _canSubmit && !support.isSubmitting ? _submit : null,

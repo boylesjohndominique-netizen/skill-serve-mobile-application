@@ -3,7 +3,8 @@ import '../../../core/utils/api_error.dart';
 import '../models/report_model.dart';
 import '../services/report_service.dart';
 
-/// Drives the file-a-report flow, the My Reports list and booking disputes.
+/// Drives the file-a-report flow, the My Reports and My Disputes lists, and
+/// booking disputes.
 class ReportController extends ChangeNotifier {
   ReportController({ReportService? service}) : _reportService = service ?? ReportService();
 
@@ -11,36 +12,45 @@ class ReportController extends ChangeNotifier {
 
   List<ReportModel> reports = [];
   List<DisputeModel> disputes = [];
-  bool isLoading = false;
   bool isSubmitting = false;
 
-  /// Errors are tracked per list. The two come from separate endpoints, so one
-  /// failing must neither blank the other nor let its tab claim to be empty
-  /// when it simply could not be read.
+  /// Reports and disputes are separate cases on separate screens, read from
+  /// separate endpoints — so each list keeps its own loading state and error.
+  bool isLoadingReports = false;
+  bool isLoadingDisputes = false;
   String? reportsError;
   String? disputesError;
 
-  /// Set by a failed submit, and by a load that failed outright.
+  /// Set by a failed submit.
   String? errorMessage;
 
-  /// True when neither list could be loaded — the only case worth replacing the
-  /// whole screen with an error.
-  bool get loadFailed => reportsError != null && disputesError != null;
-
-  Future<void> loadMyReports() async {
-    isLoading = true;
+  /// Loads the complaints this account has filed, for My Reports.
+  Future<void> loadReports() async {
+    isLoadingReports = true;
     reportsError = null;
-    disputesError = null;
-    errorMessage = null;
     notifyListeners();
+    try {
+      reports = await _reportService.getMyReports();
+    } catch (e) {
+      reports = [];
+      reportsError = apiErrorMessage(e, 'Unable to load your reports.');
+    }
+    isLoadingReports = false;
+    notifyListeners();
+  }
 
-    await Future.wait([
-      _loadReports(),
-      _loadDisputes(),
-    ]);
-
-    errorMessage = loadFailed ? reportsError : null;
-    isLoading = false;
+  /// Loads the booking disputes this account is a party to, for My Disputes.
+  Future<void> loadDisputes() async {
+    isLoadingDisputes = true;
+    disputesError = null;
+    notifyListeners();
+    try {
+      disputes = await _reportService.getMyDisputes();
+    } catch (e) {
+      disputes = [];
+      disputesError = apiErrorMessage(e, 'Unable to load your disputes.');
+    }
+    isLoadingDisputes = false;
     notifyListeners();
   }
 
@@ -56,25 +66,7 @@ class ReportController extends ChangeNotifier {
       disputesError = null;
       notifyListeners();
     } catch (_) {
-      // The next visit to My Reports loads them again.
-    }
-  }
-
-  Future<void> _loadReports() async {
-    try {
-      reports = await _reportService.getMyReports();
-    } catch (e) {
-      reports = [];
-      reportsError = apiErrorMessage(e, 'Unable to load your reports.');
-    }
-  }
-
-  Future<void> _loadDisputes() async {
-    try {
-      disputes = await _reportService.getMyDisputes();
-    } catch (e) {
-      disputes = [];
-      disputesError = apiErrorMessage(e, 'Unable to load your disputes.');
+      // The next visit to My Reports or My Disputes loads them again.
     }
   }
 
@@ -117,7 +109,7 @@ class ReportController extends ChangeNotifier {
 
   /// Photos that could not be attached to the last dispute raised, so the
   /// screen can say so (the dispute itself stands; they can be added later
-  /// from My Reports).
+  /// from My Disputes).
   int unsentDisputePhotos = 0;
 
   /// Raises a dispute on a booking, then attaches [photoPaths] as evidence.

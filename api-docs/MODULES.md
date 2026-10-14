@@ -1,6 +1,7 @@
 # API Modules
 
 - [Admin Authentication](modules/admin-authentication.md)
+- [Admin Inbox](modules/admin-inbox.md)
 - [Administrators](modules/administrators.md)
 - [Authentication](modules/authentication.md)
 - [Booking Disputes](modules/booking-disputes.md)

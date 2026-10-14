@@ -44,6 +44,7 @@ final _routes = <String>[
   '/chat-conversation/CV-0',
   '/payments',
   '/my-reports',
+  '/my-disputes',
   '/notifications',
   '/reviews/PV-100',
   '/booking-details/BK-5000',
