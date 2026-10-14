@@ -449,7 +449,7 @@ class _DiscoverHero extends StatelessWidget {
               ),
               const SizedBox(height: AppSizes.sm),
               Text(
-                'Book vetted pros for home repairs, tutoring, design & more across the Visayas.',
+                'Book vetted pros for home repairs, tutoring, design & more anywhere in the Philippines.',
                 style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMutedDark),
               ),
               const SizedBox(height: AppSizes.lg),

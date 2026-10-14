@@ -15,8 +15,9 @@ import '../../../core/theme/app_palette.dart';
 class ReviewCard extends StatelessWidget {
   final ReviewModel review;
 
-  /// Shows a report action when set. Leave null for a guest, or for the
-  /// signed-in user's own review — the API refuses both.
+  /// Shows a "Report" action (and reports on long-press) when set. Leave
+  /// null for a guest, or for the signed-in user's own review — the API
+  /// refuses both.
   final VoidCallback? onReport;
 
   const ReviewCard({super.key, required this.review, this.onReport});
@@ -28,7 +29,7 @@ class ReviewCard extends StatelessWidget {
     final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surface;
     final lineColor = isDark ? AppColors.lineDark : AppColors.line;
 
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
         color: surfaceColor,
@@ -56,21 +57,37 @@ class ReviewCard extends StatelessWidget {
                 ),
               ),
               RatingWidget(rating: review.rating),
-              if (onReport != null)
-                IconButton(
-                  tooltip: 'Report review',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: onReport,
-                  icon: AppIcon(AppIcons.flag_outlined, size: 16, color: context.textMutedColor),
-                ),
             ],
           ),
           const SizedBox(height: AppSizes.sm),
           Text(review.comment, style: AppTextStyles.bodyMedium.copyWith(
             color: isDark ? AppColors.textMutedDark : AppColors.textSecondary,
           )),
+          // A labelled action, not a bare icon, so it is found.
+          if (onReport != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onReport,
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),
+                  minimumSize: const Size(48, 36),
+                ),
+                icon: AppIcon(AppIcons.flag_outlined, size: 14, color: context.textMutedColor),
+                label: Text('Report', style: AppTextStyles.label.copyWith(color: context.textMutedColor)),
+              ),
+            ),
         ],
       ),
     );
+
+    // Long-pressing the review offers the same report.
+    return onReport == null
+        ? card
+        : Semantics(
+            onLongPressHint: 'Report this review',
+            child: GestureDetector(onLongPress: onReport, child: card),
+          );
   }
 }

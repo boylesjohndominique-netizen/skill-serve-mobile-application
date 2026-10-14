@@ -10,8 +10,8 @@ class AboutScreen extends StatelessWidget {
       title: 'About SkillServe',
       sections: [
         StaticSection(
-          body: 'SkillServe bridges service accessibility and talent visibility by connecting households across '
-              'Cebu, Bohol, and Dumaguete with verified local service professionals — from plumbers and '
+          body: 'SkillServe bridges service accessibility and talent visibility by connecting households '
+              'nationwide across the Philippines with verified local service professionals — from plumbers and '
               'electricians to tutors, designers, and photographers.',
         ),
         StaticSection(

@@ -2,6 +2,7 @@
 // `star_rounded`), so the lint for snake_case identifiers is disabled here.
 // ignore_for_file: constant_identifier_names
 
+import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 /// Icon data type used by HugeIcons (SVG path data).
@@ -14,6 +15,14 @@ typedef AppIconData = List<List<dynamic>>;
 /// find-and-replace. Swap the underlying glyph here to restyle the whole app.
 abstract final class AppIcons {
   AppIcons._();
+
+  /// The Material solid icon a filled marker stands for, or null for an
+  /// ordinary HugeIcons glyph.
+  static IconData? solidFor(AppIconData icon) {
+    if (identical(icon, star_rounded)) return Icons.star_rounded;
+    if (identical(icon, favorite_rounded)) return Icons.favorite_rounded;
+    return null;
+  }
 
   // ── Time / calendar ────────────────────────────────────────────────
   static const AppIconData access_time_rounded = HugeIcons.strokeRoundedClock01;
@@ -93,10 +102,13 @@ abstract final class AppIcons {
   static const AppIconData info_outline_rounded = HugeIcons.strokeRoundedInformationCircle;
   static const AppIconData info_rounded = HugeIcons.strokeRoundedInformationCircle;
   static const AppIconData warning_amber_rounded = HugeIcons.strokeRoundedAlert01;
-  static const AppIconData star_rounded = HugeIcons.strokeRoundedStar;
+  // Filled glyphs. HugeIcons' free set is outline-only, so these are markers
+  // AppIcon draws with Material's solid icons ([AppIcons.solidFor]): a
+  // favourite is a full heart, a rating a full star.
+  static const AppIconData star_rounded = [['solid', 'star']];
   static const AppIconData star_border_rounded = HugeIcons.strokeRoundedStar;
   static const AppIconData star_outline_rounded = HugeIcons.strokeRoundedStar;
-  static const AppIconData favorite_rounded = HugeIcons.strokeRoundedFavourite;
+  static const AppIconData favorite_rounded = [['solid', 'favorite']];
   static const AppIconData favorite_border_rounded = HugeIcons.strokeRoundedFavourite;
   static const AppIconData flag_outlined = HugeIcons.strokeRoundedFlag01;
   static const AppIconData flag_rounded = HugeIcons.strokeRoundedFlag01;

@@ -7,8 +7,7 @@ import 'package:provider/provider.dart';
 import '../controllers/booking_controller.dart';
 import '../controllers/provider_booking_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../reports/controllers/report_controller.dart';
-import '../../reports/views/raise_dispute_sheet.dart';
+import '../../reports/views/raise_dispute_flow.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -790,33 +789,14 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   Future<void> _raiseDispute(BookingModel booking) async {
-    final draft = await showRaiseDisputeSheet(context);
-    if (draft == null || !mounted) return;
-
-    final reports = context.read<ReportController>();
-    setState(() => _acting = true);
-    final dispute = await reports.raiseDispute(
-      bookingId: booking.id,
-      reason: draft.reason,
-      photoPaths: draft.photoPaths,
+    final raised = await raiseDisputeFlow(
+      context,
+      booking.id,
+      onBusy: (busy) {
+        if (mounted) setState(() => _acting = busy);
+      },
     );
-    if (!mounted) return;
-    setState(() => _acting = false);
-
-    if (dispute == null) {
-      AppSnackbar.error(context, reports.errorMessage ?? 'Unable to raise this dispute.');
-      return;
-    }
-    final unsent = reports.unsentDisputePhotos;
-    if (unsent > 0) {
-      AppSnackbar.error(
-        context,
-        'Dispute raised, but $unsent ${unsent == 1 ? 'photo' : 'photos'} could not be attached. Add them from My Disputes.',
-      );
-    } else {
-      AppSnackbar.success(context, 'Dispute raised. Our support team will review it.');
-    }
-    await _loadBooking();
+    if (raised && mounted) await _loadBooking();
   }
 
   Future<void> _reschedule(BookingModel booking) async {

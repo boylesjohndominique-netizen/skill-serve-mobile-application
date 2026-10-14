@@ -19,6 +19,7 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import 'case_card.dart';
+import 'raise_dispute_flow.dart';
 
 /// The booking disputes this account is a party to — raised by either side
 /// from a booking. Each card opens its booking, and takes more photos as
@@ -100,7 +101,24 @@ class _MyDisputesScreenState extends State<MyDisputesScreen> {
                           ),
                   ),
       ),
+      floatingActionButton: error != null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _raiseDispute(context),
+              backgroundColor: AppColors.secondary,
+              foregroundColor: AppColors.primary,
+              icon: const AppIcon(AppIcons.gavel_rounded, size: 18, color: AppColors.primary),
+              label: const Text('Raise a dispute'),
+            ),
     );
+  }
+
+  /// Pick the booking that went wrong, then describe it — the same sheet as
+  /// on the booking itself. The new dispute appears at the top of this list.
+  Future<void> _raiseDispute(BuildContext context) async {
+    final booking = await pickDisputableBooking(context);
+    if (booking == null || !context.mounted) return;
+    await raiseDisputeFlow(context, booking.id);
   }
 }
 

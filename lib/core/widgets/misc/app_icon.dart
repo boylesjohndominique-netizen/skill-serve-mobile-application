@@ -26,10 +26,14 @@ class AppIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final i = icon;
     if (i == null) return const SizedBox.shrink();
+    final color = this.color ?? IconTheme.of(context).color ?? const Color(0xFF1C2128);
+    // A filled heart or star: Material's solid glyph, sized to match.
+    final solid = AppIcons.solidFor(i);
+    if (solid != null) return Icon(solid, size: size ?? 18.0, color: color);
     return HugeIcon(
       icon: i,
       size: size ?? 18.0,
-      color: color ?? IconTheme.of(context).color ?? const Color(0xFF1C2128),
+      color: color,
       strokeWidth: strokeWidth ?? 1.5,
     );
   }

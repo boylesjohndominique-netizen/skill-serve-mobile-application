@@ -44,9 +44,9 @@ class RatingSummary extends StatelessWidget {
                 children: [
                   for (var star = 1; star <= 5; star++)
                     AppIcon(
-                      AppIcons.star_rounded,
+                      // A full star for each point earned, an outline for the rest.
+                      star <= average.round() && total > 0 ? AppIcons.star_rounded : AppIcons.star_outline_rounded,
                       size: 13,
-                      // Filled and empty stars share a glyph; colour tells them apart.
                       color: star <= average.round() && total > 0
                           ? context.starColor
                           : context.textMutedColor.withValues(alpha: 0.4),
