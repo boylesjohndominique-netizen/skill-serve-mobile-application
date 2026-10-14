@@ -14,6 +14,7 @@ import '../../../core/widgets/feedback/shimmer_placeholder.dart';
 import '../../../core/widgets/inputs/app_search_bar.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/widgets/misc/status_badge.dart';
+import '../models/chat_thread.dart';
 import '../models/message_model.dart';
 import '../../../core/constants/app_icons.dart';
 
@@ -122,7 +123,7 @@ class _ConversationRow extends StatelessWidget {
     final unread = conversation.unreadCount > 0;
 
     return InkWell(
-      onTap: () => context.push('/chat-conversation/${conversation.bookingId}'),
+      onTap: () => context.push(ChatThread.route(conversation.threadKey)),
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -152,9 +153,9 @@ class _ConversationRow extends StatelessWidget {
                       ],
                     ],
                   ),
-                  if (conversation.serviceTitle.isNotEmpty)
+                  if (conversation.topic.isNotEmpty)
                     Text(
-                      conversation.serviceTitle,
+                      conversation.topic,
                       style: AppTextStyles.caption.copyWith(color: AppColors.neutral400),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

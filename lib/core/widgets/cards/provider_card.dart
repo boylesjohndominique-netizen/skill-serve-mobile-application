@@ -6,6 +6,7 @@ import '../../constants/app_text_styles.dart';
 import '../../utils/formatters.dart';
 import '../../../features/marketplace/models/provider_model.dart';
 import '../misc/app_avatar.dart';
+import '../misc/on_job_badge.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
@@ -138,6 +139,10 @@ class _ProviderCardState extends State<ProviderCard> with SingleTickerProviderSt
                         ),
                       ],
                     ),
+                    if (widget.provider.onJobNow) ...[
+                      const SizedBox(height: 4),
+                      const OnJobBadge(),
+                    ],
                   ],
                 ),
               ),

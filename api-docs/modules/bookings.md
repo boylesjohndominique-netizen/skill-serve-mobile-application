@@ -14,7 +14,7 @@ GET /api/bookings — paginated, searchable, filterable list.
 |---|---|---:|---|
 | `search` | query | no | string |
 | `status` | query | no | string (`pending`, `confirmed`, `active`, `completed`, `cancelled`, `disputed`) |
-| `payment_status` | query | no | string (`unpaid`, `paid`, `refunded`, `partially_refunded`) |
+| `payment_status` | query | no | string (`unpaid`, `partially_paid`, `paid`, `refunded`, `partially_refunded`) |
 | `provider_id` | query | no | integer |
 | `client_id` | query | no | integer |
 | `service_id` | query | no | integer |
@@ -333,6 +333,37 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 422: Booking is pending or cancelled, or validation error
+
+Response schema: `see openapi.json`
+
+## `GET /api/bookings/{booking}/payment-proofs/{proof}/image`
+
+The screenshot of a customer's GCash payment proof
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `booking` | path | yes | integer |
+| `proof` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: The image file
+
+Response schema: `see openapi.json`
+
+#### HTTP 403: Unauthorized
+
+Response schema: `see openapi.json`
+
+#### HTTP 404: No such proof on this booking
 
 Response schema: `see openapi.json`
 

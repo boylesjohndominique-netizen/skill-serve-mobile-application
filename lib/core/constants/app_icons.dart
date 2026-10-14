@@ -103,6 +103,9 @@ abstract final class AppIcons {
   static const AppIconData content_copy_rounded = HugeIcons.strokeRoundedCopy01;
   static const AppIconData block_rounded = HugeIcons.strokeRoundedBlocked;
   static const AppIconData task_alt_rounded = HugeIcons.strokeRoundedTaskDone01;
+  // The Bookings tab: a job list, distinct from the calendar icons used for dates.
+  static const AppIconData assignment_outlined = HugeIcons.strokeRoundedTask01;
+  static const AppIconData assignment_rounded = HugeIcons.strokeRoundedTask01;
   static const AppIconData refresh_rounded = HugeIcons.strokeRoundedRefresh01;
   static const AppIconData rotate_left_rounded = HugeIcons.strokeRoundedRotateLeft01;
   static const AppIconData radio_button_checked_rounded = HugeIcons.strokeRoundedRadioButton;

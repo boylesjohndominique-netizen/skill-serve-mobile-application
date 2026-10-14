@@ -27,6 +27,8 @@ import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/widgets/feedback/app_notice.dart';
+import 'payment_proof_section.dart';
+import '../controllers/booking_change_signal.dart';
 
 class BookingDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -48,6 +50,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   ChangeNotifier? _bookings;
 
+  /// The last realtime change signal this screen acted on.
+  int _seenChange = 0;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +60,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       _bookings = _isProviderView
           ? context.read<ProviderBookingController>()
           : context.read<BookingController>();
+      _seenChange = (_bookings! as BookingChangeSignal).changeCount;
       _bookings!.addListener(_followList);
       _loadBooking();
     });
@@ -73,6 +79,16 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   void _followList() {
     final current = _booking;
     if (!mounted || current == null || _loading) return;
+    // The push said this booking changed — a payment proof arrived or was
+    // reviewed — even if its status is the same.
+    final signal = _bookings! as BookingChangeSignal;
+    if (signal.changeCount != _seenChange) {
+      _seenChange = signal.changeCount;
+      if (signal.changedBookingId == current.id) {
+        _loadBooking();
+        return;
+      }
+    }
     final bookings = _isProviderView
         ? context.read<ProviderBookingController>().bookings
         : context.read<BookingController>().bookings;
@@ -124,6 +140,69 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         ? context.read<ProviderBookingController>().errorMessage
         : context.read<BookingController>().errorMessage;
     if (mounted) AppSnackbar.error(context, message ?? 'That did not work. Please try again.');
+  }
+
+  /// The customer paid in GCash (all or a downpayment) and sends the proof.
+  Future<void> _sendPaymentProof(BookingModel booking) async {
+    final draft = await showSendPaymentProofSheet(context, balance: booking.balanceDue);
+    if (draft == null || !mounted) return;
+
+    final controller = context.read<BookingController>();
+    setState(() => _acting = true);
+    final updated = await controller.sendPaymentProof(
+      booking.id,
+      amount: draft.amount,
+      reference: draft.reference,
+      screenshotPath: draft.screenshotPath,
+    );
+    if (!mounted) return;
+    setState(() {
+      _acting = false;
+      if (updated != null) _booking = updated;
+    });
+    if (updated != null) {
+      AppSnackbar.success(context, 'Proof sent. The provider will confirm your payment.');
+    } else {
+      AppSnackbar.error(context, controller.errorMessage ?? 'Unable to send this payment proof.');
+    }
+  }
+
+  Future<void> _confirmPaymentProof(BookingModel booking, PaymentProof proof) async {
+    final settles = proof.amount >= booking.balanceDue - 0.001;
+    final ok = await AppDialog.confirm(
+      context,
+      title: 'Confirm ${Formatters.peso(proof.amount)}?',
+      message: settles
+          ? 'Only confirm once this payment shows in your GCash. The booking will be fully paid.'
+          : 'Only confirm once this payment shows in your GCash. ${Formatters.peso(booking.balanceDue - proof.amount)} will still be to pay.',
+      confirmLabel: 'Confirm payment',
+    );
+    if (!ok || !mounted) return;
+    final controller = context.read<ProviderBookingController>();
+    await _act(
+      () => controller.confirmPaymentProof(booking.id, proof.id),
+      settles ? 'Payment confirmed — fully paid.' : 'Downpayment confirmed.',
+    );
+  }
+
+  Future<void> _rejectPaymentProof(BookingModel booking, PaymentProof proof) async {
+    final reason = await AppDialog.prompt(
+      context,
+      title: 'Reject this payment proof?',
+      message: 'The customer sees your reason and can send another proof.',
+      fieldLabel: 'Reason',
+      hint: 'e.g. No payment with this reference reached my GCash',
+      confirmLabel: 'Reject',
+      danger: true,
+      minLength: 3,
+      maxLength: 500,
+    );
+    if (reason == null || !mounted) return;
+    final controller = context.read<ProviderBookingController>();
+    await _act(
+      () => controller.rejectPaymentProof(booking.id, proof.id, reason: reason),
+      'Payment proof rejected. The customer has been told why.',
+    );
   }
 
   /// Where back leads when this screen opened with nothing beneath it — after
@@ -342,6 +421,23 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                   )
                       .animate()
                       .fadeIn(delay: 300.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                ],
+                // GCash payments: the customer sends proof (a downpayment or the
+                // rest); the provider checks the screenshot and confirms it.
+                if (PaymentProofSection.appliesTo(booking, isProviderView: isProviderView)) ...[
+                  const SizedBox(height: AppSizes.lg),
+                  PaymentProofSection(
+                    booking: booking,
+                    isProviderView: isProviderView,
+                    isDark: isDark,
+                    busy: _acting,
+                    onSendProof: () => _sendPaymentProof(booking),
+                    onConfirm: (proof) => _confirmPaymentProof(booking, proof),
+                    onReject: (proof) => _rejectPaymentProof(booking, proof),
+                  )
+                      .animate()
+                      .fadeIn(delay: 320.ms, duration: 350.ms)
                       .slideY(begin: 0.06, end: 0),
                 ],
                 if (booking.notes != null && booking.notes!.isNotEmpty) ...[

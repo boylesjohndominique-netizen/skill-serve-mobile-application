@@ -234,8 +234,9 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      // The API refuses a taken window, a paused provider or a time outside
-      // the published hours — each comes back as a message worth reading.
+      // The API refuses a paused provider or a time outside the published
+      // hours — each comes back as a message worth reading. Another job at
+      // the same time is allowed: the provider accepts or declines.
       AppSnackbar.error(context, apiErrorMessage(e, 'Unable to create this booking.'));
     }
   }

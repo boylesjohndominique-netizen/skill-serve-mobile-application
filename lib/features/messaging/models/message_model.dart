@@ -1,3 +1,5 @@
+import 'chat_thread.dart';
+
 /// One message on a booking, as `BookingMessage` returns it.
 class MessageModel {
   final String id;
@@ -77,11 +79,13 @@ class MessageModel {
   static DateTime? _date(Object? value) => value is String ? DateTime.tryParse(value)?.toLocal() : null;
 }
 
-/// One booking thread in the Messages inbox, as `Conversation` returns it.
-///
-/// A booking *is* the conversation, so [bookingId] both identifies the thread
-/// and addresses `/bookings/{booking}/messages`.
+/// One thread in the Messages inbox, as `Conversation` returns it: a
+/// booking's chat, or a conversation with a provider before booking.
 class ConversationModel {
+  /// Addresses the thread everywhere in the app ([ChatThread]).
+  final String threadKey;
+
+  /// The booking for a booking chat; empty before booking.
   final String bookingId;
   final String bookingNumber;
   final String bookingStatus;
@@ -106,7 +110,8 @@ class ConversationModel {
   final int unreadCount;
 
   const ConversationModel({
-    required this.bookingId,
+    required this.threadKey,
+    this.bookingId = '',
     this.bookingNumber = '',
     this.bookingStatus = '',
     this.serviceTitle = '',
@@ -119,6 +124,12 @@ class ConversationModel {
     this.lastMessageAt,
     this.unreadCount = 0,
   });
+
+  bool get isInquiry => ChatThread.isInquiry(threadKey);
+
+  /// What the conversation is about, under the name: the booked service, or
+  /// that it comes before any booking.
+  String get topic => isInquiry ? 'Before booking' : serviceTitle;
 
   /// What the inbox row shows under the name.
   String get preview =>
@@ -138,8 +149,10 @@ class ConversationModel {
     final counterpart = json['counterpart'] as Map<String, dynamic>?;
     final last = json['last_message'] as Map<String, dynamic>?;
 
+    final isInquiry = json['kind'] == 'inquiry';
     return ConversationModel(
-      bookingId: json['booking_id'].toString(),
+      threadKey: isInquiry ? ChatThread.inquiry(json['inquiry_id']) : json['booking_id'].toString(),
+      bookingId: isInquiry ? '' : json['booking_id'].toString(),
       bookingNumber: json['booking_number'] as String? ?? '',
       bookingStatus: json['booking_status'] as String? ?? '',
       serviceTitle: json['service_title'] as String? ?? '',
@@ -161,6 +174,7 @@ class ConversationModel {
     DateTime? lastMessageAt,
   }) =>
       ConversationModel(
+        threadKey: threadKey,
         bookingId: bookingId,
         bookingNumber: bookingNumber,
         bookingStatus: bookingStatus,

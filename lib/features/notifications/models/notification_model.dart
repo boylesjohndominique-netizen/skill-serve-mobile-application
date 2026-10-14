@@ -1,3 +1,5 @@
+import '../../messaging/models/chat_thread.dart';
+
 enum NotificationType {
   booking,
   message,
@@ -52,9 +54,10 @@ class NotificationModel {
     final ticketId = _id('ticket_id');
     final serviceId = _id('service_id');
 
-    // A message is about a conversation, which is addressed by its booking.
-    if (type == NotificationType.message && bookingId != null) {
-      return '/chat-conversation/$bookingId';
+    // A message opens its conversation: a booking's chat, or one before booking.
+    if (type == NotificationType.message) {
+      final thread = ChatThread.fromIds(bookingId: bookingId, inquiryId: _id('inquiry_id'));
+      if (thread != null) return ChatThread.route(thread);
     }
     if (bookingId != null) return '/booking-details/$bookingId';
     // A decision on the provider's verification opens where they can act on it.
@@ -113,7 +116,10 @@ class NotificationModel {
     if (value.contains('message') || value.startsWith('support_ticket')) {
       return NotificationType.message;
     }
-    if (value.contains('booking') || value.contains('dispute')) return NotificationType.booking;
+    // A payment proof is about a booking's payment, under "Booking updates".
+    if (value.contains('booking') || value.contains('dispute') || value.startsWith('payment_proof')) {
+      return NotificationType.booking;
+    }
     if (value.contains('verification')) return NotificationType.verification;
     return NotificationType.system;
   }

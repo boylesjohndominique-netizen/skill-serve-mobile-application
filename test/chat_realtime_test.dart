@@ -4,6 +4,7 @@ import 'package:skillserve_mobile/features/messaging/models/message_model.dart';
 
 ConversationModel _conversation(String bookingId, {int unread = 0, String last = 'Earlier.'}) =>
     ConversationModel(
+      threadKey: bookingId,
       bookingId: bookingId,
       participantName: 'Provider $bookingId',
       lastMessage: last,
@@ -31,7 +32,7 @@ void main() {
     await chat.onRealtimeMessage('2', _push('50', 'On my way.'));
 
     // Moved to the top, previewed, and counted — without a network round trip.
-    expect(chat.conversations.first.bookingId, '2');
+    expect(chat.conversations.first.threadKey, '2');
     expect(chat.conversations.first.lastMessage, 'On my way.');
     expect(chat.conversations.first.lastMessageIsMine, isFalse);
     expect(chat.conversations.first.unreadCount, 2);
@@ -42,13 +43,13 @@ void main() {
   test('a message for the open thread appears at once and adds no unread', () async {
     final chat = ChatController()
       ..conversations = [_conversation('1'), _conversation('2')]
-      ..activeBookingId = '2'
+      ..activeThreadKey = '2'
       ..unreadCount = 0;
 
     await chat.onRealtimeMessage('2', _push('51', 'Almost there.'));
 
     expect(chat.activeMessages.map((m) => m.content), ['Almost there.']);
-    expect(chat.conversations.first.bookingId, '2');
+    expect(chat.conversations.first.threadKey, '2');
     expect(chat.conversations.first.unreadCount, 0);
     // The server may not be reachable in a test; the badge must not go up.
     expect(chat.unreadCount, 0);
@@ -57,7 +58,7 @@ void main() {
   test('the same push twice does not duplicate the bubble', () async {
     final chat = ChatController()
       ..conversations = [_conversation('2')]
-      ..activeBookingId = '2';
+      ..activeThreadKey = '2';
 
     await chat.onRealtimeMessage('2', _push('52', 'Hello.'));
     await chat.onRealtimeMessage('2', _push('52', 'Hello.'));

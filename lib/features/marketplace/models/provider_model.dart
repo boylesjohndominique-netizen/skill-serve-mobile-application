@@ -45,6 +45,10 @@ class ProviderModel {
   /// Whether the provider is taking new bookings at all.
   final bool isAcceptingBookings;
 
+  /// Working a job right now (a booking in progress). Informational: they
+  /// can still be booked and messaged.
+  final bool onJobNow;
+
   /// Published weekly hours, present on the provider detail payload. Empty
   /// means the provider publishes none, which does not restrict when they
   /// can be booked.
@@ -82,6 +86,7 @@ class ProviderModel {
     this.isFeatured = false,
     this.badges = const [],
     this.isAcceptingBookings = true,
+    this.onJobNow = false,
     this.availability = const [],
     this.startingPrice,
     this.services = const [],
@@ -166,6 +171,7 @@ class ProviderModel {
       // Absent on older payloads; a provider is bookable unless they say
       // otherwise.
       isAcceptingBookings: json['is_accepting_bookings'] != false,
+      onJobNow: json['on_job_now'] == true,
       availability: [
         for (final item in (json['availability'] as List? ?? const []))
           ProviderAvailabilityModel.fromJson(item as Map<String, dynamic>),

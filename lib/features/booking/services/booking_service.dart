@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/booking_model.dart';
 import '../../../core/services/api_client.dart';
+import '../../../core/utils/image_upload.dart';
 
 /// Service for the booking lifecycle — live API only.
 ///
@@ -11,6 +12,7 @@ import '../../../core/services/api_client.dart';
 /// - GET   /api/client/v1/bookings/{booking}
 /// - PATCH /api/client/v1/bookings/{booking}/cancel
 /// - PATCH /api/client/v1/bookings/{booking}/reschedule
+/// - POST  /api/client/v1/bookings/{booking}/payment-proofs (GCash proof)
 ///
 /// Provider endpoints (api-docs/modules/provider-bookings.md):
 /// - GET   /api/client/v1/provider/bookings
@@ -21,6 +23,7 @@ import '../../../core/services/api_client.dart';
 /// - PATCH /api/client/v1/provider/bookings/{booking}/start
 /// - PATCH /api/client/v1/provider/bookings/{booking}/complete
 /// - PATCH /api/client/v1/provider/bookings/{booking}/payment-received
+/// - PATCH /api/client/v1/provider/bookings/{booking}/payment-proofs/{proof}/confirm|reject
 class BookingService {
   static const _clientBase = '/client/v1/bookings';
   static const _providerBase = '/client/v1/provider/bookings';
@@ -148,6 +151,35 @@ class BookingService {
     );
     return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
+
+  /// POST …/payment-proofs — the customer paid [amount] in GCash (a
+  /// downpayment or the rest) and sends the screenshot for the provider to
+  /// confirm. Returns the booking with its proofs.
+  Future<BookingModel> sendPaymentProof(
+    String id, {
+    required double amount,
+    String? reference,
+    required String screenshotPath,
+  }) async {
+    final response = await ApiClient.instance.dio.post(
+      '$_clientBase/$id/payment-proofs',
+      data: FormData.fromMap({
+        'amount': amount.toStringAsFixed(2),
+        if (reference != null && reference.trim().isNotEmpty) 'reference': reference.trim(),
+        'image': await imageMultipart(screenshotPath),
+      }),
+    );
+    return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// PATCH …/payment-proofs/{proof}/confirm — the provider received it.
+  Future<BookingModel> confirmPaymentProof(String id, String proofId) =>
+      _transition('$_providerBase/$id/payment-proofs/$proofId/confirm');
+
+  /// PATCH …/payment-proofs/{proof}/reject — not received; [reason] is shown
+  /// to the customer.
+  Future<BookingModel> rejectPaymentProof(String id, String proofId, {required String reason}) =>
+      _transition('$_providerBase/$id/payment-proofs/$proofId/reject', reason: reason);
 
   // ── Shared plumbing ──
 

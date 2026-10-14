@@ -14,6 +14,9 @@ enum PaymentStatus {
   /// Owed to the provider for a job that is going ahead or has been done.
   unpaid,
 
+  /// A downpayment was confirmed; the rest is still owed.
+  partiallyPaid,
+
   /// The booking was cancelled before anything was paid, so nothing is owed.
   notDue,
   refunded,
@@ -43,6 +46,10 @@ class PaymentModel {
   final double refundedAmount;
   final String? refundReason;
 
+  /// Confirmed so far, and what is still owed.
+  final double amountPaid;
+  final double balanceDue;
+
   const PaymentModel({
     required this.bookingId,
     this.bookingNumber = '',
@@ -58,12 +65,14 @@ class PaymentModel {
     this.paidAt,
     this.refundedAmount = 0,
     this.refundReason,
+    this.amountPaid = 0,
+    this.balanceDue = 0,
   });
 
   /// The status key the shared badge understands.
   String get statusKey => switch (status) {
         PaymentStatus.paid => 'paid',
-        PaymentStatus.unpaid => 'pending',
+        PaymentStatus.unpaid || PaymentStatus.partiallyPaid => 'pending',
         PaymentStatus.notDue => 'closed',
         PaymentStatus.refunded => 'refunded',
         PaymentStatus.partiallyRefunded => 'refunded',
@@ -72,6 +81,7 @@ class PaymentModel {
   String get statusLabel => switch (status) {
         PaymentStatus.paid => 'Paid',
         PaymentStatus.unpaid => 'Unpaid',
+        PaymentStatus.partiallyPaid => 'Partly paid',
         PaymentStatus.notDue => 'Nothing due',
         PaymentStatus.refunded => 'Refunded',
         PaymentStatus.partiallyRefunded => 'Partly refunded',
@@ -92,6 +102,8 @@ class PaymentModel {
         paidAt: booking.paidAt,
         refundedAmount: booking.refundedAmount,
         refundReason: booking.refundReason,
+        amountPaid: booking.amountPaid,
+        balanceDue: booking.balanceDue,
       );
 
   static PaymentStatus statusFor(BookingModel booking) {
@@ -102,6 +114,8 @@ class PaymentModel {
         return PaymentStatus.refunded;
       case 'partially_refunded':
         return PaymentStatus.partiallyRefunded;
+      case 'partially_paid':
+        return PaymentStatus.partiallyPaid;
     }
     // Unpaid: owed, unless the job was called off before any work.
     return booking.status == BookingStatus.cancelled

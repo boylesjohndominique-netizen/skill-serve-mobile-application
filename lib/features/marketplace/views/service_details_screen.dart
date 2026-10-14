@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../messaging/views/open_provider_chat.dart';
 import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -87,13 +88,13 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
     // Only a signed-in customer reports a listing; guests have no account,
     // and providers never see other providers' services.
-    final canReport = context.select<AuthController, bool>((auth) => auth.isClient);
+    final isCustomer = context.select<AuthController, bool>((auth) => auth.isClient);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Service Details'),
         actions: [
-          if (canReport)
+          if (isCustomer)
             IconButton(
               tooltip: 'Report this service',
               icon: const AppIcon(AppIcons.flag_outlined),
@@ -167,7 +168,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
               const SizedBox(height: AppSizes.xl),
               ServiceReviewsPreview(serviceId: s.id, serviceTitle: s.title)
                   .animate().fadeIn(delay: 400.ms, duration: 300.ms),
-              if (canReport) ...[
+              if (isCustomer) ...[
                 const SizedBox(height: AppSizes.lg),
                 Center(
                   child: TextButton.icon(
@@ -188,10 +189,32 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.lg),
-          child: PrimaryButton(
-            label: 'Book this service',
-            icon: AppIcons.calendar_month_rounded,
-            onPressed: () => context.push('/booking-form/${s.providerId}?serviceId=${s.id}'),
+          child: Row(
+            children: [
+              // Ask the provider first — no booking needed.
+              if (isCustomer && s.providerId.isNotEmpty) ...[
+                OutlinedButton(
+                  onPressed: () => openProviderChat(context, s.providerId),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(56, 52),
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
+                  ),
+                  child: Tooltip(
+                    message: 'Message the provider',
+                    child: AppIcon(AppIcons.chat_bubble_outline_rounded, color: context.accentInk),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.md),
+              ],
+              Expanded(
+                child: PrimaryButton(
+                  label: 'Book this service',
+                  icon: AppIcons.calendar_month_rounded,
+                  onPressed: () => context.push('/booking-form/${s.providerId}?serviceId=${s.id}'),
+                ),
+              ),
+            ],
           ),
         ),
       ),

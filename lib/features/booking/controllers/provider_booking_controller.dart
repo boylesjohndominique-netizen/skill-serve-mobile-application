@@ -2,10 +2,11 @@ import 'package:flutter/foundation.dart';
 import '../../../core/utils/api_error.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
+import 'booking_change_signal.dart';
 
 /// Drives the provider's Booking Requests / Active / Completed job screens,
 /// plus the dashboard, calendar and earnings views that read the same list.
-class ProviderBookingController extends ChangeNotifier {
+class ProviderBookingController extends ChangeNotifier with BookingChangeSignal {
   final BookingService _bookingService = BookingService();
 
   List<BookingModel> bookings = [];
@@ -91,6 +92,33 @@ class ProviderBookingController extends ChangeNotifier {
         () => _bookingService.recordPayment(id, reference: reference),
         'Unable to record this payment.',
       );
+
+  /// Confirms the customer's GCash payment proof: its amount is recorded as
+  /// received (the booking becomes partly or fully paid).
+  Future<bool> confirmPaymentProof(String id, String proofId) => _transition(
+        id,
+        () => _bookingService.confirmPaymentProof(id, proofId),
+        'Unable to confirm this payment.',
+      );
+
+  /// Rejects the customer's payment proof; [reason] is shown to them.
+  Future<bool> rejectPaymentProof(String id, String proofId, {required String reason}) => _transition(
+        id,
+        () => _bookingService.rejectPaymentProof(id, proofId, reason: reason),
+        'Unable to reject this payment proof.',
+      );
+
+  /// The realtime push said [bookingId] changed: an open booking screen
+  /// reloads it, and the job lists catch up without a loading state.
+  Future<void> onRealtimeChange(String bookingId) async {
+    signalBookingChanged(bookingId);
+    try {
+      bookings = await _bookingService.getProviderBookings();
+      notifyListeners();
+    } catch (_) {
+      // Keep what is on screen; the next visit reloads it.
+    }
+  }
 
   Future<bool> _transition(
     String id,

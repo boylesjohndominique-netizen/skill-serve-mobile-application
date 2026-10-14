@@ -20,7 +20,7 @@ Nothing open.
 ### F12 · Owner feedback round (2026-10-14) — see the web repo's PENDING_FIXES F12
 - [ ] **Pictures missing** — production uploads are wiped on every Render restart (no persistent
   disk; `/api/health` → `storage.persistent: false`). Attach the Render disk, then re-upload photos.
-- [ ] **Chat with a provider before booking** — design to agree (inquiry thread + migration), then build.
+- [x] **Chat with a provider before booking** — done (inquiries; Message on profile and service).
 
 Nothing open. **H6** (the app behind the API) was closed on 2026-09-26 — see below.
 

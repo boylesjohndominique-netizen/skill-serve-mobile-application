@@ -22,16 +22,17 @@ import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
 import '../../../core/widgets/misc/private_image.dart';
+import '../models/chat_thread.dart';
 import '../models/message_model.dart';
 import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 
-/// One booking's conversation. [bookingId] addresses the thread, because a
-/// booking is the conversation.
+/// One conversation: a booking's chat, or a conversation with a provider
+/// before booking. [threadKey] addresses it ([ChatThread]).
 class ChatConversationScreen extends StatefulWidget {
-  final String bookingId;
-  const ChatConversationScreen({super.key, required this.bookingId});
+  final String threadKey;
+  const ChatConversationScreen({super.key, required this.threadKey});
 
   @override
   State<ChatConversationScreen> createState() => _ChatConversationScreenState();
@@ -65,7 +66,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   static const _typingTimeout = Duration(seconds: 5);
   static const _typingResend = Duration(seconds: 3);
 
-  String get _presenceChannel => 'booking-chat.${widget.bookingId}';
+  String get _presenceChannel => ChatThread.presenceChannel(widget.threadKey);
 
   @override
   void initState() {
@@ -73,11 +74,11 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     _chat = context.read<ChatController>();
     _myId = context.read<AuthController>().currentUser?.id ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _chat.openConversation(widget.bookingId);
+      _chat.openConversation(widget.threadKey);
       // Opened from a notification, a booking or a profile before the
       // Messages tab: the header needs this thread's participant (name,
       // photo, profile link) from the inbox.
-      if (_chat.conversationFor(widget.bookingId) == null && !_chat.isLoading) {
+      if (_chat.conversationFor(widget.threadKey) == null && !_chat.isLoading) {
         _chat.loadConversations();
       }
     });
@@ -150,7 +151,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     _controller.clear();
     setState(() => _attachment = null);
     _stoppedTyping();
-    await chat.send(widget.bookingId, text, myUserId: myId, imagePath: photo);
+    await chat.send(widget.threadKey, text, myUserId: myId, imagePath: photo);
   }
 
   /// Picks a photo for the next message — taken now, or from the gallery.
@@ -162,14 +163,14 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   Future<void> _retry(MessageModel failed) async {
     final chat = context.read<ChatController>();
     final myId = context.read<AuthController>().currentUser?.id ?? '';
-    await chat.retry(widget.bookingId, failed, myUserId: myId);
+    await chat.retry(widget.threadKey, failed, myUserId: myId);
   }
 
   @override
   Widget build(BuildContext context) {
     final chat = context.watch<ChatController>();
     final myId = context.read<AuthController>().currentUser?.id ?? '';
-    final conversation = chat.conversationFor(widget.bookingId);
+    final conversation = chat.conversationFor(widget.threadKey);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final inputBg = isDark ? AppColors.surfaceAltDark : AppColors.surfaceAlt;
 
@@ -216,9 +217,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                         ),
                         maxLines: 1,
                       )
-                    else if (conversation?.serviceTitle.isNotEmpty == true)
+                    else if (conversation?.topic.isNotEmpty == true)
                       Text(
-                        conversation!.serviceTitle,
+                        conversation!.topic,
                         style: TextStyle(fontSize: 11, color: context.textMutedColor),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -236,11 +237,13 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
               onPressed: () => context.push('/provider-profile/$providerProfileId'),
               icon: const AppIcon(AppIcons.person_outline_rounded, size: 20),
             ),
-          IconButton(
-            tooltip: 'View booking',
-            onPressed: () => context.push('/booking-details/${widget.bookingId}'),
-            icon: const AppIcon(AppIcons.calendar_today_rounded, size: 18),
-          ),
+          // A conversation before booking has no booking to open yet.
+          if (!ChatThread.isInquiry(widget.threadKey))
+            IconButton(
+              tooltip: 'View booking',
+              onPressed: () => context.push('/booking-details/${widget.threadKey}'),
+              icon: const AppIcon(AppIcons.calendar_today_rounded, size: 18),
+            ),
         ],
       ),
       body: SafeArea(
@@ -260,7 +263,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     if (chat.threadErrorMessage != null && chat.activeMessages.isEmpty) {
       return ErrorState(
         message: chat.threadErrorMessage!,
-        onRetry: () => chat.openConversation(widget.bookingId),
+        onRetry: () => chat.openConversation(widget.threadKey),
       );
     }
 

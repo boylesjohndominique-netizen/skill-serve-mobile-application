@@ -100,7 +100,9 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
       PaymentStatus.partiallyRefunded =>
         (AppColors.warningBg, AppColors.warning, AppIcons.currency_exchange_rounded),
       PaymentStatus.notDue => (AppColors.neutral100, AppColors.neutral400, AppIcons.close_rounded),
-      PaymentStatus.unpaid => (AppColors.secondarySoft, AppColors.secondaryDeep, AppIcons.hourglass_top_rounded),
+      PaymentStatus.unpaid ||
+      PaymentStatus.partiallyPaid =>
+        (AppColors.secondarySoft, AppColors.secondaryDeep, AppIcons.hourglass_top_rounded),
     };
 
     return Scaffold(
@@ -167,6 +169,10 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
                     Divider(height: AppSizes.xl, color: isDark ? AppColors.lineDark : AppColors.line),
                     InfoRow(label: 'Method', value: p.method),
                     InfoRow(label: 'Scheduled', value: Formatters.dateTime(p.date)),
+                    if (p.status == PaymentStatus.partiallyPaid) ...[
+                      InfoRow(label: 'Paid so far', value: Formatters.peso(p.amountPaid)),
+                      InfoRow(label: 'Still to pay', value: Formatters.peso(p.balanceDue)),
+                    ],
                     if (p.paidAt != null)
                       InfoRow(label: 'Paid on', value: Formatters.dateTime(p.paidAt!)),
                     if (p.refundedAmount > 0) ...[

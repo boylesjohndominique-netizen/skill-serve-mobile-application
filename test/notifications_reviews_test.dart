@@ -78,6 +78,15 @@ void main() {
         expect(notification.destination, '/chat-conversation/42');
       });
 
+      test('a message before booking opens that conversation', () {
+        final notification = NotificationModel.fromJson(notificationPayload({
+          'type': 'booking_message',
+          'data': {'type': 'booking_message', 'booking_id': null, 'inquiry_id': 5},
+        }));
+
+        expect(notification.destination, '/chat-conversation/inquiry-5');
+      });
+
       test('a support reply opens the ticket', () {
         final notification = NotificationModel.fromJson(notificationPayload({
           'type': 'support_ticket_response',

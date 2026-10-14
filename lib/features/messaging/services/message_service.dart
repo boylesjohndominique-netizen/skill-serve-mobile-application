@@ -1,27 +1,29 @@
 import 'package:dio/dio.dart';
 
+import '../models/chat_thread.dart';
 import '../models/message_model.dart';
 import '../../../core/services/api_client.dart';
 import '../../../core/utils/image_upload.dart';
 
-/// Service for booking conversations and messages — live API only.
+/// Service for conversations and messages — live API only.
 ///
-/// Messaging is booking-scoped: the client and provider on a booking talk to
-/// each other about that job, so a conversation is addressed by its booking id.
+/// A thread is a booking's chat, or a conversation with a provider before
+/// booking; both are addressed by a [ChatThread] key and share one API shape.
 ///
-/// Endpoints (api-docs/modules/conversations.md, booking-messages.md):
-/// - GET  /api/client/v1/conversations
+/// Endpoints (api-docs/modules/conversations.md, booking-messages.md, inquiries.md):
+/// - GET  /api/client/v1/conversations?include_inquiries=1
 /// - GET  /api/client/v1/conversations/unread-count
-/// - GET  /api/client/v1/bookings/{booking}/messages
-/// - POST /api/client/v1/bookings/{booking}/messages
-/// - POST /api/client/v1/bookings/{booking}/messages/read
+/// - POST /api/client/v1/inquiries (start or reopen a conversation before booking)
+/// - GET|POST /api/client/v1/{bookings|inquiries}/{id}/messages
+/// - POST /api/client/v1/{bookings|inquiries}/{id}/messages/read
 class MessageService {
   static const _conversations = '/client/v1/conversations';
 
   /// GET /api/client/v1/conversations — the Messages inbox. Reading it does
   /// not mark anything read.
   Future<List<ConversationModel>> getConversations() async {
-    final response = await ApiClient.instance.dio.get(_conversations, queryParameters: {'per_page': 100});
+    final response = await ApiClient.instance.dio
+        .get(_conversations, queryParameters: {'per_page': 100, 'include_inquiries': 1});
     return [
       for (final item in response.data['data'] as List? ?? const [])
         ConversationModel.fromJson(item as Map<String, dynamic>),
@@ -35,27 +37,35 @@ class MessageService {
     return (data?['unread_count'] as num?)?.toInt() ?? 0;
   }
 
-  /// GET /api/client/v1/bookings/{booking}/messages — the thread, oldest
-  /// first. Opening it marks the messages addressed to the caller as read.
-  Future<List<MessageModel>> getMessages(String bookingId) async {
-    final response = await ApiClient.instance.dio.get('/client/v1/bookings/$bookingId/messages');
+  /// POST /api/client/v1/inquiries — the customer's conversation with
+  /// [providerId] before booking, started the first time.
+  Future<ConversationModel> startInquiry(String providerId) async {
+    final response = await ApiClient.instance.dio
+        .post('/client/v1/inquiries', data: {'provider_id': int.tryParse(providerId) ?? providerId});
+    return ConversationModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// GET …/messages — the thread, oldest first. Opening it marks the
+  /// messages addressed to the caller as read.
+  Future<List<MessageModel>> getMessages(String threadKey) async {
+    final response = await ApiClient.instance.dio.get(ChatThread.messagesPath(threadKey));
     return [
       for (final item in response.data['data'] as List? ?? const [])
         MessageModel.fromJson(item as Map<String, dynamic>),
     ];
   }
 
-  /// POST /api/client/v1/bookings/{booking}/messages — text, a photo
+  /// POST …/messages — text, a photo
   /// ([imagePath], sent as multipart), or both. [idempotencyKey] makes a
   /// retried send return the message already stored instead of a duplicate.
   Future<MessageModel> sendMessage(
-    String bookingId,
+    String threadKey,
     String content, {
     String? imagePath,
     String? idempotencyKey,
   }) async {
     final response = await ApiClient.instance.dio.post(
-      '/client/v1/bookings/$bookingId/messages',
+      ChatThread.messagesPath(threadKey),
       data: imagePath == null
           ? {'content': content}
           : FormData.fromMap({
@@ -67,11 +77,11 @@ class MessageService {
     return MessageModel.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
-  /// POST /api/client/v1/bookings/{booking}/messages/read — clears the
+  /// POST …/messages/read — clears the
   /// thread's unread state without re-reading it. Returns the unread total
   /// left across every thread, for the Messages badge.
-  Future<int> markThreadRead(String bookingId) async {
-    final response = await ApiClient.instance.dio.post('/client/v1/bookings/$bookingId/messages/read');
+  Future<int> markThreadRead(String threadKey) async {
+    final response = await ApiClient.instance.dio.post('${ChatThread.messagesPath(threadKey)}/read');
     final data = response.data['data'] as Map<String, dynamic>?;
     return (data?['unread_count'] as num?)?.toInt() ?? 0;
   }

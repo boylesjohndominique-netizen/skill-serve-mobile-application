@@ -2,9 +2,10 @@ import 'package:flutter/foundation.dart';
 import '../../../core/utils/api_error.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
+import 'booking_change_signal.dart';
 
 /// Drives the client's Booking History / Booking Details screens.
-class BookingController extends ChangeNotifier {
+class BookingController extends ChangeNotifier with BookingChangeSignal {
   final BookingService _bookingService = BookingService();
 
   List<BookingModel> bookings = [];
@@ -70,8 +71,8 @@ class BookingController extends ChangeNotifier {
   }
 
   /// Moves a booking to [scheduledDate]. Returns the updated booking, or
-  /// null when the API refused it — a taken window or a time outside the
-  /// provider's hours — with the reason in [errorMessage].
+  /// null when the API refused it — a time outside the provider's hours —
+  /// with the reason in [errorMessage].
   Future<BookingModel?> reschedule(String bookingId, DateTime scheduledDate) async {
     isSaving = true;
     errorMessage = null;
@@ -86,6 +87,47 @@ class BookingController extends ChangeNotifier {
     } finally {
       isSaving = false;
       notifyListeners();
+    }
+  }
+
+  /// Sends proof of a GCash payment. Returns the updated booking, or null
+  /// when the API refused it (reason in [errorMessage]).
+  Future<BookingModel?> sendPaymentProof(
+    String bookingId, {
+    required double amount,
+    String? reference,
+    required String screenshotPath,
+  }) async {
+    isSaving = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final updated = await _bookingService.sendPaymentProof(
+        bookingId,
+        amount: amount,
+        reference: reference,
+        screenshotPath: screenshotPath,
+      );
+      _replace(updated);
+      return updated;
+    } catch (e) {
+      errorMessage = apiErrorMessage(e, 'Unable to send this payment proof.');
+      return null;
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  /// The realtime push said [bookingId] changed: an open booking screen
+  /// reloads it, and the list catches up without a loading state.
+  Future<void> onRealtimeChange(String bookingId) async {
+    signalBookingChanged(bookingId);
+    try {
+      bookings = await _bookingService.getClientBookings();
+      notifyListeners();
+    } catch (_) {
+      // Keep what is on screen; the next visit reloads it.
     }
   }
 

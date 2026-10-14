@@ -6,7 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../booking/controllers/booking_controller.dart';
+import '../../messaging/views/open_provider_chat.dart';
 import '../../marketplace/controllers/favorites_controller.dart';
 import 'favorite_toggle.dart';
 import '../../../core/constants/app_colors.dart';
@@ -16,7 +16,6 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/buttons/outlined_app_button.dart';
 import '../../../core/widgets/buttons/primary_button.dart';
 import '../../../core/widgets/cards/review_card.dart';
-import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/widgets/feedback/loading_state.dart';
 import '../../../core/widgets/misc/image_carousel.dart';
 import '../../../core/widgets/misc/rating_widget.dart';
@@ -29,6 +28,7 @@ import '../../../core/widgets/feedback/error_state.dart';
 import '../../marketplace/services/catalog_updates.dart';
 import '../../marketplace/services/service_service.dart';
 import '../../../core/widgets/misc/app_avatar.dart';
+import '../../../core/widgets/misc/on_job_badge.dart';
 import '../../../core/widgets/cards/portfolio_card.dart';
 import '../../../core/widgets/misc/app_icon.dart';
 import '../../../core/constants/app_icons.dart';
@@ -52,32 +52,6 @@ class ProviderProfileScreen extends StatefulWidget {
 class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   /// Opens the conversation for this provider.
   ///
-  /// Messaging is booking-scoped, so there has to be a booking to talk on. The
-  /// newest booking with this provider carries the thread; without one there is
-  /// nothing to message about yet, and saying so beats opening an empty screen.
-  Future<void> _messageProvider(ProviderModel provider) async {
-    final bookings = context.read<BookingController>();
-    if (bookings.bookings.isEmpty) {
-      await bookings.loadClientBookings();
-    }
-    if (!mounted) return;
-
-    final withProvider = bookings.bookings
-        .where((booking) => booking.providerId == provider.id)
-        .toList()
-      ..sort((a, b) => b.bookingDate.compareTo(a.bookingDate));
-
-    if (withProvider.isEmpty) {
-      AppSnackbar.error(
-        context,
-        'Messaging opens once you book ${provider.user.fullName.isEmpty ? 'this provider' : provider.user.fullName}.',
-      );
-      return;
-    }
-
-    context.push('/chat-conversation/${withProvider.first.id}');
-  }
-
   ProviderModel? _provider;
   List<ServiceModel> _services = [];
   List<ReviewModel> _reviews = [];
@@ -247,7 +221,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     child: OutlinedAppButton(
                       label: 'Message',
                       icon: AppIcons.chat_bubble_outline_rounded,
-                      onPressed: () => _messageProvider(p),
+                      onPressed: () => openProviderChat(context, p.id),
                     ),
                   ),
                   const SizedBox(width: AppSizes.md),
@@ -590,6 +564,10 @@ class _AvailabilityPanel extends StatelessWidget {
               ),
             ],
           ),
+          if (provider.onJobNow) ...[
+            const SizedBox(height: AppSizes.xs),
+            const OnJobBadge(long: true),
+          ],
           const SizedBox(height: AppSizes.sm),
           if (schedule.isEmpty)
             Text(

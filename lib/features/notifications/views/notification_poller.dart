@@ -8,6 +8,7 @@ import '../../booking/controllers/booking_controller.dart';
 import '../../booking/controllers/provider_booking_controller.dart';
 import '../../identity/controllers/identity_controller.dart';
 import '../../messaging/controllers/chat_controller.dart';
+import '../../messaging/models/chat_thread.dart';
 import '../../provider/controllers/commission_controller.dart';
 import '../../provider/controllers/provider_services_controller.dart';
 import '../../reports/controllers/report_controller.dart';
@@ -108,13 +109,25 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       // the notification above: muting message alerts must not stop a
       // conversation the user is looking at from moving.
       _realtime.listen('App.Models.User.$userId', 'client.message.created', (data) {
-        final bookingId = data['booking_id']?.toString();
+        final threadKey = ChatThread.fromIds(bookingId: data['booking_id'], inquiryId: data['inquiry_id']);
         final message = data['message'];
-        if (bookingId != null && message is Map<String, dynamic>) {
-          _chat.onRealtimeMessage(bookingId, message);
+        if (threadKey != null && message is Map<String, dynamic>) {
+          _chat.onRealtimeMessage(threadKey, message);
         }
       });
-      _listeningUserId = userId;
+      // A booking changed — its status, a payment or a payment proof. Open
+      // booking screens reload at once; unlike notifications this is never
+      // muted, so a screen the user is looking at never goes stale.
+      _realtime.listen('App.Models.User.$userId', 'client.booking.changed', (data) {
+        final bookingId = data['booking_id']?.toString();
+        if (bookingId == null || !mounted) return;
+        if (_auth.isProvider) {
+          context.read<ProviderBookingController>().onRealtimeChange(bookingId);
+        } else {
+          context.read<BookingController>().onRealtimeChange(bookingId);
+        }
+      });
+            _listeningUserId = userId;
     }
     _notifications.startPolling();
     // The Messages badge has to be right before the tab is ever opened.

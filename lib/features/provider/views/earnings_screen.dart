@@ -61,7 +61,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
     final fees = sum(completed, (b) => b.platformFee);
     final net = sum(completed, (b) => b.providerEarnings);
     final netThisMonth = sum(thisMonth, (b) => b.providerEarnings);
-    final unpaid = sum(completed.where((b) => b.isUnpaid), (b) => b.amount);
+    // What customers still owe on finished jobs, after any downpayment.
+    final unpaid = sum(completed.where((b) => b.isOwing), (b) => b.balanceDue);
     final failed = bookings.errorMessage != null && bookings.bookings.isEmpty;
 
     return Scaffold(
@@ -276,7 +277,7 @@ class _JobRow extends StatelessWidget {
                   label: job.paymentLabel,
                   tone: job.isPaid
                       ? StatusTone.success
-                      : job.isUnpaid
+                      : job.isOwing
                           ? StatusTone.warning
                           : StatusTone.neutral,
                 ),

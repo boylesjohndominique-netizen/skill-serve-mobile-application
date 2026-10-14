@@ -13,8 +13,8 @@ class PaymentController extends ChangeNotifier {
 
   /// What is still owed across every booking going ahead or done.
   double get outstanding => payments
-      .where((p) => p.status == PaymentStatus.unpaid)
-      .fold(0, (sum, p) => sum + p.amount);
+      .where((p) => p.status == PaymentStatus.unpaid || p.status == PaymentStatus.partiallyPaid)
+      .fold(0, (sum, p) => sum + p.balanceDue);
 
   double get settled => payments
       .where((p) => p.status == PaymentStatus.paid)

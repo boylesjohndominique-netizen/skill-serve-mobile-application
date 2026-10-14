@@ -56,6 +56,48 @@ class BookingEarnings {
       );
 }
 
+/// Proof of a GCash payment the customer sent: what they paid and a
+/// screenshot, for the provider to confirm or reject.
+class PaymentProof {
+  final String id;
+  final double amount;
+  final String? reference;
+
+  /// `pending`, `confirmed` or `rejected`.
+  final String status;
+
+  /// Why the provider rejected it.
+  final String? reviewNote;
+  final DateTime? createdAt;
+
+  /// The private screenshot, loaded with the user's token.
+  final String? imageUrl;
+
+  const PaymentProof({
+    required this.id,
+    required this.amount,
+    this.reference,
+    this.status = 'pending',
+    this.reviewNote,
+    this.createdAt,
+    this.imageUrl,
+  });
+
+  bool get isPending => status == 'pending';
+  bool get isConfirmed => status == 'confirmed';
+  bool get isRejected => status == 'rejected';
+
+  factory PaymentProof.fromJson(Map<String, dynamic> json) => PaymentProof(
+        id: json['id'].toString(),
+        amount: double.tryParse('${json['amount'] ?? ''}') ?? 0,
+        reference: json['reference'] as String?,
+        status: json['status'] as String? ?? 'pending',
+        reviewNote: json['review_note'] as String?,
+        createdAt: DateTime.tryParse('${json['created_at'] ?? ''}')?.toLocal(),
+        imageUrl: json['image_url'] as String?,
+      );
+}
+
 class PaymentInstructions {
   final String method;
   final String? gcashNumber;
@@ -127,9 +169,17 @@ class BookingModel {
   final DateTime? scheduledEndDate;
   final BookingStatus status;
 
-  /// `unpaid`, `paid`, `partially_refunded` or `refunded`. Payment happens
-  /// off-platform; the provider or an administrator records it.
+  /// `unpaid`, `partially_paid`, `paid`, `partially_refunded` or `refunded`.
+  /// Payment happens off-platform; the provider confirms it (from the
+  /// customer's GCash proof, or as cash) or an administrator records it.
   final String paymentStatus;
+
+  /// Confirmed so far — downpayments add up — and what is still to pay.
+  final double amountPaid;
+  final double balanceDue;
+
+  /// The customer's GCash payment proofs, newest first.
+  final List<PaymentProof> paymentProofs;
 
   /// When the payment was recorded; null while unpaid.
   final DateTime? paidAt;
@@ -196,6 +246,9 @@ class BookingModel {
     this.paidAt,
     this.refundedAmount = 0,
     this.refundReason,
+    this.amountPaid = 0,
+    this.balanceDue = 0,
+    this.paymentProofs = const [],
     required this.amount,
     this.platformFee = 0,
     this.currency = 'PHP',
@@ -249,12 +302,29 @@ class BookingModel {
 
   bool get isUnpaid => paymentStatus == 'unpaid';
 
-  /// A finished job the provider can confirm they were paid for.
-  bool get canRecordPayment => status == BookingStatus.completed && isUnpaid;
+  /// Something is still to pay: nothing yet, or only a downpayment.
+  bool get isOwing => paymentStatus == 'unpaid' || paymentStatus == 'partially_paid';
 
-  /// "Paid", "Unpaid", "Refunded" or "Partly refunded".
+  /// A proof the provider has not checked yet.
+  PaymentProof? get pendingProof => paymentProofs.where((p) => p.isPending).firstOrNull;
+
+  /// A GCash booking the customer can send payment proof for: accepted, and
+  /// with something still to pay. One proof waits at a time.
+  bool get canSendPaymentProof =>
+      paymentMethodCode == 'gcash' &&
+      isOwing &&
+      pendingProof == null &&
+      const [BookingStatus.confirmed, BookingStatus.inProgress, BookingStatus.completed, BookingStatus.disputed]
+          .contains(status);
+
+  /// A finished job the provider can confirm they were paid for (in cash,
+  /// or the rest after a downpayment).
+  bool get canRecordPayment => status == BookingStatus.completed && isOwing;
+
+  /// "Paid", "Partly paid", "Unpaid", "Refunded" or "Partly refunded".
   String get paymentLabel => switch (paymentStatus) {
         'paid' => 'Paid',
+        'partially_paid' => 'Partly paid',
         'refunded' => 'Refunded',
         'partially_refunded' => 'Partly refunded',
         _ => 'Unpaid',
@@ -309,6 +379,16 @@ class BookingModel {
       paidAt: _date(json['paid_at']),
       refundedAmount: _money(json['refunded_amount']) ?? 0,
       refundReason: json['refund_reason'] as String?,
+      amountPaid: _money(json['amount_paid']) ?? 0,
+      // Older payloads have no balance: everything is owed until paid.
+      balanceDue: _money(json['balance_due']) ??
+          ((json['payment_status'] ?? 'unpaid') == 'unpaid'
+              ? (_money(json['total_price']) ?? 0)
+              : 0),
+      paymentProofs: [
+        for (final item in (json['payment_proofs'] as List? ?? const []))
+          if (item is Map) PaymentProof.fromJson(Map<String, dynamic>.from(item)),
+      ],
       amount: _money(json['total_price']) ?? _money(json['service_price']) ?? 0,
       platformFee: _money(json['platform_fee']) ?? 0,
       currency: json['currency'] as String? ?? 'PHP',

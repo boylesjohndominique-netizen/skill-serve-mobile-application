@@ -86,7 +86,7 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
-#### HTTP 409: Idempotency or provider schedule conflict
+#### HTTP 409: Idempotency key reused for a different request
 
 Response schema: `see openapi.json`
 
@@ -170,7 +170,7 @@ Response schema: `see openapi.json`
 
 ## `PATCH /api/client/v1/bookings/{booking}/reschedule`
 
-Re-runs the provider hours and overlap checks for the new window. A confirmed booking returns to pending for the provider to accept again, and the provider is notified. Without scheduled_end_date the booking keeps its current length.
+Re-runs the provider hours check for the new window (other bookings at that time are allowed: providers may hold several jobs at once). A confirmed booking returns to pending for the provider to accept again, and the provider is notified. Without scheduled_end_date the booking keeps its current length.
 
 **Authentication:** Bearer token
 
@@ -202,10 +202,6 @@ Response schema: `see openapi.json`
 Response schema: `see openapi.json`
 
 #### HTTP 404: Booking not found
-
-Response schema: `see openapi.json`
-
-#### HTTP 409: The new time overlaps another booking for this provider
 
 Response schema: `see openapi.json`
 

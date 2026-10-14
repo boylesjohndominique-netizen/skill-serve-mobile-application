@@ -24,7 +24,8 @@ import 'schedule_picker.dart';
 ///
 /// Offers only slots inside the provider's published hours that fit the
 /// booking's current length — the API keeps that length and re-checks the
-/// hours and overlaps. Pops `true` once the booking has moved.
+/// hours (other jobs at that time are allowed). Pops `true` once the booking
+/// has moved.
 class RescheduleBookingScreen extends StatefulWidget {
   final String bookingId;
   const RescheduleBookingScreen({super.key, required this.bookingId});
