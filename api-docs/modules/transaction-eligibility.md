@@ -6,7 +6,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 Returns the same decision the protected endpoints enforce, so the app can show the right prompt rather than a bare 403.
 
-`reason` is null when eligible, otherwise one of `identity_unverified`, `identity_pending`, `identity_rejected`, `outstanding_commission` or `no_provider_profile`. Providers additionally receive their outstanding commission total, `block_threshold` (the unpaid total at which the commission block starts; `0.00` means any debt) and `block_deadline` (when the oldest unpaid commission starts blocking by age, or null when that trigger is off or nothing is owed).
+`reason` is null when eligible, otherwise one of `identity_unverified`, `identity_pending`, `identity_rejected`, `refund_overdue` (a cancelled booking's payment not returned to the customer in time, reported as not received, or found not returned), `outstanding_commission` or `no_provider_profile`. Providers additionally receive `refunds_overdue` (how many such refunds), their outstanding commission total, `block_threshold` (the unpaid total at which the commission block starts; `0.00` means any debt) and `block_deadline` (when the oldest unpaid commission starts blocking by age, or null when that trigger is off or nothing is owed).
 
 `identity_required` reflects System Settings → Identity: accounts created before the grandfathering date are not required to verify and report `false`.
 

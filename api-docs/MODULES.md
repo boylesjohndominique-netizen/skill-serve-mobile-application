@@ -6,6 +6,7 @@
 - [Authentication](modules/authentication.md)
 - [Booking Disputes](modules/booking-disputes.md)
 - [Booking Messages](modules/booking-messages.md)
+- [Booking Refunds](modules/booking-refunds.md)
 - [Bookings](modules/bookings.md)
 - [Client Authentication](modules/client-authentication.md)
 - [Client Bookings](modules/client-bookings.md)

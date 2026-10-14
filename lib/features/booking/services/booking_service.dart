@@ -181,6 +181,28 @@ class BookingService {
   Future<BookingModel> rejectPaymentProof(String id, String proofId, {required String reason}) =>
       _transition('$_providerBase/$id/payment-proofs/$proofId/reject', reason: reason);
 
+  /// POST …/provider/bookings/{booking}/refund — the provider returned the
+  /// customer's payment after a cancellation; the screenshot is required proof.
+  Future<BookingModel> markRefundSent(String id, {String? reference, required String screenshotPath}) async {
+    final response = await ApiClient.instance.dio.post(
+      '$_providerBase/$id/refund',
+      data: FormData.fromMap({
+        if (reference != null && reference.trim().isNotEmpty) 'reference': reference.trim(),
+        'image': await imageMultipart(screenshotPath),
+      }),
+    );
+    return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
+  /// PATCH …/bookings/{booking}/refund/confirm — the customer got it back.
+  Future<BookingModel> confirmRefund(String id) => _transition('$_clientBase/$id/refund/confirm');
+
+  /// PATCH …/bookings/{booking}/refund/not-received — it did not arrive.
+  Future<BookingModel> reportRefundNotReceived(String id, {required String note}) async {
+    final response = await ApiClient.instance.dio.patch('$_clientBase/$id/refund/not-received', data: {'note': note.trim()});
+    return BookingModel.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
+
   // ── Shared plumbing ──
 
   Future<List<BookingModel>> _list(String path, BookingStatus? status) async {

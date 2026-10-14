@@ -37,7 +37,6 @@ import '../features/booking/views/reschedule_booking_screen.dart';
 import '../features/profile/views/edit_profile_screen.dart';
 import '../features/profile/views/change_password_screen.dart';
 import '../features/profile/views/account_data_screen.dart';
-import '../features/profile/views/account_deletion_screen.dart';
 
 // Messaging
 import '../features/messaging/views/chat_conversation_screen.dart';
@@ -278,9 +277,6 @@ final List<RouteBase> appRoutes = [
   GoRoute(
       path: '/account-data',
       builder: (context, state) => const AccountDataScreen()),
-  GoRoute(
-      path: '/account-deletion',
-      builder: (context, state) => const AccountDeletionScreen()),
 
   // Provider shell (bottom-nav: Dashboard / Bookings / Portfolio / Messages / Profile)
   GoRoute(
@@ -399,7 +395,6 @@ const _sharedSignedIn = <String>{
   'application-preferences',
   'security-activity',
   'account-data',
-  'account-deletion',
 };
 
 /// The customer and provider experiences are separate apps within the app:

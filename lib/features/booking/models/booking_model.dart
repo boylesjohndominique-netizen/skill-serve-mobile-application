@@ -98,6 +98,64 @@ class PaymentProof {
       );
 }
 
+/// What the provider owes back on a cancelled booking that had been (partly)
+/// paid, and where returning it stands.
+class BookingRefund {
+  final double amount;
+
+  /// `due`, `sent`, `confirmed`, `not_received` or `resolved`.
+  final String status;
+
+  /// Still due past the deadline: the provider is blocked from new work.
+  final bool isOverdue;
+  final DateTime? dueBy;
+  final String? reference;
+  final DateTime? sentAt;
+  final String? customerNote;
+
+  /// An administrator's decision: `returned` or `not_returned`.
+  final String? resolution;
+  final String? resolutionNote;
+
+  /// The provider's proof screenshot, loaded with the user's token.
+  final String? proofUrl;
+
+  const BookingRefund({
+    required this.amount,
+    this.status = 'due',
+    this.isOverdue = false,
+    this.dueBy,
+    this.reference,
+    this.sentAt,
+    this.customerNote,
+    this.resolution,
+    this.resolutionNote,
+    this.proofUrl,
+  });
+
+  bool get isDue => status == 'due';
+  bool get isSent => status == 'sent';
+  bool get isConfirmed => status == 'confirmed';
+  bool get isNotReceived => status == 'not_received';
+  bool get isResolved => status == 'resolved';
+
+  /// Settled one way or the other.
+  bool get isClosed => isConfirmed || (isResolved && resolution == 'returned');
+
+  factory BookingRefund.fromJson(Map<String, dynamic> json) => BookingRefund(
+        amount: double.tryParse('${json['amount'] ?? ''}') ?? 0,
+        status: json['status'] as String? ?? 'due',
+        isOverdue: json['is_overdue'] == true,
+        dueBy: DateTime.tryParse('${json['due_by'] ?? ''}')?.toLocal(),
+        reference: json['reference'] as String?,
+        sentAt: DateTime.tryParse('${json['sent_at'] ?? ''}')?.toLocal(),
+        customerNote: json['customer_note'] as String?,
+        resolution: json['resolution'] as String?,
+        resolutionNote: json['resolution_note'] as String?,
+        proofUrl: json['proof_url'] as String?,
+      );
+}
+
 class PaymentInstructions {
   final String method;
   final String? gcashNumber;
@@ -181,6 +239,9 @@ class BookingModel {
   /// The customer's GCash payment proofs, newest first.
   final List<PaymentProof> paymentProofs;
 
+  /// What the provider owes back after a cancellation, when anything was paid.
+  final BookingRefund? refund;
+
   /// When the payment was recorded; null while unpaid.
   final DateTime? paidAt;
 
@@ -249,6 +310,7 @@ class BookingModel {
     this.amountPaid = 0,
     this.balanceDue = 0,
     this.paymentProofs = const [],
+    this.refund,
     required this.amount,
     this.platformFee = 0,
     this.currency = 'PHP',
@@ -389,6 +451,7 @@ class BookingModel {
         for (final item in (json['payment_proofs'] as List? ?? const []))
           if (item is Map) PaymentProof.fromJson(Map<String, dynamic>.from(item)),
       ],
+      refund: json['refund'] is Map ? BookingRefund.fromJson(Map<String, dynamic>.from(json['refund'] as Map)) : null,
       amount: _money(json['total_price']) ?? _money(json['service_price']) ?? 0,
       platformFee: _money(json['platform_fee']) ?? 0,
       currency: json['currency'] as String? ?? 'PHP',

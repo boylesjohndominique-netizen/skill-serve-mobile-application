@@ -204,7 +204,6 @@ void main() {
         '/support/tickets',
         '/support/tickets/3',
         '/edit-profile',
-        '/account-deletion',
         '/help-center',
       ]) {
         expect(asClient(path), isNull, reason: 'customer $path');

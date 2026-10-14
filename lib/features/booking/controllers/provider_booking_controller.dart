@@ -108,6 +108,13 @@ class ProviderBookingController extends ChangeNotifier with BookingChangeSignal 
         'Unable to reject this payment proof.',
       );
 
+  /// The provider returned the customer's payment, with the screenshot.
+  Future<bool> markRefundSent(String id, {String? reference, required String screenshotPath}) => _transition(
+        id,
+        () => _bookingService.markRefundSent(id, reference: reference, screenshotPath: screenshotPath),
+        'Unable to send the refund proof.',
+      );
+
   /// The realtime push said [bookingId] changed: an open booking screen
   /// reloads it, and the job lists catch up without a loading state.
   Future<void> onRealtimeChange(String bookingId) async {

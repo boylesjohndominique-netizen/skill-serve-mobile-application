@@ -115,6 +115,13 @@ class _EligibilityBannerState extends State<EligibilityBanner> {
           icon: AppIcons.info_outline_rounded,
           tone: NoticeTone.error,
         ),
+      'refund_overdue' => const _EligibilityPrompt(
+          title: 'Return a customer\'s payment',
+          message: 'A cancelled booking\'s payment has not been returned in time. Return it and upload the proof to take on new work.',
+          route: '/booking-requests',
+          icon: AppIcons.currency_exchange_rounded,
+          tone: NoticeTone.error,
+        ),
       'outstanding_commission' => _EligibilityPrompt(
           title: 'Commission outstanding',
           message: 'You owe ₱${eligibility.outstandingTotal}. Settle it to take on new work.',

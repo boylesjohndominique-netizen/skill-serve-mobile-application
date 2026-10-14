@@ -119,6 +119,31 @@ class BookingController extends ChangeNotifier with BookingChangeSignal {
     }
   }
 
+  /// The returned payment reached the customer.
+  Future<BookingModel?> confirmRefund(String bookingId) =>
+      _save(() => _bookingService.confirmRefund(bookingId), 'Unable to confirm the refund.');
+
+  /// The returned payment did not arrive; SkillServe's team steps in.
+  Future<BookingModel?> reportRefundNotReceived(String bookingId, {required String note}) =>
+      _save(() => _bookingService.reportRefundNotReceived(bookingId, note: note), 'Unable to send this report.');
+
+  Future<BookingModel?> _save(Future<BookingModel> Function() action, String fallback) async {
+    isSaving = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final updated = await action();
+      _replace(updated);
+      return updated;
+    } catch (e) {
+      errorMessage = apiErrorMessage(e, fallback);
+      return null;
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
   /// The realtime push said [bookingId] changed: an open booking screen
   /// reloads it, and the list catches up without a loading state.
   Future<void> onRealtimeChange(String bookingId) async {

@@ -184,10 +184,9 @@ class _ProviderSettingsScreenState extends State<ProviderSettingsScreen> {
             SettingsGroup(
               icon: AppIcons.description_outlined,
               title: 'Your data',
-              summary: 'View or delete your account data',
+              summary: 'View your account data',
               children: [
                 SettingsTile(icon: AppIcons.description_outlined, label: 'View account data', onTap: () => context.push('/account-data')),
-                SettingsTile(icon: AppIcons.delete_outline_rounded, label: 'Delete account', danger: true, onTap: () => context.push('/account-deletion')),
               ],
             ),
             const SizedBox(height: AppSizes.md),

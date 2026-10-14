@@ -60,7 +60,8 @@ class TransactionEligibility {
   final bool eligible;
 
   /// `identity_unverified`, `identity_pending`, `identity_rejected`,
-  /// `outstanding_commission`, `no_provider_profile`, or null when eligible.
+  /// `refund_overdue`, `outstanding_commission`, `no_provider_profile`, or
+  /// null when eligible.
   final String? reason;
 
   final String identityStatus;
@@ -73,6 +74,10 @@ class TransactionEligibility {
   final String outstandingTotal;
   final int outstandingCount;
 
+  /// Providers only: cancelled bookings whose payment they have not returned
+  /// to the customer in time (or that the customer reported not received).
+  final int refundsOverdue;
+
   const TransactionEligibility({
     required this.eligible,
     this.reason,
@@ -80,6 +85,7 @@ class TransactionEligibility {
     this.identityRequired = false,
     this.outstandingTotal = '0.00',
     this.outstandingCount = 0,
+    this.refundsOverdue = 0,
   });
 
   /// Nothing is required of a brand-new install until the API says otherwise;
@@ -89,6 +95,7 @@ class TransactionEligibility {
 
   bool get blockedByIdentity => !eligible && (reason?.startsWith('identity_') ?? false);
   bool get blockedByCommission => reason == 'outstanding_commission';
+  bool get blockedByRefund => reason == 'refund_overdue';
 
   factory TransactionEligibility.fromJson(Map<String, dynamic> json) => TransactionEligibility(
         eligible: json['eligible'] == true,
@@ -97,6 +104,7 @@ class TransactionEligibility {
         identityRequired: json['identity_required'] == true,
         outstandingTotal: json['outstanding_total']?.toString() ?? '0.00',
         outstandingCount: (json['outstanding_count'] as num?)?.toInt() ?? 0,
+        refundsOverdue: (json['refunds_overdue'] as num?)?.toInt() ?? 0,
       );
 }
 

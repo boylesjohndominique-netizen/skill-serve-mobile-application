@@ -295,7 +295,7 @@ Response schema: `#/components/schemas/ApiEnvelope`
 
 ## `DELETE /api/client/v1/auth/me`
 
-Confirmed with the account password. Refused while the account still has open bookings, so the other party is never left mid-job. The account is soft-deleted and every device is signed out; an administrator can restore it from Data Management. There is no separate "pending deletion" state.
+Customers and providers can no longer delete their own account: an account that owes another user money (a refund, a booking) must stay visible to SkillServe. Always answers **410** with a message telling the user to contact support; kept so older app builds show that message instead of an error.
 
 **Authentication:** Bearer token
 
@@ -305,26 +305,15 @@ None.
 
 ### Request body and validation
 
-| Field | Required | Validation / type |
-|---|---:|---|
-| `password` | yes | string |
-| `reason` | no | string, maxLength=1000 |
+No JSON request body.
 
 ### Responses
 
-#### HTTP 200: Account deleted and sessions revoked
+#### HTTP 410: Account deletion is not available
 
 Response schema: `see openapi.json`
 
 #### HTTP 401: Unauthenticated
-
-Response schema: `see openapi.json`
-
-#### HTTP 403: Active mobile account required
-
-Response schema: `see openapi.json`
-
-#### HTTP 422: Wrong password, or open bookings remain
 
 Response schema: `see openapi.json`
 

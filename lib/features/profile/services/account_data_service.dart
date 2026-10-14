@@ -32,19 +32,4 @@ class AccountDataService {
     final data = await exportAccountData();
     return const JsonEncoder.withIndent('  ').convert(data);
   }
-
-  /// DELETE /api/client/v1/auth/me — closes the account for good.
-  ///
-  /// The API confirms the password and refuses while any booking is still open,
-  /// so the other party is never left mid-job. The account is soft-deleted and
-  /// every device is signed out; an administrator can restore it.
-  Future<void> deleteAccount({required String password, String? reason}) async {
-    await ApiClient.instance.dio.delete(
-      '/client/v1/auth/me',
-      data: {
-        'password': password,
-        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
-      },
-    );
-  }
 }

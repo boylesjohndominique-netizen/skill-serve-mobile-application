@@ -28,6 +28,7 @@ import '../../../core/constants/app_icons.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/widgets/feedback/app_notice.dart';
 import 'payment_proof_section.dart';
+import 'refund_section.dart';
 import '../controllers/booking_change_signal.dart';
 
 class BookingDetailsScreen extends StatefulWidget {
@@ -203,6 +204,64 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       () => controller.rejectPaymentProof(booking.id, proof.id, reason: reason),
       'Payment proof rejected. The customer has been told why.',
     );
+  }
+
+  Future<void> _markRefundSent(BookingModel booking) async {
+    final draft = await showRefundProofSheet(context, amount: booking.refund!.amount);
+    if (draft == null || !mounted) return;
+    final controller = context.read<ProviderBookingController>();
+    await _act(
+      () => controller.markRefundSent(booking.id, reference: draft.reference, screenshotPath: draft.screenshotPath),
+      'Proof sent. The customer will confirm it arrived.',
+    );
+  }
+
+  Future<void> _confirmRefund(BookingModel booking) async {
+    final ok = await AppDialog.confirm(
+      context,
+      title: 'Received ${Formatters.peso(booking.refund!.amount)}?',
+      message: 'Only confirm once the money shows in your GCash. This closes the refund.',
+      confirmLabel: 'I received it',
+    );
+    if (!ok || !mounted) return;
+    await _customerRefundAction(
+      () => context.read<BookingController>().confirmRefund(booking.id),
+      'Thank you — the refund is confirmed.',
+    );
+  }
+
+  Future<void> _reportRefundNotReceived(BookingModel booking) async {
+    final note = await AppDialog.prompt(
+      context,
+      title: 'Refund not received?',
+      message: 'Tell us what you checked. SkillServe\'s team will review it, and the provider cannot take new bookings until it is settled.',
+      fieldLabel: 'What happened',
+      hint: 'e.g. Nothing arrived in my GCash, and the reference does not exist',
+      confirmLabel: 'Report',
+      danger: true,
+      minLength: 10,
+      maxLength: 1000,
+    );
+    if (note == null || !mounted) return;
+    await _customerRefundAction(
+      () => context.read<BookingController>().reportRefundNotReceived(booking.id, note: note),
+      'Reported. Our team will look into it.',
+    );
+  }
+
+  Future<void> _customerRefundAction(Future<BookingModel?> Function() action, String success) async {
+    setState(() => _acting = true);
+    final updated = await action();
+    if (!mounted) return;
+    setState(() {
+      _acting = false;
+      if (updated != null) _booking = updated;
+    });
+    if (updated != null) {
+      AppSnackbar.success(context, success);
+    } else {
+      AppSnackbar.error(context, context.read<BookingController>().errorMessage ?? 'That did not work. Please try again.');
+    }
   }
 
   /// Where back leads when this screen opened with nothing beneath it — after
@@ -421,6 +480,22 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                   )
                       .animate()
                       .fadeIn(delay: 300.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                ],
+                // A cancelled booking's payment going back to the customer.
+                if (booking.refund != null) ...[
+                  const SizedBox(height: AppSizes.lg),
+                  RefundSection(
+                    refund: booking.refund!,
+                    isProviderView: isProviderView,
+                    isDark: isDark,
+                    busy: _acting,
+                    onMarkSent: () => _markRefundSent(booking),
+                    onConfirm: () => _confirmRefund(booking),
+                    onNotReceived: () => _reportRefundNotReceived(booking),
+                  )
+                      .animate()
+                      .fadeIn(delay: 310.ms, duration: 350.ms)
                       .slideY(begin: 0.06, end: 0),
                 ],
                 // GCash payments: the customer sends proof (a downpayment or the
