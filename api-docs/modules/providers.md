@@ -138,7 +138,9 @@ Soft-deletes the provider's account: they leave the marketplace and every mobile
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | yes | string, minLength=3, maxLength=1000 |
 
 ### Responses
 
@@ -395,7 +397,9 @@ Returns the provider to the marketplace and reactivates the account suspended wi
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | no | string, maxLength=1000 |
 
 ### Responses
 
@@ -1193,7 +1197,9 @@ PATCH /api/providers/{provider}/verification/remove — remove verified status.
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | yes | string, minLength=3, maxLength=1000 |
 
 ### Responses
 

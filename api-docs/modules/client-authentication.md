@@ -198,6 +198,7 @@ None.
 | `experience_years` | no | integer, minimum=0 |
 | `bio` | no | string, maxLength=5000 |
 | `birthday` | yes | string, format=date |
+| `id_number` | no | string |
 | `address_details` | no | object |
 
 ### Responses
@@ -525,6 +526,7 @@ None.
 | `password` | no | string, format=password, minLength=8 |
 | `password_confirmation` | no | string, format=password |
 | `birthday` | yes | string, format=date |
+| `id_number` | no | string |
 | `address_details` | no | object |
 
 ### Responses
@@ -569,6 +571,7 @@ None.
 | `experience_years` | no | integer, minimum=0 |
 | `bio` | no | string, maxLength=5000 |
 | `birthday` | yes | string, format=date |
+| `id_number` | no | string |
 | `address_details` | no | object |
 
 ### Responses

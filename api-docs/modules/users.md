@@ -102,7 +102,9 @@ DELETE /api/users/{user} — soft-delete a user account.
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | yes | string, minLength=3, maxLength=1000 |
 
 ### Responses
 
@@ -501,7 +503,9 @@ PATCH /api/users/{user}/activate — restore a suspended user.
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | no | string, maxLength=1000 |
 
 ### Responses
 

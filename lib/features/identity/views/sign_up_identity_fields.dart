@@ -68,10 +68,14 @@ class SignUpIdentityForm {
         address: address.hasBarangay ? address.formatted : null,
       );
 
-  /// `birthday` and `address_details` for the sign-up request.
+  /// `birthday`, `address_details` and the card number for the sign-up
+  /// request. The server only checks the number — one National ID may back
+  /// one provider and one customer account — and refuses the sign-up on
+  /// `id_number` when an account of the same type already uses it.
   Map<String, dynamic> get signUpDetails => {
         if (birthdate != null) 'birthday': _iso(birthdate!),
         if (address.hasBarangay) 'address_details': address.toDoorJson(),
+        if (_cardDigits.length == 16) 'id_number': _cardDigits,
       };
 
   static String _iso(DateTime date) =>

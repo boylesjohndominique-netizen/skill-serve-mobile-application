@@ -204,6 +204,7 @@ Assign a badge to a provider
 | Field | Required | Validation / type |
 |---|---:|---|
 | `badge_id` | yes | integer, minimum=1 |
+| `reason` | no | string, maxLength=1000 |
 
 ### Responses
 
@@ -238,7 +239,9 @@ Remove a badge from a provider
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | yes | string, minLength=3, maxLength=1000 |
 
 ### Responses
 
@@ -275,6 +278,7 @@ Feature or unfeature a provider
 | Field | Required | Validation / type |
 |---|---:|---|
 | `is_featured` | yes | boolean |
+| `reason` | no | string, minLength=3, maxLength=1000 |
 
 ### Responses
 

@@ -17,6 +17,10 @@ Nothing open.
 
 ## High
 
+### F14 · One National ID = one provider + one customer account (2026-10-15) — see the web repo's PENDING_FIXES F14
+- [x] Sign-up sends the scanned card number (`id_number`); a second account of the same type on one
+  National ID is refused before it is created, with the server's message. Test `national_id_sign_up_test`.
+
 ### F13 · Instant sign-out; customers told about their provider (2026-10-15) — see the web repo's PENDING_FIXES F13
 - [x] **Signed out at once** when an admin suspends, bans or deletes the account
   (`client.account.restricted` → login screen shows why, including *Your account was deleted*).

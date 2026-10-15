@@ -132,7 +132,9 @@ Soft-deletes the service.
 
 ### Request body and validation
 
-No JSON request body.
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | yes | string, minLength=3, maxLength=1000 |
 
 ### Responses
 
@@ -629,6 +631,7 @@ PATCH /api/services/{service}/feature — feature/unfeature a service.
 | Field | Required | Validation / type |
 |---|---:|---|
 | `is_featured` | yes | boolean |
+| `reason` | no | string, minLength=3, maxLength=1000 |
 
 Example request body:
 
@@ -709,12 +712,14 @@ PATCH /api/services/{service}/hide — hide/unhide a service.
 | Field | Required | Validation / type |
 |---|---:|---|
 | `is_hidden` | yes | boolean |
+| `reason` | no | string, minLength=3, maxLength=1000 |
 
 Example request body:
 
 ```json
 {
-    "is_hidden": true
+    "is_hidden": true,
+    "reason": "Breaks the community guidelines."
 }
 ```
 

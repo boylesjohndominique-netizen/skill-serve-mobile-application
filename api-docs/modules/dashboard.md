@@ -4,7 +4,7 @@ All examples and validation details in this file come from the Laravel backend O
 
 ## `GET /api/dashboard`
 
-commission_summary is included only when the viewer holds view commissions or manage commissions. Amounts are Philippine pesos; collected_rate is settled commission as a percentage of the settled bookings' value.
+user_summary counts mobile accounts: suspended_users includes a provider whose profile is suspended, active_users excludes them, and deleted_users counts soft-deleted accounts still restorable in Data Management. commission_summary is included only when the viewer holds view commissions or manage commissions. Amounts are Philippine pesos; collected_rate is settled commission as a percentage of the settled bookings' value.
 
 **Authentication:** Bearer token
 
@@ -29,7 +29,8 @@ No JSON request body.
             "total_clients": 0,
             "total_providers": 0,
             "active_users": 0,
-            "suspended_users": 0
+            "suspended_users": 0,
+            "deleted_users": 0
         },
         "service_summary": {
             "total_services": 0,

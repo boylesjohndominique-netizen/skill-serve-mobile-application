@@ -135,7 +135,7 @@ PATCH /api/bookings/{booking}/cancel — cancel a booking.
 
 | Field | Required | Validation / type |
 |---|---:|---|
-| `reason` | no | string, maxLength=1000 |
+| `reason` | yes | string, minLength=3, maxLength=1000 |
 
 Example request body:
 

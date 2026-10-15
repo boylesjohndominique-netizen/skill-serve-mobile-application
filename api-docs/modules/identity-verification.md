@@ -52,7 +52,7 @@ Response schema: `see openapi.json`
 
 Allowed while unverified or rejected; a pending or verified account is refused with 422. The card number is normalised to 16 digits, so grouped input is accepted.
 
-A National ID can back only one active SkillServe account: submitting one already linked to another live account returns 422 without revealing which account holds it. An ID becomes available again only once the original account is permanently deleted.
+One National ID can verify one provider account and one customer account. Submitting an ID that another account of the same type already holds (pending or verified) returns 422 — `A provider account already uses this National ID.` (or `customer`) — without revealing which account holds it. A rejected submission does not hold the ID. An ID becomes available again once the original account is permanently deleted.
 
 Files are private (JPG, PNG or PDF, up to 10 MB each) and are never served directly; an administrator opens them through an authorised download. A photo of the front or back must be at least 800 × 500 pixels (either orientation), or that file gets a 422 asking for a retake.
 
@@ -80,7 +80,7 @@ Response schema: `see openapi.json`
 
 Response schema: `see openapi.json`
 
-#### HTTP 422: Validation failed, the ID is already linked to an account, or the account is already pending or verified
+#### HTTP 422: Validation failed, another account of the same type (provider or customer) already uses the ID, or the account is already pending or verified
 
 Response schema: `see openapi.json`
 
