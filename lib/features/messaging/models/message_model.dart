@@ -101,6 +101,13 @@ class ConversationModel {
   /// (the customer's view); null on the provider's side.
   final String? providerProfileId;
 
+  /// `active`, `suspended`, `banned` or `deleted` — whether an administrator
+  /// acted on the provider (customer's view only; `active` otherwise).
+  final String providerAccountStatus;
+
+  /// What to tell the customer when [providerAccountStatus] is not `active`.
+  final String? providerAccountNotice;
+
   final String lastMessage;
 
   /// Whether the signed-in account sent [lastMessage], so the list can
@@ -119,6 +126,8 @@ class ConversationModel {
     this.participantName = '',
     this.participantAvatar,
     this.providerProfileId,
+    this.providerAccountStatus = 'active',
+    this.providerAccountNotice,
     this.lastMessage = '',
     this.lastMessageIsMine = false,
     this.lastMessageAt,
@@ -126,6 +135,9 @@ class ConversationModel {
   });
 
   bool get isInquiry => ChatThread.isInquiry(threadKey);
+
+  /// The provider was suspended, banned or deleted by an administrator.
+  bool get isProviderUnavailable => providerAccountStatus != 'active';
 
   /// What the conversation is about, under the name: the booked service, or
   /// that it comes before any booking.
@@ -160,6 +172,8 @@ class ConversationModel {
       participantName: counterpart?['name'] as String? ?? '',
       participantAvatar: counterpart?['profile_picture'] as String?,
       providerProfileId: counterpart?['provider_id']?.toString(),
+      providerAccountStatus: counterpart?['account_status'] as String? ?? 'active',
+      providerAccountNotice: counterpart?['account_notice'] as String?,
       lastMessage: last?['content'] as String? ?? '',
       lastMessageIsMine: last?['is_mine'] == true,
       lastMessageAt: MessageModel._date(json['last_message_at']),
@@ -183,6 +197,8 @@ class ConversationModel {
         participantName: participantName,
         participantAvatar: participantAvatar,
         providerProfileId: providerProfileId,
+        providerAccountStatus: providerAccountStatus,
+        providerAccountNotice: providerAccountNotice,
         lastMessage: lastMessage ?? this.lastMessage,
         lastMessageIsMine: lastMessageIsMine ?? this.lastMessageIsMine,
         lastMessageAt: lastMessageAt ?? this.lastMessageAt,

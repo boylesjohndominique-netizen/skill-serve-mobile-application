@@ -2,9 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 /// Why the server refused an account, from `meta.account` on a 403
-/// (login, token refresh, or any request once an account is restricted).
+/// (login, token refresh, or any request once an account is restricted), or
+/// from the live `client.account.restricted` push that signs an open app out.
 class AccountRestriction {
-  /// `suspended` or `banned`.
+  /// `suspended`, `banned`, or `deleted` (live push only).
   final String status;
   final String? reason;
   final DateTime? since;
@@ -20,6 +21,7 @@ class AccountRestriction {
   String get title => switch (status) {
         'suspended' => 'Your account is suspended',
         'banned' => isPermanent ? 'Your account is banned' : 'Your account is temporarily banned',
+        'deleted' => 'Your account was deleted',
         _ => 'Your account is restricted',
       };
 
@@ -28,6 +30,7 @@ class AccountRestriction {
         'banned' when until != null =>
           'You can sign in again after ${DateFormat('MMM d, yyyy h:mm a').format(until!)}.',
         'banned' => 'This ban is permanent.',
+        'deleted' => 'An administrator deleted your account. Contact support if you think this is a mistake.',
         _ => 'You cannot sign in right now.',
       };
 

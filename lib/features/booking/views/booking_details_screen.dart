@@ -350,6 +350,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     .slideY(begin: 0.08, end: 0),
                 const SizedBox(height: AppSizes.xl),
 
+                // The provider was suspended, banned or deleted by an
+                // administrator: say so first, with what the customer can do.
+                if (!isProviderView && booking.isProviderUnavailable) ...[
+                  _Banner(
+                    icon: AppIcons.block_rounded,
+                    title: booking.providerUnavailableTitle,
+                    message: booking.providerAccountNotice ?? 'This provider can no longer work on bookings.',
+                  )
+                      .animate()
+                      .fadeIn(delay: 120.ms, duration: 350.ms)
+                      .slideY(begin: 0.06, end: 0),
+                  const SizedBox(height: AppSizes.lg),
+                ],
+
                 // Disputed banner
                 if (booking.status == BookingStatus.disputed) ...[
                   const _Banner(

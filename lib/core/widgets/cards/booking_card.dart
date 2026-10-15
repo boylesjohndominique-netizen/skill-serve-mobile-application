@@ -74,6 +74,24 @@ class _BookingCardState extends State<BookingCard> {
                 widget.isProviderView ? 'Client: ${widget.booking.clientName}' : 'Provider: ${widget.booking.providerName}',
                 style: AppTextStyles.bodyMedium,
               ),
+              // The customer's provider was suspended, banned or deleted.
+              if (!widget.isProviderView && widget.booking.isProviderUnavailable) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    AppIcon(AppIcons.block_rounded, size: 14, color: context.errorColor),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        widget.booking.providerUnavailableLabel,
+                        style: AppTextStyles.bodySmall.copyWith(color: context.errorColor),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               Divider(height: AppSizes.lg, color: lineColor),
               Row(
                 children: [

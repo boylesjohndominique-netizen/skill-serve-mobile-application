@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/models/account_restriction.dart';
+import '../../../core/services/api_client.dart';
 import '../../../core/widgets/feedback/app_snackbar.dart';
 import '../../../core/services/background_notifications.dart';
 import '../../../core/services/realtime_client.dart';
@@ -100,6 +102,14 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       _realtime.listen('App.Models.User.$userId', 'client.notification.created', (_) {
         _notifications.onRealtimeNotification();
       });
+      // An administrator suspended, banned or deleted the account: sign out
+      // now and let the login screen say why, rather than waiting for the
+      // next request to be refused.
+      _realtime.listen('App.Models.User.$userId', 'client.account.restricted', (data) {
+        final account = data['account'];
+        if (account is! Map) return;
+        ApiClient.instance.endSession(AccountRestriction.fromJson(Map<String, dynamic>.from(account)));
+      });
       // Archived, restored or deleted on another of the user's devices.
       _realtime.listen('App.Models.User.$userId', 'client.notifications.changed', (_) {
         _notifications.onRemoteChange();
@@ -189,6 +199,12 @@ class _NotificationPollerState extends State<NotificationPoller> with WidgetsBin
       } else {
         context.read<BookingController>().loadClientBookings();
       }
+    }
+
+    // A provider the customer booked was suspended, banned, deleted or
+    // reinstated: their chats carry a notice too, so re-read the inbox.
+    if (rawType == 'booking_provider_status') {
+      _chat.loadConversations();
     }
 
     // Support replied to or resolved a ticket: an open thread shows the

@@ -160,6 +160,11 @@ class ApiClient {
     return _dio.fetch<dynamic>(options);
   }
 
+  /// Ends the session because the server said so outside a request — the
+  /// live push sent when an administrator suspends, bans or deletes the
+  /// account — so the login screen shows why.
+  Future<void> endSession(AccountRestriction restriction) => _endSession(restriction);
+
   Future<void> _endSession([AccountRestriction? restriction]) async {
     await TokenStorage.clear();
     onSessionRevoked?.call(restriction);

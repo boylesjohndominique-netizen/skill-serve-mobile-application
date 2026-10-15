@@ -77,6 +77,7 @@ No JSON request body.
             },
             "rejection_reason": null,
             "is_suspended": false,
+            "account_status": "active",
             "suspended_at": null,
             "suspended_by": null,
             "suspension_reason": null,
@@ -117,6 +118,100 @@ No JSON request body.
 {
     "success": false,
     "message": "This action is unauthorized.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+## `DELETE /api/providers/{provider}`
+
+Soft-deletes the provider's account: they leave the marketplace and every mobile session ends at once (the open app receives `client.account.restricted` with status "deleted"). Booking history is kept, and the account can be restored from Data Management. Refused with 409 while the provider has open bookings, a downpayment not yet returned to a customer, or unpaid commission.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `provider` | path | yes | integer |
+
+### Request body and validation
+
+No JSON request body.
+
+### Responses
+
+#### HTTP 200: Provider deleted (soft delete)
+
+```json
+{
+    "success": true,
+    "message": "Provider deleted.",
+    "data": null,
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 401: Unauthenticated / expired token
+
+```json
+{
+    "success": false,
+    "message": "Unauthenticated.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 403: Missing the delete providers permission
+
+```json
+{
+    "success": false,
+    "message": "This action is unauthorized.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 404: Provider not found
+
+```json
+{
+    "success": false,
+    "message": "Resource not found.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 409: The provider still owes something: open bookings, an unreturned downpayment, or unpaid commission
+
+```json
+{
+    "success": false,
+    "message": "This provider cannot be deleted while they have unpaid commission.",
+    "data": [],
+    "errors": {
+        "provider": [
+            "Settle the provider's unpaid commission first."
+        ]
+    },
+    "meta": []
+}
+```
+
+#### HTTP 422: The account is already deleted
+
+```json
+{
+    "success": false,
+    "message": "This provider account is already deleted.",
     "data": [],
     "errors": null,
     "meta": []
@@ -207,6 +302,7 @@ No JSON request body.
         },
         "rejection_reason": null,
         "is_suspended": false,
+        "account_status": "active",
         "suspended_at": null,
         "suspended_by": null,
         "suspension_reason": null,
@@ -287,7 +383,7 @@ No JSON request body.
 
 ## `PATCH /api/providers/{provider}/activate`
 
-PATCH /api/providers/{provider}/activate — activate a suspended provider.
+Returns the provider to the marketplace and reactivates the account suspended with them, so they can sign in again. A banned account stays banned.
 
 **Authentication:** Bearer token
 
@@ -354,6 +450,7 @@ No JSON request body.
         },
         "rejection_reason": null,
         "is_suspended": false,
+        "account_status": "active",
         "suspended_at": null,
         "suspended_by": null,
         "suspension_reason": null,
@@ -416,7 +513,7 @@ No JSON request body.
 
 ## `PATCH /api/providers/{provider}/suspend`
 
-PATCH /api/providers/{provider}/suspend — suspend a provider.
+Hides the provider from the marketplace and suspends their account: every mobile session ends at once (the open app receives `client.account.restricted`), and sign-in is refused with `meta.account` until the provider is activated. A banned account stays banned.
 
 **Authentication:** Bearer token
 
@@ -493,6 +590,7 @@ Example request body:
         },
         "rejection_reason": null,
         "is_suspended": true,
+        "account_status": "suspended",
         "suspended_at": "2026-08-12T10:00:00+00:00",
         "suspended_by": {
             "id": 1,
@@ -556,6 +654,78 @@ Example request body:
             "The reason field is required."
         ]
     },
+    "meta": []
+}
+```
+
+## `PATCH /api/providers/{provider}/unban`
+
+Lifts a ban on the provider's account (bans come from report moderation), so they can sign in again; the provider is emailed and their customers with open bookings are told they are available again. A suspended profile stays suspended — use activate for that.
+
+**Authentication:** Bearer token
+
+### Parameters
+
+| Name | Location | Required | Type / allowed values |
+|---|---|---:|---|
+| `provider` | path | yes | integer |
+
+### Request body and validation
+
+| Field | Required | Validation / type |
+|---|---:|---|
+| `reason` | no | string, maxLength=500 |
+
+### Responses
+
+#### HTTP 200: Ban lifted; the provider profile
+
+Response schema: `#/components/schemas/ApiEnvelope`
+
+#### HTTP 401: Unauthenticated / expired token
+
+```json
+{
+    "success": false,
+    "message": "Unauthenticated.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 403: Missing the activate providers permission
+
+```json
+{
+    "success": false,
+    "message": "This action is unauthorized.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 404: Provider not found
+
+```json
+{
+    "success": false,
+    "message": "Resource not found.",
+    "data": [],
+    "errors": null,
+    "meta": []
+}
+```
+
+#### HTTP 422: The account is not banned, or the note is too long
+
+```json
+{
+    "success": false,
+    "message": "The account is not currently banned.",
+    "data": [],
+    "errors": null,
     "meta": []
 }
 ```
@@ -803,6 +973,7 @@ Example request body:
         },
         "rejection_reason": null,
         "is_suspended": false,
+        "account_status": "active",
         "suspended_at": null,
         "suspended_by": null,
         "suspension_reason": null,
@@ -943,6 +1114,7 @@ Example request body:
         "verified_by": null,
         "rejection_reason": "Documents are unclear and illegible.",
         "is_suspended": false,
+        "account_status": "active",
         "suspended_at": null,
         "suspended_by": null,
         "suspension_reason": null,
@@ -1073,6 +1245,7 @@ No JSON request body.
         "verified_by": null,
         "rejection_reason": null,
         "is_suspended": false,
+        "account_status": "active",
         "suspended_at": null,
         "suspended_by": null,
         "suspension_reason": null,
@@ -1209,6 +1382,7 @@ Example request body:
         "verified_by": null,
         "rejection_reason": null,
         "is_suspended": false,
+        "account_status": "active",
         "suspended_at": null,
         "suspended_by": null,
         "suspension_reason": null,

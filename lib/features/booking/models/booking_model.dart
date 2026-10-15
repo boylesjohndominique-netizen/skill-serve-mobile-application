@@ -209,6 +209,23 @@ class PaymentInstructions {
 class BookingModel {
   static final _time = DateFormat('h:mm a');
 
+  /// The provider was suspended, banned or deleted by an administrator.
+  bool get isProviderUnavailable => providerAccountStatus != 'active';
+
+  /// Short label for a booking card when [isProviderUnavailable].
+  String get providerUnavailableLabel => switch (providerAccountStatus) {
+        'deleted' => 'Provider account deleted',
+        'banned' => 'Provider banned',
+        _ => 'Provider suspended',
+      };
+
+  /// Headline for the notice the customer sees when [isProviderUnavailable].
+  String get providerUnavailableTitle => switch (providerAccountStatus) {
+        'deleted' => "Your provider's account was deleted",
+        'banned' => 'Your provider was banned',
+        _ => 'Your provider was suspended',
+      };
+
   final String id;
   final String bookingNumber;
   final String clientId;
@@ -218,6 +235,13 @@ class BookingModel {
   final String providerId;
   final String providerName;
   final String? providerAvatar;
+
+  /// `active`, `suspended`, `banned` or `deleted` — whether an administrator
+  /// acted on the provider since (customer's view only).
+  final String providerAccountStatus;
+
+  /// What to tell the customer when [providerAccountStatus] is not `active`.
+  final String? providerAccountNotice;
   final String serviceId;
   final String serviceTitle;
   final String serviceDuration;
@@ -297,6 +321,8 @@ class BookingModel {
     this.providerId = '',
     this.providerName = '',
     this.providerAvatar,
+    this.providerAccountStatus = 'active',
+    this.providerAccountNotice,
     required this.serviceId,
     required this.serviceTitle,
     this.serviceDuration = '',
@@ -429,6 +455,8 @@ class BookingModel {
       clientPhone: client?['phone'] as String? ?? json['contact_phone'] as String? ?? '',
       providerId: provider?['id']?.toString() ?? '',
       providerName: provider?['business_name'] as String? ?? '',
+      providerAccountStatus: provider?['account_status'] as String? ?? 'active',
+      providerAccountNotice: provider?['account_notice'] as String?,
       serviceId: service?['id']?.toString() ?? '',
       serviceTitle: service?['title'] as String? ?? '',
       serviceDuration: service?['duration'] as String? ?? '',

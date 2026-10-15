@@ -26,6 +26,7 @@ import '../models/chat_thread.dart';
 import '../models/message_model.dart';
 import '../../reports/views/report_content_sheet.dart';
 import '../../../core/constants/app_icons.dart';
+import '../../../core/widgets/feedback/app_notice.dart';
 import '../../../core/theme/app_palette.dart';
 
 /// One conversation: a booking's chat, or a conversation with a provider
@@ -249,6 +250,17 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // The provider was suspended, banned or deleted: messages may
+            // never be read, so say so above the thread.
+            if (conversation != null && conversation.isProviderUnavailable)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSizes.pageHPad, AppSizes.sm, AppSizes.pageHPad, 0),
+                child: AppNotice(
+                  tone: NoticeTone.error,
+                  icon: AppIcons.block_rounded,
+                  message: conversation.providerAccountNotice ?? 'This provider can no longer use SkillServe.',
+                ),
+              ),
             Expanded(child: _buildThread(chat, myId, isDark)),
             _buildComposer(chat, isDark, inputBg),
           ],

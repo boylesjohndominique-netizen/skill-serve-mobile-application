@@ -36,6 +36,13 @@ void main() {
       expect(permanent.explanation, 'This ban is permanent.');
     });
 
+    test('reads the live push sent when an administrator deletes the account', () {
+      final deleted = AccountRestriction.fromJson({'status': 'deleted', 'reason': null, 'since': '2026-10-15T08:00:00+00:00', 'until': null});
+      expect(deleted.title, 'Your account was deleted');
+      expect(deleted.isBanned, isFalse);
+      expect(deleted.explanation, contains('deleted your account'));
+    });
+
     test('other failures are not restrictions', () {
       expect(AccountRestriction.fromError(_refusal({'message': 'Invalid email or password.'}, status: 401)), isNull);
       expect(AccountRestriction.fromError(_refusal({'message': 'Please verify your email.'})), isNull);

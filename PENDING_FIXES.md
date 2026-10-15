@@ -17,6 +17,13 @@ Nothing open.
 
 ## High
 
+### F13 · Instant sign-out; customers told about their provider (2026-10-15) — see the web repo's PENDING_FIXES F13
+- [x] **Signed out at once** when an admin suspends, bans or deletes the account
+  (`client.account.restricted` → login screen shows why, including *Your account was deleted*).
+- [x] **Provider suspended, banned or deleted** — red notice on booking details, booking cards and
+  the chat (`provider.account_notice` / `counterpart.account_notice`); the inbox reloads on the
+  `booking_provider_status` notification. Tests `account_status_test`, `provider_standing_test`.
+
 ### F12 · Owner feedback round (2026-10-14) — see the web repo's PENDING_FIXES F12
 - [ ] **Pictures missing** — production uploads are wiped on every Render restart (no persistent
   disk; `/api/health` → `storage.persistent: false`). Attach the Render disk, then re-upload photos.
